@@ -5,6 +5,8 @@
   const $ = (s, r = document) => r.querySelector(s);
   const UI = { screen: null, version: 'dev', install: null, touch: false };
   const POINTS = [10, 6, 3, 1];
+  const POINTS_BIG = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1]; // fields of more than four
+  const pointsFor = (n, i) => (n <= 4 ? POINTS[i] : POINTS_BIG[i]) || 0;
   const REWARD = [120, 80, 50, 25];
   const CUP_RIVALS = { rookie: ['Pip', 'Moxie', 'Rusty'], pro: ['Vex', 'Moxie', 'Pip'], mirror: ['Nova', 'Vex', 'Rusty'], champ: ['Nova', 'Glitch', 'Vex'], workshop: ['Rusty', 'Moxie', 'Vex'], tour: ['Glitch', 'Nova', 'Pip'], legend: ['Nova', 'Glitch', 'Vex'] };
   const rival = (n) => CR.RIVALS.find((r) => r.name === n);
@@ -64,6 +66,7 @@
         <button class="btn" id="m-ko"><span class="ico">💥</span>Knockout<span class="sub">Fall off screen and you're out</span></button>
         <button class="btn cyan" id="m-garage"><span class="ico">🔧</span>Garage<span class="sub">Cars, paint and upgrades</span></button>
         <button class="btn ghost" id="m-set"><span class="ico">⚙️</span>Settings<span class="sub">Controls, graphics, sound</span></button>
+        <button class="btn ghost" id="m-tutb"><span class="ico">🎓</span>Driving Lesson<span class="sub">${d.tutorialDone ? 'Replay the tutorial race' : 'Learn the ropes, earn 100 coins'}</span></button>
         ${UI.install ? '<button class="btn ghost" id="m-inst"><span class="ico">📲</span>Install<span class="sub">Add to your home screen</span></button>' : ''}
         ${UI.iosHint ? '<button class="btn ghost" id="m-ios"><span class="ico">📲</span>Install<span class="sub">How to add to iPhone / iPad</span></button>' : ''}
       </div>
@@ -76,9 +79,10 @@
     click($('#m-ko'), () => renderTracks('ko'));
     click($('#m-garage'), () => renderGarage());
     click($('#m-set'), () => renderSettings());
+    click($('#m-tutb'), startTutorial);
     if (UI.install) click($('#m-inst'), async () => { const p = UI.install; UI.install = null; p.prompt(); try { await p.userChoice; } catch (e) { /* */ } renderMenu(); });
     if (UI.iosHint) click($('#m-ios'), () => modal(`<h2>Install on iPhone / iPad</h2><ol class="help"><li>Open this page in <b>Safari</b>.</li><li>Tap the <b>Share</b> button.</li><li>Choose <b>Add to Home Screen</b>.</li></ol><p class="muted small">It then runs full screen and works offline.</p><div class="actions"><button class="btn primary" id="m-ok">Got it</button></div>`, (m) => click($('#m-ok', m), closeModal)));
-    if (!Save.data.seenHelp) { Save.data.seenHelp = true; Save.save(); setTimeout(help, 400); }
+    if (!Save.data.seenHelp) { Save.data.seenHelp = true; Save.save(); setTimeout(() => modal(`<h2>Welcome to Cursor Racing</h2><p class="muted">New here? A two-minute driving lesson covers steering, drifting, boost and power-ups, and pays 100 coins.</p><div class="actions"><button class="btn ghost" id="m-skip">Skip</button><button class="btn primary" id="m-tut">Driving lesson</button></div>`, (m) => { click($('#m-skip', m), closeModal, 'back'); click($('#m-tut', m), () => { closeModal(); startTutorial(); }); }), 400); }
   }
 
   function help() {
@@ -119,8 +123,17 @@
   // ---------------------------------------------------------------------------
   function renderCups() {
     const d = Save.data, el = $('#scr-cups');
-    el.innerHTML = `<div class="wrap">${topbar('Championship')}<div class="cards" id="cuplist"></div>
-      <p class="muted small" style="margin-top:12px">Three races per cup. Points 10 / 6 / 3 / 1. Finish on the podium to open the next cup. Win it to unlock a new car.</p></div>`;
+    el.innerHTML = `<div class="wrap">${topbar('Championship')}
+      <div class="panel setup">
+        <div class="setrow"><span>Field</span><div class="seg" id="c-field">${[[3, '4 cars'], [7, '8'], [11, '12'], [19, '20']].map(([v, l]) => `<button data-v="${v}" class="${d.settings.cupRivals === v ? 'on' : ''}">${l}</button>`).join('')}</div></div>
+        <div class="setrow"><span>Laps</span><div class="seg" id="c-laps">${[2, 3, 5].map((v) => `<button data-v="${v}" class="${d.settings.cupLaps === v ? 'on' : ''}">${v}</button>`).join('')}</div></div>
+        <div class="setrow"><span>Power-ups</span><button class="tog ${d.settings.cupItems ? 'on' : ''}" id="c-items"></button><span class="muted small">${d.settings.cupItems ? 'Item boxes on the road' : 'Classic: pure racing'}</span></div>
+      </div>
+      <div class="cards" id="cuplist"></div>
+      <p class="muted small" style="margin-top:12px">Three races per cup. Points: ${d.settings.cupRivals > 3 ? '25 / 18 / 15 / 12 / 10 / 8 / 6 / 4 / 2 / 1 for the top ten' : '10 / 6 / 3 / 1'}. Finish the cup on the podium to open the next one. Win it to unlock a new car. These options apply to the next cup you start.</p></div>`;
+    el.querySelectorAll('#c-field button').forEach((b) => click(b, () => { d.settings.cupRivals = +b.dataset.v; Save.save(); renderCups(); }));
+    el.querySelectorAll('#c-laps button').forEach((b) => click(b, () => { d.settings.cupLaps = +b.dataset.v; Save.save(); renderCups(); }));
+    click($('#c-items', el), () => { d.settings.cupItems = !d.settings.cupItems; Save.save(); renderCups(); });
     const list = $('#cuplist', el);
     CR.CUPS.forEach((cup, i) => {
       const st = d.cups[cup.id] || {}, open = !!st.unlocked;
@@ -136,17 +149,66 @@
     bind(el); show('cups');
   }
   function startCup(i) {
-    const cup = CR.CUPS[i];
-    const pts = { You: 0 }; for (const n of CUP_RIVALS[cup.id]) pts[n] = 0;
-    Save.data.cupRun = { cup: cup.id, race: 0, pts }; Save.save();
+    const cup = CR.CUPS[i], S = Save.data.settings;
+    // the cup's three named rivals, then others drawn at random to fill the field
+    const names = CUP_RIVALS[cup.id].slice();
+    const rest = CR.RIVALS.map((r) => r.name).filter((n) => !names.includes(n)).sort(() => Math.random() - 0.5);
+    while (names.length < S.cupRivals && rest.length) names.push(rest.pop());
+    const pts = { You: 0 }; for (const n of names) pts[n] = 0;
+    Save.data.cupRun = { cup: cup.id, race: 0, pts, names, laps: S.cupLaps, items: !!S.cupItems }; Save.save();
     continueCup();
   }
   function continueCup() {
     const run = Save.data.cupRun, ci = CR.CUPS.findIndex((c) => c.id === run.cup), cup = CR.CUPS[ci];
     const [t, rev] = cup.races[run.race];
     const lvl = Math.min(5, ci + 1);
-    const rivals = CUP_RIVALS[cup.id].map((n) => ({ ...rival(n), up: { eng: lvl, grip: lvl - 1, boost: lvl - 1 } }));
-    startRace({ mode: 'race', track: t, reversed: rev, laps: 3, ai: cup.ai, rivals, cup: ci });
+    const names = run.names || CUP_RIVALS[cup.id]; // runs saved by older versions have no names
+    const rivals = names.map((n) => ({ ...rival(n), up: { eng: lvl, grip: lvl - 1, boost: lvl - 1 } }));
+    startRace({ mode: 'race', track: t, reversed: rev, laps: run.laps || 3, items: !!run.items, ai: cup.ai, rivals, cup: ci });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Driving lesson: a short guided race. Each step waits until the player has done the thing.
+  const touchy = () => UI.touch;
+  const LESSON = [
+    { text: () => (touchy() ? (Save.data.settings.controls === 'stick' ? 'Put your thumb on the left side of the screen and point it where you want to go.' : 'Steer with the arrow buttons. The car drives itself forward.') : 'Drive with the arrow keys or WASD.'), goal: 'Follow the road', done: (p, t) => t.dist > 700 },
+    { text: () => `Corners: hold ${touchy() ? 'BRAKE' : 'Down or S'} while turning at speed and the tail slides out. That is a drift, and it fills the boost meter.`, goal: 'Drift through a corner', done: (p, t) => t.drift > 0.5, hint: 16 },
+    { text: () => `Your boost meter is topped up. Hold ${touchy() ? 'BOOST' : 'Space'} on a straight.`, goal: 'Use your boost', start: (p) => { p.boost = 1; }, done: (p, t) => t.boost > 0.6 },
+    { text: () => `Drive through a rainbow box to pick up a power-up, then ${touchy() ? 'tap ITEM' : 'press E'} to use it.`, goal: 'Use a power-up', done: (p, t) => p.usedItems > t.items0, hint: 25, onHint: (p) => { if (!p.item) { p.item = 'turbo'; Game.msg('HAVE A TURBO', 1, 'info'); } } },
+    { text: () => 'Stay close behind another car to slipstream: more speed and free boost. Chevron pads boost you too, and the table edge is a long way down.', goal: 'Cross the finish line', done: (p, t) => p.lap > t.lap0 },
+  ];
+  function startTutorial() {
+    const rivals = [rival('Pip'), rival('Dash')];
+    startRace({ mode: 'race', track: 0, reversed: false, laps: 99, items: true, ai: 0.8, rivals, tutorial: true });
+    UI.lesson = { i: -1, t: null };
+  }
+  function lessonTick() {
+    const L = UI.lesson, p = Game.player; if (!L || !p || Game.state === 'count' || Game.paused) return;
+    const now = Game.raceT, dt = Math.min(0.1, now - (L.last ?? now)); L.last = now;
+    if (L.i < 0 || LESSON[L.i].done(p, L.t)) {
+      if (L.i >= 0) { Audio.play('best'); Game.emit('confetti', p.x, p.y, 20, 20); }
+      L.i++;
+      if (L.i >= LESSON.length) return lessonDone();
+      const st = LESSON[L.i];
+      L.t = { dist: 0, drift: 0, boost: 0, since: 0, hinted: false, items0: p.usedItems || 0, lap0: p.lap, px: p.x, py: p.y };
+      if (st.start) st.start(p);
+      H.coach.innerHTML = `<small>Lesson ${L.i + 1} of ${LESSON.length}</small><p>${st.text()}</p><b>&#9654; ${st.goal}</b>`;
+      H.coach.classList.remove('pop'); void H.coach.offsetWidth; H.coach.classList.add('pop');
+      return;
+    }
+    const t = L.t, st = LESSON[L.i], spd = Math.hypot(p.vx, p.vy);
+    t.dist += Math.hypot(p.x - t.px, p.y - t.py) < 60 ? Math.hypot(p.x - t.px, p.y - t.py) : 0; t.px = p.x; t.py = p.y;
+    if (p.slip > 60 && spd > 100 && !p.air) t.drift += dt;
+    if (p.boosting && p.padT <= 0) t.boost += dt;
+    t.since += dt;
+    if (st.hint && t.since > st.hint && !t.hinted) { t.hinted = true; if (st.onHint) st.onHint(p); else H.coach.querySelector('b').insertAdjacentHTML('afterend', '<p class="muted small">Tip: get up to speed first, then brake and turn together.</p>'); }
+  }
+  function lessonDone() {
+    const d = Save.data, first = !d.tutorialDone;
+    UI.lesson = null; UI.inRace = false; teardownTouch(); Game.stop(); Audio.setMusic('menu'); Audio.play('win');
+    d.tutorialDone = true; if (first) Save.addCoins(100); else Save.save();
+    renderMenu();
+    modal(`<h2>Lesson complete</h2><p>You can steer, drift, boost and use power-ups. ${first ? 'Here are <b class="gold">100 coins</b> for the garage.' : ''}</p><p class="muted small">One more trick: press the gas in the last half-second of the countdown for a perfect start.</p><div class="actions"><button class="btn ghost" id="m-ok">Menu</button><button class="btn primary" id="m-go">Championship</button></div>`, (m) => { click($('#m-ok', m), closeModal, 'back'); click($('#m-go', m), () => { closeModal(); renderCups(); }); });
   }
 
   // ---------------------------------------------------------------------------
@@ -224,7 +286,7 @@
         <div class="panel">
           <h2>Stats</h2>
           <div class="stat">Speed ${st(car.top, up.eng * 0.03)}</div><div class="stat">Accel ${st(car.accel, up.eng * 0.03)}</div>
-          <div class="stat">Grip ${st(car.grip, up.grip * 0.04)}</div><div class="stat">Weight ${st(car.mass, 0)}</div>
+          <div class="stat">Grip ${st(car.grip, up.grip * 0.04)}</div><div class="stat">Weight ${st(car.mass / 1.8, 0)}</div>
           <div id="g-act" style="margin:12px 0"></div>
           ${owned ? `<h2 style="margin-top:6px">Upgrades</h2><div id="g-up"></div>` : ''}
         </div>
@@ -279,7 +341,7 @@
         <div class="set"><div class="lbl"><b>Sound effects</b></div><input type="range" id="s-sfx" min="0" max="1" step="0.05" value="${s.sfx}"></div>
         <div class="set"><div class="lbl"><b>Music</b></div><input type="range" id="s-mus" min="0" max="1" step="0.05" value="${s.music}"></div>
       </div>
-      <div class="actions"><button class="btn" id="s-help">How to play</button><button class="btn" id="s-upd">Check for updates</button><button class="btn" id="s-cred">Credits</button><button class="btn ghost" id="s-reset">Reset progress</button></div>
+      <div class="actions"><button class="btn" id="s-help">How to play</button><button class="btn" id="s-tut">Driving lesson</button><button class="btn" id="s-upd">Check for updates</button><button class="btn" id="s-cred">Credits</button><button class="btn ghost" id="s-reset">Reset progress</button></div>
       <p class="muted small" style="text-align:center;margin-top:14px">Cursor Racing v${UI.version}</p></div>`;
     const segBind = (id, key, fn) => el.querySelectorAll(`#${id} button`).forEach((b) => click(b, () => { const v = b.dataset.v; s[key] = isNaN(+v) ? v : +v; Save.save(); applySettings(); if (fn) fn(); renderSettings(); }));
     const togBind = (id, key) => click($('#' + id, el), () => { s[key] = !s[key]; Save.save(); applySettings(); renderSettings(); });
@@ -289,6 +351,7 @@
     $('#s-sfx', el).addEventListener('change', () => Audio.play('coin'));
     $('#s-mus', el).addEventListener('input', (e) => { s.music = +e.target.value; applySettings(); Save.save(); });
     click($('#s-help', el), help);
+    click($('#s-tut', el), startTutorial);
     click($('#s-upd', el), () => (UI.checkUpdate ? UI.checkUpdate(true) : UI.toast('Updates work once the game is installed or served over https')));
     click($('#s-cred', el), () => modal(`<h2>Credits</h2><p>Cursor Racing is made from scratch: hand-written JavaScript, WebGL and Web Audio. Every car, prop, sprite, sound and song is generated in code. No third-party libraries, fonts, images or audio.</p>
       <p class="muted small">Inspired by classic top-down toy-car racers. Not affiliated with or endorsed by any of them. All trademarks belong to their owners.</p><p class="muted small">MIT licence. See LICENSE and CREDITS.md.</p><div class="actions"><button class="btn primary" id="m-ok">Close</button></div>`, (m) => click($('#m-ok', m), closeModal)));
@@ -339,7 +402,7 @@
     Save.addCoins(coins);
     if (cfg.cup != null) {
       const run = d.cupRun;
-      res.order.forEach((o, i) => { run.pts[o.isPlayer ? 'You' : o.name] = (run.pts[o.isPlayer ? 'You' : o.name] || 0) + POINTS[i]; });
+      res.order.forEach((o, i) => { run.pts[o.isPlayer ? 'You' : o.name] = (run.pts[o.isPlayer ? 'You' : o.name] || 0) + pointsFor(res.order.length, i); });
       run.race++; Save.save();
     }
     Audio.setMusic('menu');
@@ -350,9 +413,9 @@
     const el = $('#scr-results'), me = res.order.find((o) => o.isPlayer);
     const ko = cfg.mode === 'ko', tt = cfg.mode === 'tt';
     const head = tt ? `<div class="bigplace">${U.fmtTime(res.bestLap)}</div><div class="reward">Best lap · total ${U.fmtTime(res.total)}</div>`
-      : `<div class="bigplace">${U.ordinal(res.place)}</div><div class="reward">${ko ? (res.place === 1 ? 'Knockout champion!' : `You scored ${me.points}`) : (res.place === 1 ? 'Winner!' : res.place <= 3 ? 'Podium!' : 'Keep at it')}</div>`;
+      : `<div class="bigplace">${U.ordinal(res.place)}</div><div class="reward">${ko ? (res.place === 1 ? 'Knockout champion!' : `You scored ${me.points}`) : (res.place === 1 ? 'Winner!' : res.place <= 3 ? 'Podium!' : res.place <= res.order.length / 2 ? 'Solid drive' : 'Keep at it')}</div>`;
     const rows = res.order.map((o, i) => `<tr class="${o.isPlayer ? 'me' : ''}"><td>${i + 1}</td><td><span class="chip" style="background:${o.paint}"></span>${o.name}</td><td class="muted small">${o.car}</td>
-      <td class="num">${ko ? o.points + ' pts' : (o.est ? '~' : '') + U.fmtTime(o.time)}</td>${cfg.cup != null ? `<td class="num gold">+${POINTS[i]}</td>` : ''}</tr>`).join('');
+      <td class="num">${ko ? o.points + ' pts' : (o.est ? '~' : '') + U.fmtTime(o.time)}</td>${cfg.cup != null ? `<td class="num gold">${pointsFor(res.order.length, i) ? '+' + pointsFor(res.order.length, i) : ''}</td>` : ''}</tr>`).join('');
     const laps = tt && Game.player ? Game.player.lapTimes.map((t, i) => `Lap ${i + 1}: ${U.fmtTime(t)}`).join(' · ') : '';
     const cupNext = cfg.cup != null;
     el.innerHTML = `<div class="wrap" style="max-width:620px"><div class="panel">${head}
@@ -364,7 +427,7 @@
     if (cupNext) click($('#r-next', el), renderStandings);
     else { click($('#r-again', el), () => { const c = { ...UI.last }; if (c.mode === 'tt') { const g = Save.ghost(c.track, c.reversed); c.ghost = g && g.data; c.bestLap = Save.bestOf(c.track, c.reversed).lap; } startRace(c); }); click($('#r-tracks', el), () => renderTracks(cfg.quick || 'quick')); }
     click($('#r-menu', el), () => { if (cupNext) renderStandings(); else { Game.stop(); renderMenu(); } }, 'back');
-    if (res.place === 1 && !tt) { Audio.play('win'); } else if (!tt && res.place === 4) Audio.play('lose');
+    if (res.place === 1 && !tt) { Audio.play('win'); } else if (!tt && res.place === res.order.length) Audio.play('lose');
   }
 
   function renderStandings() {
@@ -414,7 +477,9 @@
       </div>
       <div class="hud-board" id="h-board"></div>
       <div class="hud-song" id="h-song">&#9834; ${Audio.songName(CR.TRACKS[cfg.track].theme)}</div>
+      ${cfg.tutorial ? '<div class="hud-coach" id="h-coach"></div>' : ''}
       <div class="hud-msg" id="h-msg"></div>`;
+    H.coach = $('#h-coach', el);
     H.item = $('#h-item', el); H.board = $('#h-board', el);
     if (H.item) H.item.addEventListener('pointerdown', (e) => { e.stopPropagation(); if (Game.player) CR.Extras.use(Game.player); });
     H.pos = $('#h-pos', el); H.lap = $('#h-lap', el); H.time = $('#h-time', el); H.boost = $('#h-boost', el); H.bb = $('#h-bb', el); H.msg = $('#h-msg', el); H.ko = $('#h-ko', el);
@@ -430,11 +495,12 @@
   UI.hudFrame = function () {
     if (!UI.inRace || !Game.player) return;
     const p = Game.player, c = H.cache;
+    if (UI.lesson) { lessonTick(); if (!UI.inRace) return; }
     if (H.pos) {
       const order = Game.standings(), place = order.indexOf(p) + 1;
       if (c.place !== place) { c.place = place; H.pos.innerHTML = `${place}<sup>${U.ordinal(place).slice(-2)}</sup><small>/${Game.cars.length}</small>`; }
       const lap = Math.min(Game.laps, Math.max(1, p.lap + 1));
-      if (c.lap !== lap) { c.lap = lap; H.lap.textContent = `LAP ${lap}/${Game.laps}`; }
+      if (c.lap !== lap) { c.lap = lap; H.lap.textContent = UI.lesson ? 'DRIVING LESSON' : `LAP ${lap}/${Game.laps}`; }
     }
     if (H.ko) {
       const k = Game.cars.map((x) => `<div style="color:${x.paint}">${x.isPlayer ? 'YOU' : x.name}${'<i></i>'.repeat(0)}${Array.from({ length: Game.ko.target }, (_, i) => `<i class="${i < x.points ? 'on' : ''}"></i>`).join('')}</div>`).join('');
@@ -556,15 +622,15 @@
     if (!UI.inRace || Game.paused || !Game.on) return;
     Game.paused = true; Audio.engine(0, 0, false, false); Audio.skid(0);
     modal(`<h2>Paused</h2><div class="actions" style="flex-direction:column"><button class="btn primary" id="p-res">Resume</button><button class="btn" id="p-rst">Restart</button><button class="btn" id="p-help">How to drive</button><button class="btn ghost" id="p-quit">Quit to menu</button></div>`, (m) => {
-      click($('#p-res', m), resume); click($('#p-rst', m), () => { closeModal(); Game.paused = false; startRace({ ...UI.last }); });
+      click($('#p-res', m), resume); click($('#p-rst', m), () => { closeModal(); Game.paused = false; if (UI.lesson) startTutorial(); else startRace({ ...UI.last }); });
       click($('#p-help', m), help);
-      click($('#p-quit', m), () => { closeModal(); UI.inRace = false; Game.stop(); if (UI.last.cup != null) { /* leave the cup run saved */ } Audio.setMusic('menu'); renderMenu(); }, 'back');
+      click($('#p-quit', m), () => { closeModal(); UI.inRace = false; UI.lesson = null; teardownTouch(); Game.stop(); if (UI.last.cup != null) { /* leave the cup run saved */ } Audio.setMusic('menu'); renderMenu(); }, 'back');
     });
   }
   function resume() { closeModal(); Game.paused = false; }
   UI.pause = pause;
 
-  UI.renderTitle = renderTitle; UI.renderMenu = renderMenu; UI.show = show; UI.startRace = startRace; UI.renderGarage = renderGarage; UI.renderTracks = renderTracks; UI.renderCups = renderCups; UI.renderSettings = renderSettings;
+  UI.renderTitle = renderTitle; UI.renderMenu = renderMenu; UI.show = show; UI.startRace = startRace; UI.startTutorial = startTutorial; UI.renderGarage = renderGarage; UI.renderTracks = renderTracks; UI.renderCups = renderCups; UI.renderSettings = renderSettings;
   UI.isSafe = () => !UI.inRace && ['title', 'menu', 'results', 'standings', 'cups', 'tracks', 'garage', 'settings'].includes(UI.screen);
   CR.UI = UI;
 })(window.CR);

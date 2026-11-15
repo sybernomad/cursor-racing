@@ -214,7 +214,7 @@
   // ---------- using items ----------
   X.use = function (c) {
     const it = c.item; if (!it || c.state !== 'race') return;
-    c.item = null;
+    c.item = null; c.usedItems = (c.usedItems || 0) + 1;
     const fx = Math.cos(c.h), fy = Math.sin(c.h), me = c.isPlayer, loud = me || near(c);
     switch (it) {
       case 'turbo': c.padT = 1.3; if (me) Audio.play('boost'); break;

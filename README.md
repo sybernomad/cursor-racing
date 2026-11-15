@@ -35,10 +35,14 @@ Use a power-up with **ITEM** on touch, E or Q on a keyboard, Y or LB on a gamepa
 
 ## Modes
 
-- **Championship:** seven cups of three races (points 10/6/3/1): Rookie, Pro, Workshop, Mirror,
-  Grand Tour, Champion and Legend. A podium opens the next cup, and winning some cups gives you a new
-  car. Mirror, Champion and Legend run tracks in reverse; once the Mirror Cup is open, every open track
-  can also be raced mirrored in Quick Race, Time Trial and Knockout.
+- **Driving Lesson:** a short guided race that teaches steering, drifting, boost and power-ups one
+  step at a time. Offered on first launch, pays 100 coins the first time, replayable from the menu.
+- **Championship:** seven cups of three races: Rookie, Pro, Workshop, Mirror, Grand Tour, Champion and
+  Legend. Finish a cup on the podium to open the next one; winning some cups gives you a new car.
+  Mirror, Champion and Legend run tracks in reverse. Options on the cup screen: field of 4, 8, 12 or
+  20 cars, 2/3/5 laps, power-ups on or off. Points are 10/6/3/1 with four cars, and
+  25/18/15/12/10/8/6/4/2/1 for the top ten in bigger fields. Once the Mirror Cup is open, every open
+  track can also be raced mirrored in Quick Race, Time Trial and Knockout.
 - **Quick Race:** any open track, 1 to 9 laps, **1 to 19 rivals** (a full 20-car grid), power-ups on or off.
 - **Time Trial:** solo, races against a ghost of your best lap (saved per track).
 - **Knockout:** the camera follows the leader. Anyone who falls off the screen (or off the table)
@@ -54,7 +58,7 @@ Use a power-up with **ITEM** on touch, E or Q on a keyboard, Y or LB on a gamepa
 - **Road hazards:** puddles and goo, swinging sweeper arms, things that slide across the road (a robot
   vacuum, a rubber duck, a mouse, a rolling pin, a ladybug, a toy train at a level crossing), pinball
   bumpers that fling you, spring pads that launch you, and jump gaps where you need speed off the ramp.
-- **Power-ups** (Quick Race and Knockout; the Championship stays classic): drive through the rainbow boxes.
+- **Power-ups** (Quick Race, Knockout, and the Championship if you switch them on): drive through the rainbow boxes.
   Turbo, Oil slick (dropped behind you), Shield (6 seconds, bumps and hits bounce off), Shockwave
   (blasts nearby cars away) and Marble (fired ahead, bounces off walls). Cars further back get better items.
 
