@@ -142,6 +142,177 @@
       v.box(2, 1, 0, 6, 1, 1, A); v.box(2, 1, 7, 6, 1, 8, A);
       v.set(15, 2, 4, HEAD, 1);
     },
+    // ---------- the second garage: 20 more ----------
+    taxi(v, P, A, r) {
+      wheels(v, [3, 12]);
+      v.box(0, 1, 1, 15, 3, 7, P, 0, 0.04, r);
+      for (let x = 1; x <= 14; x++) { const c = x % 2 ? DARK : [1, 1, 1]; v.set(x, 2, 1, c); v.set(x, 2, 7, c); }
+      v.box(4, 4, 2, 11, 5, 6, GLASS); v.box(4, 6, 2, 11, 6, 6, P); v.box(5, 4, 3, 10, 5, 5, DARK); helmet(v, 8, 4, 4, A);
+      v.box(7, 7, 3, 8, 7, 5, [1, 1, 0.8], 0.9);
+      v.set(15, 2, 1, HEAD, 1); v.set(15, 2, 7, HEAD, 1); v.set(0, 2, 1, TAIL, 1); v.set(0, 2, 7, TAIL, 1);
+    },
+    icecream(v, P, A, r) {
+      wheels(v, [3, 12]);
+      v.box(1, 1, 1, 15, 6, 7, P, 0, 0.03, r);
+      v.box(1, 3, 1, 15, 3, 1, A); v.box(1, 3, 7, 15, 3, 7, A); v.box(1, 6, 1, 15, 6, 7, A);
+      v.box(13, 4, 1, 15, 5, 7, GLASS); v.box(5, 4, 0, 9, 5, 0, GLASS); v.box(4, 3, 0, 10, 3, 0, [1, 1, 1]);
+      v.set(6, 7, 4, [0.85, 0.6, 0.3]); v.box(5, 8, 3, 7, 8, 5, [1, 0.6, 0.75]); v.set(6, 9, 4, [0.9, 0.1, 0.2]);
+      v.set(15, 2, 1, HEAD, 1); v.set(15, 2, 7, HEAD, 1); v.set(1, 2, 1, TAIL, 1); v.set(1, 2, 7, TAIL, 1);
+    },
+    firetruck(v, P, A, r) {
+      wheels(v, [3, 12], true);
+      v.box(0, 2, 1, 15, 4, 7, P, 0, 0.04, r);
+      v.box(11, 5, 1, 15, 6, 7, P); v.box(13, 5, 1, 15, 5, 7, GLASS);
+      v.box(1, 5, 2, 10, 5, 6, HUB);
+      for (let x = 0; x <= 11; x++) { v.set(x, 6, 3, A); v.set(x, 6, 5, A); if (x % 2 === 0) v.set(x, 6, 4, A); }
+      v.set(13, 7, 3, [1, 0.15, 0.15], 1); v.set(13, 7, 5, [0.2, 0.45, 1], 1);
+      v.box(0, 3, 1, 9, 3, 1, [1, 1, 1]); v.box(0, 3, 7, 9, 3, 7, [1, 1, 1]);
+      v.set(15, 3, 1, HEAD, 1); v.set(15, 3, 7, HEAD, 1); v.set(0, 3, 2, TAIL, 1); v.set(0, 3, 6, TAIL, 1);
+    },
+    bus(v, P, A, r) {
+      wheels(v, [3, 12]);
+      v.box(0, 1, 1, 15, 6, 7, P, 0, 0.03, r);
+      v.box(0, 2, 1, 15, 2, 1, DARK); v.box(0, 2, 7, 15, 2, 7, DARK);
+      for (let x = 1; x <= 13; x += 2) for (const z of [1, 7]) { v.set(x, 4, z, GLASS); v.set(x, 5, z, GLASS); }
+      v.box(15, 4, 2, 15, 5, 6, GLASS); v.box(1, 7, 2, 14, 7, 6, A);
+      v.set(15, 2, 2, HEAD, 1); v.set(15, 2, 6, HEAD, 1); v.set(0, 2, 2, TAIL, 1); v.set(0, 2, 6, TAIL, 1); v.set(0, 6, 3, [1, 0.6, 0.1], 1); v.set(0, 6, 5, [1, 0.6, 0.1], 1);
+    },
+    tank(v, P, A, r) {
+      for (const z of [0, 1, 7, 8]) { v.box(0, 0, z, 15, 2, z, TIRE); v.clear(0, 0, z); v.clear(15, 0, z); }
+      for (let x = 2; x <= 13; x += 3) { v.set(x, 1, 0, HUB); v.set(x, 1, 8, HUB); }
+      v.box(1, 1, 2, 14, 2, 6, DARK); v.box(1, 3, 1, 14, 4, 7, P, 0, 0.06, r);
+      v.box(5, 5, 2, 10, 6, 6, P, 0, 0.06, r); v.box(11, 5, 4, 15, 5, 4, DARK); v.set(7, 7, 4, A); v.set(8, 7, 4, A);
+      v.set(3, 4, 4, A); v.set(2, 4, 4, A); v.set(3, 4, 3, A); v.set(3, 4, 5, A);
+    },
+    tractor(v, P, A, r) {
+      for (const z of [0, 1, 7, 8]) { for (let x = 1; x <= 7; x++) for (let y = 0; y <= 6; y++) if (Math.hypot(x - 4, y - 3) < 3.6) v.set(x, y, z, TIRE); v.set(4, 3, z, HUB); }
+      wheels(v, [12], false, 1, 7);
+      v.box(6, 2, 3, 14, 4, 5, P, 0, 0.05, r); v.box(3, 3, 2, 7, 3, 6, P);
+      for (const [x, z] of [[2, 2], [7, 2], [2, 6], [7, 6]]) v.box(x, 4, z, x, 7, z, DARK);
+      v.box(1, 8, 1, 8, 8, 7, A); helmet(v, 5, 4, 4, A);
+      v.box(12, 5, 4, 12, 7, 4, DARK); v.set(14, 3, 3, HEAD, 1); v.set(14, 3, 5, HEAD, 1); v.box(14, 2, 3, 14, 2, 5, HUB);
+    },
+    limo(v, P, A, r) {
+      wheels(v, [2, 13]);
+      v.box(0, 1, 1, 15, 3, 7, P, 0, 0.03, r);
+      v.box(3, 4, 2, 12, 4, 6, GLASS); v.box(3, 5, 2, 12, 5, 6, P);
+      for (const x of [3, 6, 9, 12]) v.box(x, 4, 2, x, 4, 6, P);
+      v.box(0, 1, 1, 15, 1, 1, A); v.box(0, 1, 7, 15, 1, 7, A); v.set(1, 4, 6, HUB); v.set(1, 5, 6, HUB);
+      v.set(15, 2, 1, HEAD, 1); v.set(15, 2, 7, HEAD, 1); v.set(0, 2, 1, TAIL, 1); v.set(0, 2, 7, TAIL, 1); v.box(15, 2, 3, 15, 2, 5, HUB);
+    },
+    hotrod(v, P, A, r) {
+      wheels(v, [3], true); wheels(v, [13]);
+      v.box(1, 2, 2, 9, 3, 6, P, 0, 0.04, r);
+      v.box(2, 4, 2, 6, 5, 6, P); v.box(6, 4, 3, 6, 4, 5, GLASS); v.box(3, 4, 2, 5, 4, 2, GLASS); v.box(3, 4, 6, 5, 4, 6, GLASS);
+      v.box(10, 2, 3, 13, 3, 5, HUB); v.box(11, 4, 3, 12, 5, 5, DARK); v.set(11, 6, 4, A); v.set(12, 6, 4, A);
+      v.box(8, 2, 1, 11, 2, 1, A); v.box(8, 2, 7, 11, 2, 7, A);
+      for (const z of [2, 6]) { v.set(8, 3, z, A); v.set(9, 3, z, A); v.set(7, 3, z, [1, 0.85, 0.2]); }
+      v.set(14, 3, 2, HEAD, 1); v.set(14, 3, 6, HEAD, 1); v.set(14, 2, 4, HUB); v.set(1, 3, 2, TAIL, 1); v.set(1, 3, 6, TAIL, 1);
+    },
+    dragster(v, P, A, r) {
+      wheels(v, [2], true); wheels(v, [2], true, 1, 7);
+      for (const z of [1, 7]) { v.set(14, 0, z, TIRE); v.set(14, 1, z, TIRE); v.set(13, 0, z, TIRE); v.set(15, 0, z, TIRE); }
+      v.box(3, 1, 4, 15, 1, 4, P); v.box(3, 1, 3, 10, 2, 5, P, 0, 0.04, r); v.box(13, 1, 2, 13, 1, 6, DARK);
+      v.box(4, 3, 3, 6, 3, 5, DARK); helmet(v, 5, 3, 4, A); v.box(1, 2, 3, 3, 4, 5, HUB); v.set(2, 5, 3, DARK); v.set(2, 5, 5, DARK);
+      v.box(0, 4, 2, 0, 5, 2, DARK); v.box(0, 4, 6, 0, 5, 6, DARK); v.box(0, 6, 1, 1, 6, 7, A); v.box(14, 2, 3, 15, 2, 5, A);
+      for (let x = 7; x <= 12; x++) v.set(x, 2, 4, A);
+    },
+    pickup(v, P, A, r) {
+      wheels(v, [3, 12]);
+      v.box(0, 1, 1, 15, 3, 7, P, 0, 0.04, r);
+      v.box(1, 3, 2, 6, 3, 6, DARK); v.box(2, 3, 3, 4, 4, 5, [0.72, 0.52, 0.3]); v.set(5, 3, 4, [0.3, 0.6, 0.9]);
+      v.box(8, 4, 1, 12, 5, 7, GLASS); v.box(8, 6, 1, 12, 6, 7, P); v.box(8, 4, 1, 8, 5, 7, P); v.box(8, 5, 3, 8, 5, 5, GLASS);
+      for (const z of [1, 7]) { v.set(12, 4, z, P); v.set(12, 5, z, P); v.set(10, 4, z, P); v.set(10, 5, z, P); }
+      v.box(15, 1, 1, 15, 1, 7, HUB); v.box(0, 1, 1, 0, 1, 7, HUB); for (let x = 1; x <= 14; x++) { v.set(x, 2, 1, A); v.set(x, 2, 7, A); }
+      v.set(15, 2, 1, HEAD, 1); v.set(15, 2, 7, HEAD, 1); v.set(0, 2, 1, TAIL, 1); v.set(0, 2, 7, TAIL, 1);
+    },
+    ambulance(v, P, A, r) {
+      wheels(v, [3, 12]);
+      v.box(1, 1, 1, 15, 6, 7, P, 0, 0.02, r);
+      v.box(1, 2, 1, 15, 2, 1, A); v.box(1, 2, 7, 15, 2, 7, A);
+      for (const z of [1, 7]) for (const [x, y] of [[5, 4], [6, 4], [7, 4], [6, 3], [6, 5]]) v.set(x, y, z, A);
+      v.box(13, 4, 1, 15, 5, 7, GLASS); v.box(12, 7, 2, 12, 7, 3, [1, 0.15, 0.15], 1); v.box(12, 7, 5, 12, 7, 6, [0.2, 0.45, 1], 1); v.set(12, 7, 4, HUB);
+      v.set(15, 2, 1, HEAD, 1); v.set(15, 2, 7, HEAD, 1); v.set(1, 3, 1, TAIL, 1); v.set(1, 3, 7, TAIL, 1);
+    },
+    dumper(v, P, A, r) {
+      wheels(v, [3, 12], true);
+      v.box(0, 2, 2, 15, 2, 6, DARK);
+      v.box(11, 3, 1, 15, 6, 7, P, 0, 0.04, r); v.box(13, 5, 1, 15, 5, 7, GLASS);
+      v.box(0, 3, 1, 9, 6, 7, A, 0, 0.05, r);
+      for (let x = 1; x <= 8; x++) for (let y = 4; y <= 6; y++) for (let z = 2; z <= 6; z++) v.clear(x, y, z);
+      v.box(1, 4, 2, 8, 5, 6, [0.45, 0.32, 0.2], 0, 0.25, r); v.box(3, 6, 3, 6, 6, 5, [0.5, 0.36, 0.22], 0, 0.25, r);
+      v.box(10, 6, 2, 10, 6, 6, A); v.set(13, 7, 4, [1, 0.6, 0.1], 1);
+      v.set(15, 3, 1, HEAD, 1); v.set(15, 3, 7, HEAD, 1);
+    },
+    stock(v, P, A, r) {
+      wheels(v, [3, 12]);
+      v.box(0, 1, 1, 15, 3, 7, P, 0, 0.03, r);
+      v.box(5, 4, 2, 10, 4, 6, GLASS); v.box(5, 5, 2, 10, 5, 6, P); v.box(7, 5, 3, 8, 5, 5, [1, 1, 1]);
+      for (const z of [1, 7]) v.box(6, 2, z, 9, 3, z, [1, 1, 1]);
+      for (let x = 0; x <= 15; x++) { v.set(x, 3, 2, A); v.set(x, 3, 6, A); }
+      v.box(0, 4, 1, 0, 5, 7, A); v.box(15, 1, 2, 15, 1, 6, DARK);
+      v.set(15, 2, 2, HEAD, 1); v.set(15, 2, 6, HEAD, 1); v.set(0, 2, 2, TAIL, 1); v.set(0, 2, 6, TAIL, 1);
+    },
+    mini(v, P, A, r) {
+      wheels(v, [5, 11]);
+      v.box(3, 1, 1, 13, 3, 7, P, 0, 0.04, r);
+      v.box(4, 4, 2, 10, 5, 6, GLASS); v.box(4, 6, 2, 10, 6, 6, A); v.box(5, 4, 3, 9, 5, 5, DARK); helmet(v, 8, 4, 4, A);
+      v.box(11, 3, 3, 13, 3, 3, A); v.box(11, 3, 5, 13, 3, 5, A);
+      v.set(13, 2, 2, HEAD, 1); v.set(13, 2, 6, HEAD, 1); v.set(3, 2, 2, TAIL, 1); v.set(3, 2, 6, TAIL, 1); v.box(13, 1, 3, 13, 1, 5, HUB);
+    },
+    wedge(v, P, A, r) {
+      wheels(v, [3, 12]);
+      v.box(0, 1, 1, 15, 2, 7, P, 0, 0.02, r);
+      for (let x = 1; x <= 14; x++) { const top = Math.round(2 + (x < 7 ? x * 0.5 : (15 - x) * 0.4)); for (let y = 3; y <= top; y++) v.box(x, y, 1, x, y, 7, (x >= 7 && x <= 11 && y === top) ? GLASS : P); }
+      v.box(15, 2, 1, 15, 2, 7, [1, 1, 1], 1); v.box(0, 2, 1, 0, 2, 7, TAIL, 1);
+      v.box(1, 3, 1, 1, 3, 7, A);
+    },
+    ufo(v, P, A, r) {
+      for (let x = 0; x < 16; x++) for (let z = 0; z < 9; z++) {
+        const d = Math.hypot((x - 7.5) / 8, (z - 4) / 4.6);
+        if (d <= 1) v.set(x, 1, z, d > 0.82 ? ((x + z) % 2 ? A : P) : P, d > 0.82 && (x + z) % 2 ? 1 : 0);
+        if (d <= 0.78) v.set(x, 2, z, P);
+        if (d <= 0.48) v.set(x, 3, z, GLASS); if (d <= 0.3) v.set(x, 4, z, GLASS);
+        if (d <= 0.5) v.set(x, 0, z, [0.3, 0.9, 1], 0.7);
+      }
+      v.set(7, 5, 4, HUB); v.set(7, 6, 4, [1, 0.3, 0.3], 1);
+    },
+    boat(v, P, A, r) {
+      for (let x = 0; x < 16; x++) {
+        const hw = x < 10 ? 3 : Math.max(0, 3 - (x - 10) * 0.6), z0 = Math.round(4 - hw), z1 = Math.round(4 + hw);
+        for (let z = z0; z <= z1; z++) { v.set(x, 0, z, [0.92, 0.92, 0.95]); v.set(x, 1, z, P); if (z === z0 || z === z1 || x === 0 || x > 8) v.set(x, 2, z, x > 8 ? A : P); }
+      }
+      v.box(8, 3, 2, 8, 3, 6, GLASS); helmet(v, 5, 2, 4, A); v.box(3, 2, 3, 3, 2, 5, DARK);
+      v.box(0, 2, 3, 1, 4, 5, DARK); v.set(0, 4, 4, A); for (let x = 1; x < 9; x++) { v.set(x, 1, 1, [1, 1, 1]); v.set(x, 1, 7, [1, 1, 1]); }
+    },
+    dozer(v, P, A, r) {
+      for (const z of [0, 1, 7, 8]) { v.box(1, 0, z, 12, 2, z, TIRE); v.clear(1, 0, z); v.clear(12, 0, z); }
+      for (let x = 3; x <= 11; x += 4) { v.set(x, 1, 0, HUB); v.set(x, 1, 8, HUB); }
+      v.box(2, 1, 2, 11, 2, 6, DARK); v.box(2, 3, 2, 11, 4, 6, P, 0, 0.05, r);
+      v.box(3, 5, 2, 7, 7, 6, GLASS); v.box(2, 8, 1, 8, 8, 7, P); for (const [x, z] of [[3, 2], [7, 2], [3, 6], [7, 6]]) v.box(x, 5, z, x, 7, z, P);
+      v.box(10, 5, 4, 10, 7, 4, DARK);
+      v.box(12, 2, 1, 13, 2, 1, DARK); v.box(12, 2, 7, 13, 2, 7, DARK);
+      v.box(14, 0, 0, 14, 4, 8, HUB); v.box(15, 0, 0, 15, 1, 8, HUB); v.box(14, 4, 0, 14, 4, 8, A);
+      for (let z = 0; z <= 8; z += 2) v.set(14, 3, z, [0.1, 0.1, 0.1]);
+    },
+    roadster(v, P, A, r) {
+      wheels(v, [3, 12]);
+      v.box(0, 1, 1, 15, 2, 7, P, 0, 0.03, r);
+      v.box(9, 3, 2, 14, 3, 6, P); v.box(0, 3, 2, 3, 3, 6, P); v.box(4, 3, 2, 8, 3, 6, DARK);
+      v.set(5, 3, 3, A); v.set(5, 3, 5, A); v.set(4, 4, 3, A); v.set(4, 4, 5, A);
+      v.box(9, 4, 2, 9, 4, 6, GLASS); helmet(v, 6, 3, 4, A);
+      for (const x of [0, 1, 2, 3, 10, 11, 12, 13, 14]) v.set(x, 3, 4, A);
+      v.set(15, 2, 2, HEAD, 1); v.set(15, 2, 6, HEAD, 1); v.set(0, 2, 2, TAIL, 1); v.set(0, 2, 6, TAIL, 1); v.box(15, 1, 3, 15, 1, 5, HUB);
+    },
+    proto(v, P, A, r) {
+      wheels(v, [3, 12]);
+      v.box(0, 1, 1, 15, 2, 7, P, 0, 0.03, r);
+      for (const z of [0, 1, 7, 8]) { v.box(1, 3, z, 5, 3, z, P); v.box(10, 3, z, 14, 3, z, P); }
+      v.box(6, 3, 3, 10, 3, 5, GLASS); v.box(7, 4, 3, 9, 4, 5, GLASS);
+      v.box(1, 3, 4, 5, 5, 4, A); v.box(0, 5, 1, 1, 5, 7, A); v.box(0, 3, 2, 0, 4, 2, DARK); v.box(0, 3, 6, 0, 4, 6, DARK);
+      for (let x = 11; x <= 15; x++) v.set(x, 2, 4, A);
+      v.set(15, 2, 1, HEAD, 1); v.set(15, 2, 7, HEAD, 1); v.set(14, 3, 1, HEAD, 1); v.set(14, 3, 7, HEAD, 1); v.box(0, 2, 2, 0, 2, 6, TAIL, 1);
+    },
     hover(v, P, A, r) {
       v.box(1, 0, 0, 14, 0, 8, DARK); v.clear(1, 0, 0); v.clear(14, 0, 0); v.clear(1, 0, 8); v.clear(14, 0, 8);
       v.box(1, 1, 1, 14, 2, 7, P, 0, 0.06, r);

@@ -27,7 +27,7 @@
 
   S.ups = (car) => S.data.up[car] || (S.data.up[car] = { eng: 0, grip: 0, boost: 0 });
   S.paintOf = (car) => S.data.paint[car] || CR.CARS.find((c) => c.id === car).paints[0];
-  S.upCost = (car, kind) => { const lv = S.ups(car)[kind]; if (lv >= 5) return null; const ci = CR.CARS.findIndex((c) => c.id === car); return Math.round(120 * (lv + 1) * (1 + ci * 0.2) / 10) * 10; };
+  S.upCost = (car, kind) => { const lv = S.ups(car)[kind]; if (lv >= 5) return null; const pr = CR.CARS.find((c) => c.id === car).price; return Math.round(120 * (lv + 1) * (1 + pr / 1600) / 10) * 10; };
   S.addCoins = (n) => { S.data.coins += n; S.data.stats.coinsEarned += Math.max(0, n); S.save(); };
   S.trackKey = (ti, rev) => `${CR.TRACKS[ti].id}${rev ? '-r' : ''}`;
   S.bestOf = (ti, rev) => S.data.best[S.trackKey(ti, rev)] || {};

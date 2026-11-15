@@ -200,6 +200,12 @@
   }
 
   // ---------------------------------------------------------------------------
+  const carThumbs = {};
+  function carThumb(id) { // small picture for the garage strip, redrawn when the paint changes
+    const paint = Save.paintOf(id), k = id + paint;
+    if (!carThumbs[k]) { const c = CR.CARS.find((x) => x.id === id); carThumbs[k] = CR.voxIcon(CR.carVox(id, paint, c.paints[1]), 2).toDataURL(); }
+    return carThumbs[k];
+  }
   function renderGarage(sel) {
     const d = Save.data, el = $('#scr-garage');
     const idx = sel != null ? sel : CR.CARS.findIndex((c) => c.id === (UI.gsel || d.car));
@@ -207,7 +213,10 @@
     const owned = !!d.owned[car.id], up = Save.ups(car.id), paint = Save.paintOf(car.id);
     const st = (v, add) => `<div class="bar"><b style="width:${Math.min(100, (v + add) * 100)}%"></b><i style="width:${Math.min(100, v * 100)}%"></i></div>`;
     const cupGift = CR.CUPS.find((c) => c.unlock === car.id);
+    const ownedN = CR.CARS.filter((c) => d.owned[c.id]).length;
     el.innerHTML = `<div class="wrap">${topbar('Garage')}
+      <div class="carstrip" id="g-strip">${CR.CARS.map((c, i) => `<button class="${i === idx ? 'sel' : ''} ${d.owned[c.id] ? '' : 'lock'}" data-i="${i}" title="${c.name}"><img src="${carThumb(c.id)}" alt="${c.name}"></button>`).join('')}</div>
+      <p class="muted small" style="margin:0 0 10px">${ownedN} of ${CR.CARS.length} cars owned${d.car === car.id ? '' : ` · driving ${CR.CARS.find((c) => c.id === d.car).name}`}</p>
       <div class="garage">
         <div class="panel showcase"><div class="carnav"><button class="btn small" id="g-prev">&larr;</button><h3>${car.name}</h3><button class="btn small" id="g-next">&rarr;</button></div>
           <canvas id="g-icon"></canvas><p class="muted small" style="text-align:center;margin:6px 0 0">${car.desc}</p>
@@ -243,6 +252,9 @@
         ul.appendChild(row);
       }
     }
+    el.querySelectorAll('#g-strip button').forEach((b) => click(b, () => renderGarage(+b.dataset.i)));
+    const selB = $('#g-strip .sel', el), strip = $('#g-strip', el);
+    requestAnimationFrame(() => { if (selB) strip.scrollLeft += selB.getBoundingClientRect().left - strip.getBoundingClientRect().left - strip.clientWidth / 2 + selB.clientWidth / 2; });
     click($('#g-prev', el), () => renderGarage((idx - 1 + CR.CARS.length) % CR.CARS.length));
     click($('#g-next', el), () => renderGarage((idx + 1) % CR.CARS.length));
     bind(el); show('garage');

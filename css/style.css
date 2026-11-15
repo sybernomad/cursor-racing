@@ -207,3 +207,9 @@ input[type=range] { width: 140px; accent-color: var(--gold); }
 .tbtn.itembtn { width: 64px; height: 64px; right: calc(118px + var(--safe-r)); bottom: calc(100px + var(--safe-b)); font-size: 22px; }
 .tbtn.itembtn.full { border-color: var(--gold); background: rgba(255, 211, 122, .3); }
 @media (max-height: 520px) { .hud-board { display: none; } }
+/* garage car picker */
+.carstrip { display: flex; gap: 6px; overflow-x: auto; padding: 4px 2px 8px; margin-bottom: 4px; scrollbar-width: thin; touch-action: pan-x; }
+.carstrip button { flex: 0 0 auto; width: 64px; height: 50px; border-radius: 10px; border: 1px solid var(--line); background: rgba(18, 16, 36, .75); display: grid; place-items: center; cursor: pointer; padding: 2px; }
+.carstrip button img { max-width: 100%; max-height: 100%; image-rendering: pixelated; }
+.carstrip button.sel { border-color: var(--cyan); box-shadow: 0 0 0 2px rgba(63, 240, 255, .35); }
+.carstrip button.lock img { filter: grayscale(.9) brightness(.55); }
