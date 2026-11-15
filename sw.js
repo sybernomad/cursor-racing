@@ -2,7 +2,7 @@
  * To ship an update: change VERSION below (or run `node tools/bump-version.mjs`) and push.
  * Installed apps notice the changed worker, download the new files in the background,
  * and the page switches to them on the next menu screen (never mid-race). */
-const VERSION = '1.1.1';
+const VERSION = '1.2.0';
 const CACHE = `cursorracing-${VERSION}`;
 const ASSETS = [
   './',
@@ -17,6 +17,7 @@ const ASSETS = [
   './js/render.js',
   './js/audio.js',
   './js/save.js',
+  './js/extras.js',
   './js/game.js',
   './js/ui.js',
   './js/main.js',

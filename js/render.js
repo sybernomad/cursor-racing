@@ -169,6 +169,8 @@ void main(){
     const gl = R.gl, w = R.world; if (!w) return;
     for (const m of w.meshes || []) G.free(gl, m.mesh);
     for (const b of w.balls) G.free(gl, b.mesh);
+    for (const m of w.movers || []) G.free(gl, m.mesh);
+    if (w.itemMesh) G.free(gl, w.itemMesh);
     G.free(gl, R.groundMesh); G.free(gl, R.tableMesh); G.free(gl, R.floorMesh);
     if (R.groundTex) gl.deleteTexture(R.groundTex);
     R.world = null;

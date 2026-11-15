@@ -37,8 +37,8 @@
   UI.attract = function () {
     if (Game.on && Game.mode === 'attract') return;
     const t = Math.floor(Math.random() * CR.TRACKS.length);
-    const rv = CR.RIVALS.slice().sort(() => Math.random() - 0.5).slice(0, 4);
-    Game.start({ mode: 'attract', track: t, reversed: Math.random() < 0.3, rivals: rv, ai: 1 });
+    const rv = CR.RIVALS.slice().sort(() => Math.random() - 0.5).slice(0, 7);
+    Game.start({ mode: 'attract', track: t, reversed: Math.random() < 0.3, rivals: rv, ai: 1, items: true });
     Audio.setMusic('menu');
   };
 
@@ -59,7 +59,7 @@
       <div class="row"><div class="logo menu-logo"><span class="cur"></span>Cursor Racing</div><span class="spacer"></span>${coinsHTML()}</div>
       <div class="menu-grid">
         <button class="btn primary wide" id="m-champ"><span class="ico">🏆</span>Championship<span class="sub">${run ? `Continue ${CR.CUPS.find((c) => c.id === run.cup).name}: race ${run.race + 1} of 3` : 'Win cups to unlock new cars and mirrored tracks'}</span></button>
-        <button class="btn" id="m-quick"><span class="ico">🏁</span>Quick Race<span class="sub">Any open track vs 3 rivals</span></button>
+        <button class="btn" id="m-quick"><span class="ico">🏁</span>Quick Race<span class="sub">1 to 19 rivals, power-ups, any open track</span></button>
         <button class="btn" id="m-tt"><span class="ico">⏱️</span>Time Trial<span class="sub">Race your own ghost</span></button>
         <button class="btn" id="m-ko"><span class="ico">💥</span>Knockout<span class="sub">Fall off screen and you're out</span></button>
         <button class="btn cyan" id="m-garage"><span class="ico">🔧</span>Garage<span class="sub">Cars, paint and upgrades</span></button>
@@ -85,7 +85,10 @@
     modal(`<h2>How to drive</h2><ul class="help">
       <li><b>Touch:</b> put your thumb on the left side and point it where you want to go. The car turns that way and drives.</li>
       <li><b>Boost:</b> drift through corners (brake while turning) to fill the meter, then hold <b>BOOST</b>.</li>
-      <li><b>Keyboard:</b> arrows or WASD, Space to boost, Esc to pause. Gamepads work too.</li>
+      <li><b>Power-ups:</b> drive through the rainbow boxes, then tap <b>ITEM</b> (E on a keyboard): turbo, oil slick, shield, shockwave or a marble to fire.</li>
+      <li><b>Launch:</b> press the gas in the last half-second of the countdown for a perfect start. Too early and you stall.</li>
+      <li><b>Slipstream:</b> tuck in behind a car to go faster and charge boost.</li>
+      <li><b>Keyboard:</b> arrows or WASD, Space to boost, E to use an item, Esc to pause. Gamepads work too.</li>
       <li>Watch the edges: drive off the table and you drop to the floor.</li>
       <li><b>Knockout:</b> the camera follows the leader. Fall off the screen and you're out of the round.</li></ul>
       <div class="actions"><button class="btn primary" id="m-ok">Let's race</button></div>`, (m) => click($('#m-ok', m), closeModal));
@@ -152,7 +155,7 @@
     const title = { quick: 'Quick Race', tt: 'Time Trial', ko: 'Knockout' }[mode];
     UI.pick = UI.pick || { t: 0, rev: false };
     el.innerHTML = `<div class="wrap">${topbar(title)}
-      ${mode === 'quick' ? `<div class="row" style="margin-bottom:12px"><span class="muted small">Laps</span><div class="seg" id="laps">${[1, 3, 5].map((n) => `<button data-n="${n}" class="${d.settings.laps === n ? 'on' : ''}">${n}</button>`).join('')}</div></div>` : ''}
+      ${mode !== 'tt' ? setupPanel(mode) : ''}
       <div class="cards" id="tl"></div></div>`;
     const tl = $('#tl', el);
     for (const rev of [false, true]) CR.TRACKS.forEach((tr, ti) => {
@@ -164,16 +167,36 @@
         <h3>${tr.name}${rev ? ' R' : ''}</h3><div class="meta">Best lap ${U.fmtTime(b.lap)} · Race ${U.fmtTime(b.race)}</div>`;
       if (open) click(card, () => {
         const ghost = mode === 'tt' ? Save.ghost(ti, rev) : null;
-        const pool = CR.RIVALS.slice().sort(() => Math.random() - 0.5).slice(0, 3);
+        const S = d.settings, nR = mode === 'ko' ? U.clamp(S.koRivals, 3, 7) : U.clamp(S.rivals, 1, 19);
+        const pool = mode === 'tt' ? [] : CR.RIVALS.slice().sort(() => Math.random() - 0.5).slice(0, nR);
         const top = CR.CUPS.reduce((m, c) => (Save.cupUnlocked(c.id) ? c.ai : m), 0.9);
         const lvl = CR.CUPS.filter((c) => Save.cupUnlocked(c.id)).length;
-        startRace({ mode: mode === 'quick' ? 'race' : mode, track: ti, reversed: rev, laps: mode === 'quick' ? d.settings.laps : 3, ai: top, rivals: pool.map((r) => ({ ...r, up: { eng: lvl, grip: lvl - 1, boost: lvl - 1 } })), ghost: ghost && ghost.data, bestLap: b.lap, koTarget: 4, quick: mode });
+        startRace({ mode: mode === 'quick' ? 'race' : mode, track: ti, reversed: rev, laps: mode === 'quick' ? d.settings.laps : 3, items: mode !== 'tt' && d.settings.items, ai: top, rivals: pool.map((r) => ({ ...r, up: { eng: lvl, grip: lvl - 1, boost: lvl - 1 } })), ghost: ghost && ghost.data, bestLap: b.lap, koTarget: 4, quick: mode });
       });
       else card.title = 'Open its cup in the Championship first';
       tl.appendChild(card);
     });
-    el.querySelectorAll('#laps button').forEach((b) => click(b, () => { d.settings.laps = +b.dataset.n; Save.save(); renderTracks(mode); }));
+    bindSetup(el, mode);
     bind(el); show('tracks');
+  }
+
+  // race setup: laps, field size, power-ups
+  function setupPanel(mode) {
+    const S = Save.data.settings, ko = mode === 'ko';
+    const n = ko ? U.clamp(S.koRivals, 3, 7) : U.clamp(S.rivals, 1, 19);
+    return `<div class="panel setup">
+      ${ko ? '' : `<div class="setrow"><span>Laps</span><div class="stepper"><button class="btn small" data-k="laps" data-d="-1">&minus;</button><b id="v-laps">${S.laps}</b><button class="btn small" data-k="laps" data-d="1">+</button></div></div>`}
+      <div class="setrow"><span>Rivals</span><input type="range" id="v-riv" min="${ko ? 3 : 1}" max="${ko ? 7 : 19}" value="${n}"><b id="v-rivn">${n}</b></div>
+      <div class="setrow"><span>Power-ups</span><button class="tog ${S.items ? 'on' : ''}" id="v-items"></button><span class="muted small">${S.items ? 'Item boxes on the road' : 'Pure racing'}</span></div>
+    </div>`;
+  }
+  function bindSetup(el, mode) {
+    const S = Save.data.settings, ko = mode === 'ko';
+    el.querySelectorAll('.stepper button').forEach((b) => click(b, () => { S.laps = U.clamp(S.laps + +b.dataset.d, 1, 9); Save.save(); $('#v-laps', el).textContent = S.laps; }));
+    const r = $('#v-riv', el);
+    if (r) r.addEventListener('input', () => { const v = +r.value; if (ko) S.koRivals = v; else S.rivals = v; $('#v-rivn', el).textContent = v; Save.save(); });
+    const it = $('#v-items', el);
+    if (it) click(it, () => { S.items = !S.items; Save.save(); renderTracks(mode); });
   }
 
   // ---------------------------------------------------------------------------
@@ -280,7 +303,7 @@
     UI.inRace = true;
     buildHUD(cfg);
     show('hud');
-    Audio.init(); Audio.setMusic('race');
+    Audio.init(); Audio.setMusic(CR.TRACKS[cfg.track].theme);
   }
 
   function endRace(cfg, res) {
@@ -296,8 +319,8 @@
     } else if (cfg.mode === 'ko') {
       if (res.place === 1) { coins = 180; d.stats.koWins++; d.stats.wins++; } else coins = 30 + me.points * 20;
     } else {
-      const m = cfg.cup != null ? 1 + cfg.cup * 0.25 : 0.6;
-      coins = Math.round(REWARD[res.place - 1] * m);
+      const m = cfg.cup != null ? 1 + cfg.cup * 0.25 : 0.6, N = res.order.length;
+      coins = N === 4 ? Math.round(REWARD[res.place - 1] * m) : Math.round((N - res.place + 1) / N * (60 + N * 9) * Math.max(m, 0.8) + 10);
       if (res.place === 1) d.stats.wins++; if (res.place <= 3) d.stats.podiums++;
       if (Save.setBest(cfg.track, cfg.reversed, res.bestLap, res.total)) notes.push('New best lap!');
     }
@@ -374,9 +397,14 @@
       <div class="hud-top">
         <div class="hud-box">${ko ? '<div class="ko-pips" id="h-ko"></div>' : `<div class="hud-pos" id="h-pos">1<sup>st</sup><small>/4</small></div><div class="hud-lap" id="h-lap">LAP 1/3</div>`}<div class="hud-time" id="h-time">0:00.00</div>
           <div class="boostbar" id="h-bb"><i id="h-boost"></i></div></div>
+        ${cfg.items ? '<div class="hud-item" id="h-item" role="button" aria-label="Use item"></div>' : ''}
         <span class="spacer"></span><canvas class="minimap" id="h-map"></canvas><div class="hud-pause" id="h-pause" role="button" aria-label="Pause"></div>
       </div>
+      <div class="hud-board" id="h-board"></div>
+      <div class="hud-song" id="h-song">&#9834; ${Audio.songName(CR.TRACKS[cfg.track].theme)}</div>
       <div class="hud-msg" id="h-msg"></div>`;
+    H.item = $('#h-item', el); H.board = $('#h-board', el);
+    if (H.item) H.item.addEventListener('pointerdown', (e) => { e.stopPropagation(); if (Game.player) CR.Extras.use(Game.player); });
     H.pos = $('#h-pos', el); H.lap = $('#h-lap', el); H.time = $('#h-time', el); H.boost = $('#h-boost', el); H.bb = $('#h-bb', el); H.msg = $('#h-msg', el); H.ko = $('#h-ko', el);
     H.map = $('#h-map', el); const mm = Game.world.minimap; H.map.width = mm.canvas.width; H.map.height = mm.canvas.height; H.mctx = H.map.getContext('2d');
     H.cache = {};
@@ -404,6 +432,20 @@
     if (c.t !== t) { c.t = t; H.time.textContent = t; }
     const b = Math.round(p.boost * 100);
     if (c.b !== b) { c.b = b; H.boost.style.width = b + '%'; H.bb.classList.toggle('full', b >= 99); if (H.boostBtn) H.boostBtn.style.setProperty('--p', b + '%'); }
+    // power-up slot
+    if (H.item) { const it = p.item || ''; if (c.item !== it) { c.item = it; H.item.innerHTML = it ? CR.Extras.ITEMS[it].icon : ''; H.item.classList.toggle('full', !!it); if (H.itemBtn) { H.itemBtn.innerHTML = it ? CR.Extras.ITEMS[it].icon : 'ITEM'; H.itemBtn.classList.toggle('full', !!it); } } }
+    // running order: the top few and you, a few times a second
+    if (H.board && !Game.ko && (!c.boardT || Game.time - c.boardT > 0.25)) {
+      c.boardT = Game.time;
+      const order = Game.standings(), me = order.indexOf(p), show = Game.cars.length > 4 ? 5 : 0;
+      let html = '';
+      if (show) {
+        const rows = new Set([0, 1, 2, 3, 4].filter((i) => i < order.length)); rows.add(me);
+        if (me > 4) { rows.delete(4); rows.add(me - 1); }
+        [...rows].sort((a, b) => a - b).forEach((i, k, arr) => { if (k && i - arr[k - 1] > 1) html += '<div class="gap">&middot;&middot;&middot;</div>'; const o = order[i]; html += `<div class="${o === p ? 'me' : ''}"><b>${i + 1}</b><i style="background:${o.paint}"></i>${o.isPlayer ? 'You' : o.name}</div>`; });
+      }
+      if (html !== c.board) { c.board = html; H.board.innerHTML = html; }
+    }
     // minimap
     const mm = Game.world.minimap, x = H.mctx, s = mm.scale;
     x.clearRect(0, 0, H.map.width, H.map.height); x.drawImage(mm.canvas, 0, 0);
@@ -438,6 +480,8 @@
     };
     const boost = mk('boost', '<span class="ring"></span>BOOST'); hold(boost, 'boost'); H.boostBtn = boost;
     hold(mk('brake', 'BRAKE'), 'brake');
+    H.itemBtn = null;
+    if (Game.items) { const ib = mk('itembtn', 'ITEM'); H.itemBtn = ib; ib.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); if (Game.player) CR.Extras.use(Game.player); }); }
     if (s.controls === 'buttons') {
       hold(mk('left', '&#9664;'), 'left'); hold(mk('right', '&#9654;'), 'right');
       if (!s.autoGas) hold(mk('gas', 'GAS'), 'gas');
@@ -474,6 +518,7 @@
     if (k('arrowleft', 'a')) steer -= 1; if (k('arrowright', 'd')) steer += 1;
     if (k('arrowup', 'w')) thr = 1; if (k('arrowdown', 's')) brk = 1;
     if (k(' ', 'shift', 'x')) boost = true;
+    let item = k('e', 'q', 'enter', 'control');
     if (T.left) steer -= 1; if (T.right) steer += 1;
     if (T.gas) thr = 1; if (T.brake) brk = 1; if (T.boost) boost = true;
     if (UI.touch && s.controls === 'buttons' && s.autoGas && !T.brake) thr = Math.max(thr, 1);
@@ -486,10 +531,11 @@
       if (gp.buttons[0] && gp.buttons[0].pressed) thr = 1; if (gp.buttons[7]) thr = Math.max(thr, gp.buttons[7].value);
       if (gp.buttons[1] && gp.buttons[1].pressed) brk = 1; if (gp.buttons[6]) brk = Math.max(brk, gp.buttons[6].value > 0.2 ? gp.buttons[6].value : 0);
       if ((gp.buttons[2] && gp.buttons[2].pressed) || (gp.buttons[5] && gp.buttons[5].pressed)) boost = true;
+      if ((gp.buttons[3] && gp.buttons[3].pressed) || (gp.buttons[4] && gp.buttons[4].pressed)) item = true;
       if (gp.buttons[9] && gp.buttons[9].pressed && !UI.padStart && UI.inRace) { UI.padStart = true; Game.paused ? resume() : pause(); }
       if (gp.buttons[9] && !gp.buttons[9].pressed) UI.padStart = false;
     }
-    I.steer = U.clamp(steer, -1, 1); I.throttle = thr; I.brake = brk; I.boost = boost;
+    I.steer = U.clamp(steer, -1, 1); I.throttle = thr; I.brake = brk; I.boost = boost; I.item = item;
     I.stick = T.stick.on ? T.stick : null;
   };
 

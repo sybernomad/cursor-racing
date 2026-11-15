@@ -220,14 +220,16 @@
       ramps: [{ t: 0.735, len: 26, look: 'book' }],
       boosts: [{ t: 0.17, off: 0 }, { t: 0.6, off: 25 }],
       pieces: [['bowl', 700, 820], ['glass', 1700, 560], ['glass', 1640, 1080], ['bowl', 1200, 560], ['mugpens', 2280, 1100]],
+      hazards: [{ type: 'sweeper', t: 0.3, side: 1, look: 'spoon' }, { type: 'bumper', t: 0.52, off: -32 }, { type: 'bumper', t: 0.53, off: 30 }, { type: 'spring', t: 0.88, off: -20 }],
     },
     {
       id: 'desk', name: 'Desk Dash', theme: 'desk', W: 2400, H: 1600, width: 125, seed: 23, start: [700, 335],
       pts: [[420, 400], [900, 300], [1200, 800], [1500, 1300], [2000, 1250], [2120, 800], [2000, 360], [1500, 300], [1200, 800], [900, 1300], [400, 1220], [300, 800]],
       zones: [{ t: 0.3, off: 0, rx: 60, ry: 45, type: 'sticky', look: 'ink' }],
-      ramps: [{ t: 0.56, len: 30, look: 'ruler' }, { t: 0.05, len: 26, look: 'book' }],
+      ramps: [{ t: 0.56, len: 30, look: 'ruler', gap: 46 }, { t: 0.05, len: 26, look: 'book' }],
       boosts: [{ t: 0.4, off: 0 }, { t: 0.86, off: 0 }],
       pieces: [['mugpens', 1200, 160], ['book', 1220, 1460, 0.2, { w: 40, d: 26, h: 8 }], ['book', 640, 790, 1.4, { w: 36, d: 24, h: 10 }], ['book', 1760, 800, -0.3, { w: 38, d: 26, h: 9 }], ['eraser', 1200, 600]],
+      hazards: [{ type: 'shuttle', t: 0.7, look: 'eraser', speed: 0.9 }, { type: 'sweeper', t: 0.18, side: -1, look: 'ruler' }],
     },
     {
       id: 'sandbox', name: 'Sandbox Rally', theme: 'sandbox', W: 2250, H: 1650, width: 135, seed: 37, start: [700, 270],
@@ -236,6 +238,7 @@
       ramps: [{ t: 0.7, len: 30, look: 'plank' }, { t: 0.18, len: 26, look: 'plank' }],
       boosts: [{ t: 0.1, off: 0 }, { t: 0.55, off: 0 }],
       pieces: [['bucket', 620, 800], ['castle', 1500, 640], ['castle', 680, 560], ['bucket', 1450, 1250]],
+      hazards: [{ type: 'shuttle', t: 0.45, look: 'bucket', speed: 0.7 }, { type: 'spring', t: 0.9, off: 0 }, { type: 'sweeper', t: 0.62, side: 1, look: 'shovel' }],
     },
     {
       id: 'pool', name: 'Pool Shark', theme: 'pool', W: 2400, H: 1300, width: 125, seed: 41,
@@ -245,31 +248,35 @@
       boosts: [{ t: 0.42, off: 0 }, { t: 0.9, off: 0 }],
       balls: [[0.08, -30], [0.27, 20], [0.33, -25], [0.52, 0], [0.62, 30], [0.75, -20], [0.85, 15], [0.66, -35]],
       pieces: [['cue', 1200, 520, 0.08], ['chalk', 700, 650], ['chalk', 1650, 640]],
+      hazards: [{ type: 'bumper', t: 0.3, off: -28 }, { type: 'bumper', t: 0.31, off: 28 }, { type: 'bumper', t: 0.65, off: 0 }, { type: 'sweeper', t: 0.78, side: -1, look: 'cue' }],
     },
     {
       id: 'bath', name: 'Bath Time', theme: 'bath', W: 2400, H: 1700, width: 125, seed: 53,
       pts: [[350, 300], [1100, 280], [1500, 500], [2050, 330], [2150, 800], [1700, 950], [2000, 1300], [1300, 1400], [1100, 1000], [700, 1300], [280, 1150], [450, 750]],
       zones: [{ t: 0.24, off: 0, rx: 90, ry: 55, type: 'slick', look: 'water' }, { t: 0.62, off: 15, rx: 80, ry: 50, type: 'slick', look: 'water' }, { t: 0.9, off: 0, rx: 60, ry: 45, type: 'slick', look: 'water' }],
-      ramps: [{ t: 0.47, len: 28, look: 'sponge' }],
+      ramps: [{ t: 0.47, len: 28, look: 'sponge', gap: 40 }],
       boosts: [{ t: 0.13, off: 0 }, { t: 0.72, off: 0 }],
       pieces: [['duck', 1350, 1150], ['bottle', 800, 600], ['bottle', 1800, 600], ['duck', 600, 1000], ['sponge', 1500, 820]],
+      hazards: [{ type: 'shuttle', t: 0.35, look: 'duck', speed: 0.6 }, { type: 'spring', t: 0.55, off: 15 }],
       drain: [1300, 760, 80],
     },
     {
       id: 'toybox', name: 'Toybox Night', theme: 'toybox', W: 2600, H: 1800, width: 130, seed: 67,
       pts: [[300, 300], [900, 250], [1300, 450], [1700, 250], [2300, 350], [2350, 800], [1900, 900], [2300, 1300], [1800, 1550], [1300, 1300], [800, 1550], [300, 1400], [550, 950], [250, 650]],
       zones: [{ t: 0.66, off: 0, rx: 60, ry: 40, type: 'sticky', look: 'slime' }],
-      ramps: [{ t: 0.3, len: 30, look: 'block' }, { t: 0.83, len: 28, look: 'block' }],
+      ramps: [{ t: 0.3, len: 30, look: 'block' }, { t: 0.83, len: 28, look: 'block', gap: 40 }],
       boosts: [{ t: 0.12, off: 0 }, { t: 0.5, off: -20 }, { t: 0.95, off: 0 }],
       pieces: [['lamp', 1300, 820], ['lamp', 1300, 120], ['robot', 900, 1050], ['robot', 1850, 1200], ['lamp', 2500, 1050], ['block', 700, 700], ['block', 1650, 700]],
+      hazards: [{ type: 'sweeper', t: 0.58, side: 1, look: 'glow' }, { type: 'bumper', t: 0.2, off: -30 }, { type: 'bumper', t: 0.21, off: 30 }, { type: 'shuttle', t: 0.75, look: 'robot', speed: 0.7 }],
     },
     {
       id: 'garage', name: 'Spanner Speedway', theme: 'garage', W: 2500, H: 1700, width: 125, seed: 71, start: [650, 270],
       pts: [[300, 300], [1000, 240], [1400, 500], [1800, 250], [2250, 380], [2200, 900], [1700, 1000], [1500, 1400], [900, 1450], [700, 1050], [350, 1300], [250, 800]],
       zones: [{ t: 0.47, off: 0, rx: 90, ry: 55, type: 'slick', look: 'oil' }, { t: 0.8, off: 20, rx: 60, ry: 40, type: 'sticky', look: 'sawdust' }],
-      ramps: [{ t: 0.25, len: 28, look: 'tape' }, { t: 0.66, len: 26, look: 'board' }],
+      ramps: [{ t: 0.25, len: 28, look: 'tape', gap: 44 }, { t: 0.66, len: 26, look: 'board' }],
       boosts: [{ t: 0.12, off: 0 }, { t: 0.56, off: 0 }],
       pieces: [['oilcan', 1350, 1050], ['tape', 1600, 600], ['oilcan', 1150, 780], ['battery', 2350, 1300], ['tape', 520, 640]],
+      hazards: [{ type: 'sweeper', t: 0.38, side: -1, look: 'wrench' }, { type: 'shuttle', t: 0.9, look: 'vacuum', speed: 0.55 }],
     },
     {
       id: 'mousepad', name: 'Mousepad 500', theme: 'computer', W: 2400, H: 1600, width: 125, seed: 83, start: [1350, 262],
@@ -278,6 +285,7 @@
       ramps: [{ t: 0.08, len: 28, look: 'key' }, { t: 0.45, len: 28, look: 'key' }],
       boosts: [{ t: 0.2, off: 0 }, { t: 0.33, off: 0 }, { t: 0.88, off: 0 }],
       pieces: [['mouse', 1450, 800], ['coffee', 600, 700], ['coffee', 1500, 520], ['mouse', 2280, 1500]],
+      hazards: [{ type: 'shuttle', t: 0.55, look: 'mouse', speed: 0.8 }, { type: 'bumper', t: 0.74, off: -25 }, { type: 'bumper', t: 0.75, off: 25 }, { type: 'sweeper', t: 0.27, side: 1, look: 'usb' }],
     },
     {
       id: 'bakery', name: 'Cookie Crumble', theme: 'bakery', W: 2400, H: 1700, width: 128, seed: 97, start: [650, 285],
@@ -286,14 +294,16 @@
       ramps: [{ t: 0.55, len: 30, look: 'cookie' }],
       boosts: [{ t: 0.15, off: 0 }, { t: 0.74, off: 0 }],
       pieces: [['rollingpin', 1750, 1150, 0.4], ['flour', 800, 900], ['measure', 1600, 450], ['cookie', 1000, 1150], ['egg', 1950, 1000]],
+      hazards: [{ type: 'sweeper', t: 0.42, side: 1, look: 'spoon' }, { type: 'spring', t: 0.82, off: 0 }, { type: 'shuttle', t: 0.62, look: 'pin', speed: 0.6 }],
     },
     {
       id: 'frost', name: 'Frosty Sill', theme: 'frost', W: 3000, H: 1000, width: 118, seed: 109, start: [650, 220],
       pts: [[300, 250], [1100, 200], [1500, 450], [1900, 200], [2700, 250], [2800, 600], [2300, 800], [1800, 650], [1300, 800], [700, 780], [250, 650]],
       zones: [{ t: 0.22, off: 0, rx: 110, ry: 50, type: 'slick', look: 'ice' }, { t: 0.55, off: 0, rx: 100, ry: 50, type: 'slick', look: 'ice' }, { t: 0.83, off: 0, rx: 80, ry: 45, type: 'slick', look: 'ice' }],
-      ramps: [{ t: 0.4, len: 30, look: 'snow' }],
+      ramps: [{ t: 0.4, len: 30, look: 'snow', gap: 44 }],
       boosts: [{ t: 0.08, off: 0 }, { t: 0.68, off: 0 }],
       pieces: [['snowman', 1000, 480], ['candle', 2400, 520], ['candle', 900, 450], ['candycane', 2050, 470, 0.1], ['snowman', 400, 450]],
+      hazards: [{ type: 'sweeper', t: 0.62, side: -1, look: 'cane' }, { type: 'spring', t: 0.3, off: 0 }],
     },
     {
       id: 'picnic', name: 'Picnic Panic', theme: 'picnic', W: 2400, H: 1800, width: 130, seed: 113, start: [1500, 300],
@@ -302,14 +312,16 @@
       ramps: [{ t: 0.07, len: 28, look: 'bread' }, { t: 0.85, len: 26, look: 'bread' }],
       boosts: [{ t: 0.3, off: 0 }, { t: 0.58, off: 0 }],
       pieces: [['sandwich', 1150, 800], ['melon', 1300, 1150, 0.3], ['apple', 1750, 650], ['juicebox', 950, 550], ['sandwich', 2150, 1550]],
+      hazards: [{ type: 'shuttle', t: 0.5, look: 'beetle', speed: 0.7 }, { type: 'bumper', t: 0.2, off: 0 }, { type: 'sweeper', t: 0.95, side: 1, look: 'straw' }],
     },
     {
       id: 'town', name: 'Tiny Town', theme: 'town', W: 2600, H: 1800, width: 120, seed: 127,
       pts: [[350, 400], [900, 250], [1500, 350], [2000, 250], [2350, 600], [2100, 1000], [2300, 1450], [1700, 1550], [1300, 1150], [900, 1500], [400, 1450], [300, 900]],
       zones: [{ t: 0.58, off: 0, rx: 70, ry: 45, type: 'sticky', look: 'mud' }],
-      ramps: [{ t: 0.33, len: 30, look: 'bridge' }, { t: 0.75, len: 28, look: 'bridge' }],
+      ramps: [{ t: 0.33, len: 30, look: 'bridge' }, { t: 0.75, len: 28, look: 'bridge', gap: 46 }],
       boosts: [{ t: 0.15, off: 0 }, { t: 0.46, off: 0 }, { t: 0.9, off: 0 }],
       pieces: [['house', 1300, 750], ['house', 1150, 600, 0.6], ['house', 1700, 900], ['tree', 1450, 950], ['house', 700, 900], ['tree', 900, 750], ['house', 2000, 1250, 1.2]],
+      hazards: [{ type: 'shuttle', t: 0.65, look: 'train', speed: 0.45 }, { type: 'sweeper', t: 0.25, side: 1, look: 'barrier' }],
     },
   ];
 
@@ -319,21 +331,31 @@
     { id: 'pro', name: 'Pro Cup', races: [[3, false], [4, false], [5, false]], ai: 0.95, reward: 500, unlock: 'gt' },
     { id: 'workshop', name: 'Workshop Cup', races: [[6, false], [7, false], [8, false]], ai: 0.98, reward: 650, unlock: 'hover' },
     { id: 'mirror', name: 'Mirror Cup', races: [[0, true], [1, true], [2, true]], ai: 1.0, reward: 800, unlock: 'truck' },
-    { id: 'tour', name: 'Grand Tour Cup', races: [[9, false], [10, false], [11, false]], ai: 1.02, reward: 1000, unlock: null },
+    { id: 'tour', name: 'Grand Tour Cup', races: [[9, false], [10, false], [11, false]], ai: 1.02, reward: 1000, unlock: 'muscle' },
     { id: 'champ', name: 'Champion Cup', races: [[3, true], [4, true], [5, true]], ai: 1.04, reward: 1200, unlock: 'formula' },
-    { id: 'legend', name: 'Legend Cup', races: [[7, true], [9, true], [11, true]], ai: 1.07, reward: 1600, unlock: null },
+    { id: 'legend', name: 'Legend Cup', races: [[7, true], [9, true], [11, true]], ai: 1.07, reward: 1600, unlock: 'jet' },
   ];
 
   // Cars. Stats 0..1-ish; physics turns them into numbers.
+  // Stats are 0..1. offroad: keeps speed off the road. hover: ignores puddles and goo. lift: bigger jumps.
   const CARS = [
     { id: 'zip', name: 'Zip', desc: 'Nimble hatchback. Easy to drive.', top: 0.6, accel: 0.65, grip: 0.65, mass: 0.5, price: 0, paints: ['#ff4d5e', '#ffd43b'] },
+    { id: 'kart', name: 'Go-Kart', desc: 'Sticks to the road and turns on a dime. Low top speed.', top: 0.5, accel: 0.85, grip: 0.95, mass: 0.25, price: 600, paints: ['#40c057', '#ffffff'] },
     { id: 'buggy', name: 'Dune Buggy', desc: 'Big tyres. Loses little speed off the track.', top: 0.55, accel: 0.75, grip: 0.6, mass: 0.45, offroad: 0.9, price: 900, paints: ['#ff922b', '#1c1c1c'] },
+    { id: 'beetle', name: 'Bubble', desc: 'A round little classic. Bounces off bumps without losing much.', top: 0.62, accel: 0.62, grip: 0.62, mass: 0.6, price: 1100, paints: ['#74c0fc', '#ffffff'] },
+    { id: 'rally', name: 'Rally', desc: 'Built for dirt and drifting. Charges boost fast.', top: 0.7, accel: 0.72, grip: 0.55, mass: 0.5, offroad: 0.6, charge: 1.4, price: 1400, paints: ['#f8f9fa', '#1971c2'] },
     { id: 'gt', name: 'Bolt GT', desc: 'Very fast, slides a lot. Drift it to fill boost.', top: 0.85, accel: 0.6, grip: 0.45, mass: 0.55, price: 1600, paints: ['#4dabf7', '#ffffff'] },
+    { id: 'police', name: 'Cruiser', desc: 'Heavy and quick, with a light bar on the roof.', top: 0.76, accel: 0.6, grip: 0.6, mass: 0.8, price: 2000, paints: ['#212529', '#f8f9fa'] },
     { id: 'truck', name: 'Brick', desc: 'Heavy 4x4. Shoves other cars aside.', top: 0.55, accel: 0.5, grip: 0.7, mass: 1.0, offroad: 0.8, price: 2200, paints: ['#40c057', '#ffd43b'] },
+    { id: 'van', name: 'Camper', desc: 'The heaviest thing on the table. Slow, unstoppable.', top: 0.5, accel: 0.45, grip: 0.65, mass: 1.3, offroad: 0.5, price: 2400, paints: ['#ffd43b', '#f8f9fa'] },
+    { id: 'muscle', name: 'Thunder', desc: 'Huge acceleration, a tail that loves to step out.', top: 0.82, accel: 0.92, grip: 0.4, mass: 0.75, price: 2800, paints: ['#e03131', '#111111'] },
     { id: 'formula', name: 'Formula', desc: 'Top speed and grip. Light, so it gets pushed around.', top: 0.92, accel: 0.8, grip: 0.85, mass: 0.3, price: 3200, paints: ['#e64980', '#f8f9fa'] },
+    { id: 'monster', name: 'Monster', desc: 'Giant wheels: off-road at full speed, huge jumps.', top: 0.62, accel: 0.6, grip: 0.55, mass: 1.1, offroad: 1.0, lift: 1.4, price: 3600, paints: ['#9c36b5', '#82c91e'] },
     { id: 'hover', name: 'Hover', desc: 'Floats over puddles and goo. Drifty.', top: 0.78, accel: 0.7, grip: 0.35, mass: 0.4, hover: true, price: 4000, paints: ['#9775fa', '#3ff0ff'] },
+    { id: 'jet', name: 'Rocket', desc: 'A jet engine with wheels. Fastest car there is. Good luck.', top: 1.0, accel: 0.75, grip: 0.4, mass: 0.45, charge: 1.2, price: 6000, paints: ['#ced4da', '#ff6b00'] },
   ];
   const PAINTS = ['#ff4d5e', '#ff922b', '#ffd43b', '#40c057', '#4dabf7', '#9775fa', '#e64980', '#f8f9fa', '#343a40', '#3ff0ff'];
+  // Rivals. The championship uses the first ones named per cup; custom races draw up to 19.
   const RIVALS = [
     { name: 'Rusty', car: 'truck', paint: '#c2410c', acc: '#fde68a' },
     { name: 'Pip', car: 'zip', paint: '#22b8cf', acc: '#ffffff' },
@@ -341,6 +363,20 @@
     { name: 'Moxie', car: 'buggy', paint: '#f59f00', acc: '#212529' },
     { name: 'Nova', car: 'formula', paint: '#f8f9fa', acc: '#e03131' },
     { name: 'Glitch', car: 'hover', paint: '#20c997', acc: '#ff4dd8' },
+    { name: 'Dash', car: 'kart', paint: '#fab005', acc: '#1c1c1c' },
+    { name: 'Bonnie', car: 'beetle', paint: '#ff8fab', acc: '#ffffff' },
+    { name: 'Gravel', car: 'rally', paint: '#2f9e44', acc: '#f8f9fa' },
+    { name: 'Sarge', car: 'police', paint: '#1c1c1c', acc: '#4dabf7' },
+    { name: 'Hippie', car: 'van', paint: '#ff922b', acc: '#ffe066' },
+    { name: 'Blaze', car: 'muscle', paint: '#c92a2a', acc: '#ffd43b' },
+    { name: 'Chomp', car: 'monster', paint: '#5f3dc4', acc: '#94d82d' },
+    { name: 'Zoom', car: 'jet', paint: '#adb5bd', acc: '#ff6b00' },
+    { name: 'Tinker', car: 'zip', paint: '#868e96', acc: '#ff922b' },
+    { name: 'Sprocket', car: 'buggy', paint: '#0c8599', acc: '#ffd43b' },
+    { name: 'Lola', car: 'gt', paint: '#f783ac', acc: '#212529' },
+    { name: 'Bruno', car: 'truck', paint: '#495057', acc: '#ff6b6b' },
+    { name: 'Kiwi', car: 'kart', paint: '#94d82d', acc: '#2b8a3e' },
+    { name: 'Ace', car: 'formula', paint: '#1864ab', acc: '#ffd43b' },
   ];
 
   CR.LIGHT = LIGHT; CR.THEMES = THEMES; CR.TRACKS = TRACKS; CR.CUPS = CUPS; CR.CARS = CARS; CR.PAINTS = PAINTS; CR.RIVALS = RIVALS;

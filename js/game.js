@@ -3,6 +3,7 @@
 (function (CR) {
   'use strict';
   const { U, R, Audio } = CR;
+  const X = () => CR.Extras;
   const GRAV = 1150, CAR_R = 11.5, FLOOR_PAD = 6;
 
   const Game = {
@@ -24,7 +25,7 @@
       hover: !!def.hover,
       boostPow: 1.28 + b * 0.035,
       boostDrain: 0.5 - b * 0.03,
-      charge: 1 + b * 0.08,
+      charge: (def.charge || 1) + b * 0.08,
     };
   }
 
@@ -66,7 +67,10 @@
       if (opts.mode === 'attract') Game.cars.push(makeCar({ id: 9, name: 'Zip', car: 'zip', paint: '#ff4d5e', acc: '#ffd43b', skill: 0.95 }));
     }
     Game.laps = opts.laps || 3;
+    Game.items = !!opts.items;
     Game.placeGrid();
+    Game.pulses = [];
+    X().reset(Game);
     Game.time = 0; Game.raceT = 0; Game.count = opts.mode === 'attract' ? 0 : 3.2; Game.state = opts.mode === 'attract' ? 'race' : 'count';
     Game.lastCount = 4; Game.endT = 0; Game.results = null; Game.messages = [];
     Game.ko = opts.mode === 'ko' ? { target: opts.koTarget || 4, round: 1, between: 0, regroup: 0, grace: 2 } : null;
@@ -125,7 +129,8 @@
       Game.count -= dt; Game.intro = Math.max(0, Game.count / 3.2);
       const n = Math.ceil(Game.count);
       if (n < Game.lastCount && n >= 0) { Game.lastCount = n; if (n > 0) { Audio.play('count'); Game.msg(String(n), 0.8, 'count'); } }
-      if (Game.count <= 0) { Game.state = 'race'; Audio.play('go'); Game.msg('GO!', 0.9, 'go'); Game.raceT = 0; for (const c of Game.cars) c.lapStart = 0; }
+      if (Game.player) { const I = Game.input; X().countInput(Game.player, Game.count, Math.max(I.throttle, I.stick && I.stick.on ? I.stick.mag : 0)); }
+      if (Game.count <= 0) { Game.state = 'race'; Audio.play('go'); Game.msg('GO!', 0.9, 'go'); Game.raceT = 0; for (const c of Game.cars) c.lapStart = 0; X().onGo(); }
       for (const c of Game.cars) { physics(c, dt, { steer: 0, throttle: 0, brake: 1, boost: false }); }
       return;
     }
@@ -145,11 +150,14 @@
       let inp;
       if (c.isPlayer && !c.finished && Game.state !== 'done' && !Game.autopilot) inp = playerInput(c);
       else inp = aiInput(c, dt);
+      inp = X().filterInput(c, inp, dt);
       physics(c, dt, inp);
       progress(c, dt);
     }
+    X().step(dt);
     collideCars(dt);
     ballsStep(dt);
+    for (let i = Game.pulses.length - 1; i >= 0; i--) { Game.pulses[i].t -= dt; if (Game.pulses[i].t <= 0) Game.pulses.splice(i, 1); }
     if (Game.ko) koCheck(dt);
     // ghost recording (time trial)
     if (Game.mode === 'tt' && Game.player && !Game.player.finished) {
@@ -179,6 +187,8 @@
       steer = U.clamp(d * 2.4, -1, 1);
       throttle = Math.max(throttle, U.clamp(I.stick.mag * 1.4, 0, 1) * (Math.abs(d) > 2.7 && I.stick.mag > 0.5 ? 0.6 : 1));
     }
+    if (I.item && !Game.itemLatch) { Game.itemLatch = true; X().use(c); }
+    if (!I.item) Game.itemLatch = false;
     return { steer, throttle, brake, boost: I.boost };
   }
 
@@ -219,7 +229,7 @@
     if (a.revT > 0) { a.revT -= dt; return { steer: -steer, throttle: 0, brake: 1, boost: false }; }
     if (spd > 60) a.stuckN = 0;
     c.aiTop = skill;
-    return { steer, throttle, brake, boost };
+    return X().aiAdjust(c, { steer, throttle, brake, boost }, dt);
   }
   function rubber(c) {
     if (!Game.player || Game.mode === 'attract' || Game.ko) return 1;
@@ -262,7 +272,7 @@
       if (c.isPlayer && !c.wasBoost && c.padT <= 0) Audio.play('boost');
     }
     c.wasBoost = c.boosting;
-    const top = st.top * topMul * (c.boosting ? st.boostPow : 1) * (c.aiTop || 1) * (Game.state === 'count' ? 0 : 1);
+    const top = st.top * topMul * (c.boosting ? st.boostPow : 1) * (c.aiTop || 1) * (1 + 0.07 * (c.draft || 0)) * (Game.state === 'count' ? 0 : 1);
     if (!c.air) {
       // engine / brakes
       const acc = st.accel * (c.boosting ? 1.6 : 1);
@@ -332,7 +342,7 @@
     if (c.isPlayer) { Audio.play('fall'); Audio.vibrate(40); Game.msg('OOPS!', 1, 'warn'); }
   }
   function respawn(c) {
-    const w = Game.world, s = (c.goodS ?? c.s) - 20;
+    const w = Game.world, s = X().safeS((c.goodS ?? c.s) - 20);
     const p = w.at(s);
     c.x = p.x; c.y = p.y; c.h = Math.atan2(p.ty, p.tx); c.z = 0; c.vx = c.vy = c.vz = 0; c.air = false; c.onRamp = false;
     // nudge sideways if another car sits on the spot
@@ -367,6 +377,7 @@
       }
       c.x += nx * pen; c.y += ny * pen;
       const vn = c.vx * nx + c.vy * ny;
+      if (k.bumper) { if (vn < 0) { c.vx -= vn * nx; c.vy -= vn * ny; } if (!k.cool || Game.time - k.cool > 0.15) { k.cool = Game.time; X().bumper(c, k, nx, ny); } continue; }
       if (vn < 0) {
         c.vx -= 1.35 * vn * nx; c.vy -= 1.35 * vn * ny;
         c.vx *= 0.9; c.vy *= 0.9;
@@ -391,7 +402,10 @@
       const rv = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
       if (rv < 0) {
         const jimp = -(1.55) * rv / (1 / ma + 1 / mb);
-        a.vx -= (jimp / ma) * nx; a.vy -= (jimp / ma) * ny; b.vx += (jimp / mb) * nx; b.vy += (jimp / mb) * ny;
+        // a shield takes no push and gives a double one
+        const sa = a.shieldT > 0, sb = b.shieldT > 0, ka = sa && !sb ? 0 : sb && !sa ? 2 : 1, kb = sb && !sa ? 0 : sa && !sb ? 2 : 1;
+        a.vx -= (jimp / ma) * nx * ka; a.vy -= (jimp / ma) * ny * ka; b.vx += (jimp / mb) * nx * kb; b.vy += (jimp / mb) * ny * kb;
+        if ((sa || sb) && rv < -40) { emit('spark', a.x + nx * CAR_R, a.y + ny * CAR_R, 8, 6); if (a.isPlayer || b.isPlayer) Audio.play('shield', { vol: 0.6 }); }
         if (rv < -50) {
           emit('spark', a.x + nx * CAR_R, a.y + ny * CAR_R, 7, Math.min(8, -rv / 30));
           if (a.isPlayer || b.isPlayer) { Audio.play('bump', { vol: Math.min(1, -rv / 200) }); shake(Math.min(6, -rv / 60)); Audio.vibrate(12); }
@@ -475,7 +489,7 @@
         c.finished = true; c.finishTime = Game.raceT;
         if (c.isPlayer) { Game.msg('FINISH!', 2.2, 'go'); Audio.play(place(c) === 1 ? 'win' : 'lap'); emit('confetti', c.x, c.y, 30, 60); }
       } else if (c.isPlayer) {
-        if (c.lap === Game.laps - 1) { Game.msg('FINAL LAP', 1.6, 'info'); Audio.play('final'); } else { Game.msg(`LAP ${c.lap + 1}`, 1.2, 'info'); Audio.play('lap'); }
+        if (c.lap === Game.laps - 1) { Game.msg('FINAL LAP', 1.6, 'info'); Audio.play('final'); Audio.setIntensity(1); } else { Game.msg(`LAP ${c.lap + 1}`, 1.2, 'info'); Audio.play('lap'); }
       }
       if (c.isPlayer && Game.mode === 'tt') {
         const prev = Game.opts.bestLap;
@@ -517,6 +531,7 @@
     c.out = true; c.state = 'race'; Audio.play('ko'); emit('poof', c.x, c.y, Math.max(c.z, 4), 14);
     if (c.isPlayer) { Game.msg('KNOCKED OUT', 1.4, 'warn'); Audio.vibrate(60); } else Game.msg(`${c.name} OUT`, 1.1, 'info');
     const alive = Game.cars.filter((k) => !k.out);
+    if (alive.length === 2) Audio.setIntensity(1);
     if (alive.length <= 1) {
       const win = alive[0] || c;
       win.points++;
@@ -534,6 +549,7 @@
     Game.placeGrid(s + 60, true);
     for (const k of Game.cars) { let d = k.s - s; if (d > L / 2) d -= L; if (d < -L / 2) d += L; k.prog = base + d; }
     for (const k of Game.cars) { k.out = false; k.outT = 0; k.boost = Math.max(k.boost, 0.3); }
+    Audio.setIntensity(0);
     Game.ko.between = 1.4; Game.ko.grace = 2.2; Game.msg(`ROUND ${Game.ko.round}`, 1.2, 'info');
     Game.camT.x = win.x; Game.camT.y = win.y; R.cam.x = win.x; R.cam.y = win.y;
   }
@@ -558,6 +574,8 @@
 
   Game.msg = function (text, dur, kind) { Game.messages.push({ text, t: dur, max: dur, kind }); if (Game.onMsg) Game.onMsg(text, dur, kind); };
   function shake(a) { if (Game.settings.shake) R.cam.shake = Math.max(R.cam.shake, a); }
+  Game.shake = shake;
+  Game.lightPulse = function (x, y, col) { if (Game.pulses.length < 6) Game.pulses.push({ x, y, col, t: 0.25 }); };
 
   // ---------- camera ----------
   function updateCamera(dt) {
@@ -600,6 +618,8 @@
         case 'flame': { const h = car.h + Math.PI + (Math.random() - 0.5) * 0.5; p.vx = Math.cos(h) * 120 + car.vx * 0.5; p.vy = Math.sin(h) * 120 + car.vy * 0.5; p.vz = 5; p.max = 0.15 + s * 0.12; p.size = 3 + s * 2; p.add = true; p.a = 0.9; p.grow = 0.4; p.col = s < 0.4 ? [1, 0.9, 0.4] : [1, 0.45, 0.12]; break; }
         case 'poof': p.vx = Math.cos(a) * 90 * s; p.vy = Math.sin(a) * 90 * s; p.vz = 40 + s * 60; p.max = 0.5 + s * 0.3; p.size = 5 + s * 4; p.grow = 2; p.a = 0.7; break;
         case 'splash': p.vx = Math.cos(a) * 50; p.vy = Math.sin(a) * 50; p.vz = 80 + s * 60; p.max = 0.45; p.size = 2.2; p.grav = 500; p.a = 0.8; break;
+        case 'wind': { const h = car.h; p.vx = -Math.cos(h) * 260; p.vy = -Math.sin(h) * 260; p.vz = 0; p.max = 0.18; p.size = 1.1; p.a = 0.55; p.col = [1, 1, 1]; p.drag = 0; p.grow = 1; p.add = true; break; }
+        case 'ring': { const ang = i / n * Math.PI * 2; p.vx = Math.cos(ang) * 420; p.vy = Math.sin(ang) * 420; p.vz = 10; p.max = 0.45; p.size = 3.2; p.add = true; p.a = 0.9; p.col = [1, 0.85, 0.4]; p.drag = 3; p.grow = 1.5; break; }
         case 'confetti': p.vx = Math.cos(a) * 140 * s; p.vy = Math.sin(a) * 140 * s; p.vz = 200 + s * 200; p.max = 2.2; p.size = 2.6; p.grav = 260; p.drag = 1.5; p.a = 1; p.grow = 1; p.col = [[1, 0.3, 0.4], [1, 0.85, 0.2], [0.3, 0.8, 1], [0.5, 1, 0.4], [0.9, 0.5, 1]][i % 5]; p.add = false; break;
       }
       p.kind = kind;
@@ -680,6 +700,8 @@
       const t = p.life / p.max, s = p.size * (1 + (p.grow - 1) * t), a = p.a * (1 - t * t);
       quad(p.add ? B.add : B.alpha, p.x, p.y, p.z, s, p.col, a);
     }
+    X().render(cars, B.skid, (x, y, z, s, c, a) => quad(B.add, x, y, z, s, c, a));
+    for (const pu of Game.pulses) lights.push({ x: pu.x, y: 30, z: pu.y, col: pu.col.map((v) => v * pu.t * 5), rad: 220 });
     for (const m of Game.motes) quad(B.add, m.x, m.y, m.z, 1.2, [1, 0.92, 0.7], 0.35 + Math.sin(m.p * 2) * 0.2);
     const sc = ['toybox', 'pool', 'computer', 'garage'].includes(Game.world.def.theme) ? [0.02, 0.02, 0.04] : [0.12, 0.1, 0.1];
     for (const k of Game.skids) {

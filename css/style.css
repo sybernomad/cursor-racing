@@ -186,3 +186,24 @@ input[type=range] { width: 140px; accent-color: var(--gold); }
 .btn.ghost { background: rgba(18, 16, 36, 0.72); }
 .logo small { letter-spacing: .22em; }
 .tap { text-shadow: 0 2px 8px #000, 0 0 2px #000; }
+/* race setup */
+.setup { display: grid; gap: 10px; margin-bottom: 14px; }
+.setrow { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.setrow > span:first-child { width: 104px; font-weight: 800; font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: var(--gold); }
+.setrow input[type=range] { flex: 1; min-width: 140px; max-width: 320px; }
+.setrow b { min-width: 24px; text-align: center; font-size: 18px; }
+.stepper { display: inline-flex; align-items: center; gap: 10px; }
+/* power-up slot, running order, song title */
+.hud-item { pointer-events: auto; width: 52px; height: 52px; border-radius: 12px; border: 2px dashed rgba(255, 214, 140, .35); background: rgba(10, 8, 22, .45); display: grid; place-items: center; font-size: 28px; cursor: pointer; }
+.hud-item.full { border: 2px solid var(--gold); box-shadow: 0 0 14px rgba(255, 211, 122, .6); animation: pulse .6s ease-in-out infinite alternate; }
+.hud-board { position: absolute; left: calc(10px + var(--safe-l)); top: calc(112px + var(--safe-t)); font-size: 12px; font-weight: 700; pointer-events: none; text-shadow: 0 1px 2px #000; }
+.hud-board div { display: flex; align-items: center; gap: 6px; padding: 2px 8px 2px 4px; margin-bottom: 2px; border-radius: 6px; background: rgba(10, 8, 22, .45); min-width: 92px; }
+.hud-board div.me { background: rgba(63, 240, 255, .25); color: #fff; }
+.hud-board div.gap { background: none; justify-content: center; min-width: 0; padding: 0; }
+.hud-board b { width: 16px; text-align: right; color: var(--gold); }
+.hud-board i { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
+.hud-song { position: absolute; left: 50%; bottom: calc(14px + var(--safe-b)); transform: translateX(-50%); font-size: 12px; font-weight: 700; color: var(--muted); opacity: 0; animation: songIn 5s ease 1s both; pointer-events: none; text-shadow: 0 1px 2px #000; white-space: nowrap; }
+@keyframes songIn { 10%, 75% { opacity: .9; } 100% { opacity: 0; } }
+.tbtn.itembtn { width: 64px; height: 64px; right: calc(118px + var(--safe-r)); bottom: calc(100px + var(--safe-b)); font-size: 22px; }
+.tbtn.itembtn.full { border-color: var(--gold); background: rgba(255, 211, 122, .3); }
+@media (max-height: 520px) { .hud-board { display: none; } }

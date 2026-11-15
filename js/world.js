@@ -36,15 +36,35 @@
       this.boosts = (def.boosts || []).map((b) => this.place(tf(b.t), b.off * (reversed ? -1 : 1), { rx: 34, ry: 26, ...b }));
       this.ramps = (def.ramps || []).map((r) => {
         const len = r.len * 3, t = reversed ? (1 - r.t - len / this.L + 1) % 1 : r.t;
-        const p = this.place(t, 0, r); p.len = len; p.hgt = 16; p.s0 = p.s; return p;
+        const p = this.place(t, 0, r); p.len = len; p.hgt = 16; p.s0 = p.s; p.gapLen = r.gap || 0; return p;
+      });
+      const sg = reversed ? -1 : 1;
+      this.hazards = (def.hazards || []).map((h) => {
+        const o = this.place(tf(h.t), (h.off || 0) * sg, h);
+        o.side = (h.side || 1) * sg; return o;
       });
       // keep the starting grid clear: anything placed on it moves up the road
       const clearGrid = (o, len = 0) => {
         let d = o.s; if (d > this.L / 2) d -= this.L;
-        if (d + len > -170 && d < 20) { const p = this.place(0, 0, {}); const ns = 40 + Math.max(0, len - 0) + 180; const q = this.at(ns), off = (o.x - this.at(o.s).x) * -this.at(o.s).ty + (o.y - this.at(o.s).y) * this.at(o.s).tx;
+        if (d + len > -GRID_LEN && d < 20) { const p = this.place(0, 0, {}); const ns = 40 + Math.max(0, len - 0) + 180; const q = this.at(ns), off = (o.x - this.at(o.s).x) * -this.at(o.s).ty + (o.y - this.at(o.s).y) * this.at(o.s).tx;
           o.s = ns; o.x = q.x - q.ty * off; o.y = q.y + q.tx * off; o.ang = Math.atan2(q.ty, q.tx); if (o.s0 != null) o.s0 = ns; }
       };
       this.zones.forEach((z) => clearGrid(z, z.rx)); this.boosts.forEach((b) => clearGrid(b, b.rx));
+      this.ramps.forEach((r) => clearGrid(r, r.len + r.gapLen + 20)); this.hazards.forEach((h) => clearGrid(h, 40));
+      // jump gaps: a drop across the road just past a ramp
+      this.gaps = this.ramps.filter((r) => r.gapLen).map((r) => {
+        const s0 = r.s + r.len + 10, p = this.at(s0);
+        return { s: s0, x: p.x, y: p.y, ang: Math.atan2(p.ty, p.tx), len: r.gapLen, half: this.hw + 40 };
+      });
+      this.springs = this.hazards.filter((h) => h.type === 'spring');
+      // item box rows, on clear road
+      this.itemRows = [];
+      for (const f of [0.22, 0.5, 0.78]) {
+        let s0 = f * this.L;
+        for (let k = 0; k < 40 && !this.clearAt(s0, 90); k++) s0 += 25;
+        const p = this.at(s0);
+        this.itemRows.push([-0.55, 0, 0.55].map((o) => ({ x: p.x - p.ty * o * this.hw, y: p.y + p.tx * o * this.hw, s: s0, on: true, t: 0 })));
+      }
       if (def.drain) this.holes.push({ x: def.drain[0], y: def.drain[1], r: def.drain[2], look: 'drain' });
       if (this.theme.pockets) {
         const m = 70, r = 58;
@@ -138,12 +158,29 @@
     onTrackish(x, y, pad) { const n = this.nearestGlobal(x, y, this.hw + pad + 80); return n.i >= 0 && n.d < this.hw + pad; }
     inTable(x, y, m) { return x > m && y > m && x < this.W - m && y < this.H - m; }
 
+    clearAt(s0, pad) { // nothing placed within pad of distance s0 along the lap
+      const near = (s) => { let d = Math.abs(s - s0) % this.L; d = Math.min(d, this.L - d); return d < pad; };
+      if (near(0) || (s0 > this.L - GRID_LEN)) return false;
+      for (const r of this.ramps) if (near(r.s) || near(r.s + r.len + r.gapLen)) return false;
+      for (const z of this.zones.concat(this.boosts, this.hazards)) if (near(z.s)) return false;
+      return true;
+    }
+    inGap(x, y) {
+      for (const g of this.gaps) {
+        const dx = x - g.x, dy = y - g.y, c = Math.cos(g.ang), sn = Math.sin(g.ang);
+        const u = dx * c + dy * sn, v = -dx * sn + dy * c;
+        if (u >= 0 && u <= g.len && Math.abs(v) <= g.half) return g;
+      }
+      return null;
+    }
     // ---------- surfaces ----------
     // returns {type, grip, top} for a ground point
     surface(x, y, lat) {
       const edgeM = this.theme.edge === 'void' ? 0 : -9999;
       if (x < edgeM || y < edgeM || x > this.W - edgeM || y > this.H - edgeM) return S.void;
       for (const h of this.holes) if ((x - h.x) ** 2 + (y - h.y) ** 2 < h.r * h.r) return S.void;
+      if (this.gaps.length && this.inGap(x, y)) return S.void;
+      for (const z of (this.oil || EMPTY)) if ((x - z.x) ** 2 + (y - z.y) ** 2 < z.r * z.r) return S.slick;
       for (const z of this.zones) if (inEll(z, x, y)) return z.type === 'slick' ? S.slick : S.sticky;
       for (const b of this.boosts) if (inEll(b, x, y)) return S.boost;
       if (Math.abs(lat) <= this.hw) return S.track;
@@ -188,6 +225,29 @@
         const m = this.at(r.s + r.len / 2);
         this.addProp(pr, m.x, m.y, r.ang, 0, false);
       }
+      // fixed hazards: bumpers and spring pads; moving ones get their own meshes
+      this.movers = [];
+      for (const h of this.hazards) {
+        if (h.type === 'bumper') this.addProp(CR.prop('bumper', { color: ['#ff4dd8', '#3ff0ff', '#ffd43b'][Math.floor(h.s) % 3] }, 1), h.x, h.y, 0, 0, true);
+        else if (h.type === 'spring') this.addProp(CR.prop('spring', {}, 1), h.x, h.y, h.ang, 0, false);
+        else if (h.type === 'sweeper') {
+          const p = this.at(h.s), side = h.side, px = p.x - p.ty * (this.hw + 16) * side, py = p.y + p.tx * (this.hw + 16) * side;
+          const len = this.width * 0.92, base = Math.atan2(-p.tx * side, p.ty * side); // pointing across the road
+          this.movers.push({ type: 'sweeper', x: px, y: py, base, len, amp: 1.05, speed: h.speed || 1.2, ph: h.s * 0.01, ang: base, mesh: G.upload(gl, CR.armMesh(h.look, len)), m: new Float32Array(16) });
+        } else if (h.type === 'shuttle') {
+          const raw = h.look === 'train' ? 'train' : h.look === 'vacuum' ? 'vacuum' : h.look === 'beetle' ? 'ladybug' : h.look === 'pin' ? 'rollingpin' : h.look;
+          const pr = CR.prop(raw, {}, 3);
+          const col = pr.col || { c: 16 };
+          const r = col.c || Math.max(col.w, col.d) / 2;
+          // long things are boxes: the train runs across the road, the rolling pin lies along it and rolls across
+          const box = !!col.w && col.w > col.d * 2, train = h.look === 'train';
+          const reach = this.hw + (train ? 170 : 28);
+          this.movers.push({ type: 'shuttle', cx: h.x, cy: h.y, nx: -Math.sin(h.ang), ny: Math.cos(h.ang), ang: h.ang, box, train,
+            oang: train ? h.ang + Math.PI / 2 : h.ang, hw: box ? col.w / 2 : 0, hd: box ? col.d / 2 : 0, r: box ? 0 : (col.c || 16),
+            reach, x: h.x, y: h.y, vx: 0, vy: 0, speed: h.speed || 0.7, ph: h.s * 0.013, h: pr.h, mesh: G.upload(gl, pr.bld), m: new Float32Array(16) });
+        }
+      }
+      this.itemMesh = G.upload(gl, CR.prop('itembox', {}, 1).bld);
       // border dressing
       for (const b of T.border) this.dressBorder(b);
       // set pieces
@@ -249,7 +309,7 @@
     addProp(pr, x, y, ang, z = 0, collide = true) {
       this.chunk(x, y).append(pr.bld, x, z, y, -ang, 1);
       if (collide && pr.col) {
-        if (pr.col.c) this.addCol({ x, y, r: pr.col.c, h: pr.h + z });
+        if (pr.col.c) this.addCol({ x, y, r: pr.col.c, h: pr.h + z, bumper: !!pr.col.bumper });
         else this.addCol({ x, y, hw: pr.col.w / 2, hd: pr.col.d / 2, ang, h: pr.h + z, c: Math.cos(ang), s: Math.sin(ang) });
       }
       if (pr.light) this.lights.push({ x, y: (pr.lightY || 12) + z, z: y, col: pr.light.map((v) => v * 1.4), rad: pr.lightY ? 420 : 150 });
@@ -386,6 +446,23 @@
           ctx.restore();
         }
       }
+      // jump gaps: a dark drop with warning stripes on each lip
+      for (const g of this.gaps) {
+        x.save(); x.translate(g.x / TEX, g.y / TEX); x.rotate(g.ang);
+        const L = g.len / TEX, Hh = g.half / TEX;
+        const gr = x.createLinearGradient(0, 0, L, 0); gr.addColorStop(0, '#000'); gr.addColorStop(0.5, '#0b0b10'); gr.addColorStop(1, '#000');
+        x.fillStyle = gr; x.fillRect(0, -Hh, L, Hh * 2);
+        for (let j = -Hh; j < Hh; j += 6) { x.fillStyle = (Math.floor(j / 6) % 2) ? '#ffd43b' : '#111'; x.fillRect(-3, j, 3, 6); x.fillRect(L, j, 3, 6); }
+        x.restore();
+      }
+      // level crossings for the toy train
+      for (const h of this.hazards) if (h.type === 'shuttle' && h.look === 'train') {
+        x.save(); x.translate(h.x / TEX, h.y / TEX); x.rotate(h.ang + Math.PI / 2);
+        const span = (this.hw + 200) / TEX;
+        for (let k = -span; k < span; k += 5) { x.fillStyle = '#6b4a2e'; x.fillRect(k, -12, 2, 24); }
+        x.fillStyle = '#adb5bd'; x.fillRect(-span, -8, span * 2, 2); x.fillRect(-span, 6, span * 2, 2);
+        x.restore();
+      }
       // holes
       for (const hh of this.holes) {
         const g = x.createRadialGradient(hh.x / TEX, hh.y / TEX, 1, hh.x / TEX, hh.y / TEX, hh.r / TEX);
@@ -432,7 +509,8 @@
       if (k === 'stars') for (let i = 0; i < 40; i++) { x.fillStyle = 'rgba(255,230,120,0.5)'; const sx = r() * w, sy = r() * h; x.fillRect(sx - 3, sy, 7, 1); x.fillRect(sx, sy - 3, 1, 7); }
     }
     // starting grid: [along, across] offsets relative to the start line, in world units
-    gridSlots() { const a = this.width * 0.22; return [[-36, -a], [-36, a], [-86, -a], [-86, a], [-136, -a], [-136, a]]; }
+    // up to 20 cars, two abreast and staggered like a real grid
+    gridSlots() { const a = this.width * 0.22, out = []; for (let i = 0; i < 20; i++) out.push([-34 - Math.floor(i / 2) * 44 - (i % 2) * 18, i % 2 ? a : -a]); return out; }
   }
   const S = {
     void: { type: 'void', grip: 0, top: 0 },
@@ -442,6 +520,7 @@
     boost: { type: 'boost', grip: 1, top: 1 },
   };
   const EMPTY = [];
+  const GRID_LEN = 480; // room behind the start line for 20 cars
   function inEll(z, x, y) {
     const dx = x - z.x, dy = y - z.y, c = Math.cos(z.ang), s = Math.sin(z.ang);
     const u = (dx * c + dy * s) / z.rx, v = (-dx * s + dy * c) / z.ry;

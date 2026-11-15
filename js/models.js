@@ -71,6 +71,77 @@
       v.box(6, 3, 3, 8, 3, 5, DARK); helmet(v, 7, 3, 4, A);
       v.set(15, 2, 4, A);
     },
+    kart(v, P, A, r) { // open go-kart: low tray, exposed wheels, driver sits up
+      wheels(v, [2, 12]);
+      v.box(1, 1, 2, 14, 1, 6, P, 0, 0.06, r);
+      v.box(13, 1, 1, 15, 2, 7, A); v.box(0, 1, 1, 1, 2, 7, DARK);
+      v.box(6, 2, 3, 9, 2, 5, DARK); v.box(5, 2, 3, 5, 4, 5, DARK);
+      helmet(v, 7, 3, 4, A); v.set(7, 3, 3, P); v.set(7, 3, 5, P);
+      v.box(10, 2, 4, 11, 3, 4, HUB); v.box(2, 2, 3, 3, 3, 5, HUB);
+    },
+    beetle(v, P, A, r) { // round classic bubble car
+      wheels(v, [3, 12]);
+      for (let x = 1; x <= 14; x++) for (let y = 1; y <= 6; y++) for (let z = 1; z <= 7; z++) {
+        const dx = (x - 7.5) / 7, dy = (y - 1) / 5.5, dz = (z - 4) / 3.6;
+        if (dx * dx + dy * dy + dz * dz * 0.6 <= 1) v.set(x, y, z, P);
+      }
+      v.box(6, 4, 2, 10, 5, 6, GLASS); v.box(7, 6, 3, 9, 6, 5, P); v.box(7, 4, 3, 9, 4, 5, DARK); helmet(v, 8, 4, 4, A);
+      v.set(14, 2, 2, HEAD, 1); v.set(14, 2, 6, HEAD, 1); v.set(1, 2, 2, TAIL, 1); v.set(1, 2, 6, TAIL, 1);
+      for (let z = 1; z <= 7; z++) { v.set(15, 1, z, HUB); v.set(0, 1, z, HUB); }
+    },
+    rally(v, P, A, r) { // hatch with roof scoop, mud flaps, number panel
+      wheels(v, [3, 12]);
+      v.box(1, 1, 1, 14, 3, 7, P, 0, 0.05, r);
+      v.box(5, 4, 2, 11, 5, 6, GLASS); v.box(5, 6, 2, 11, 6, 6, P); v.box(6, 4, 3, 10, 5, 5, DARK); helmet(v, 8, 4, 4, A);
+      for (let x = 1; x <= 14; x++) { v.set(x, 2, 1, A); v.set(x, 2, 7, A); }
+      v.box(8, 7, 3, 9, 7, 5, A); v.box(0, 5, 1, 1, 5, 7, A);
+      v.box(6, 3, 0, 9, 3, 0, [1, 1, 1]); v.box(6, 3, 8, 9, 3, 8, [1, 1, 1]);
+      for (let z = 2; z <= 6; z += 2) v.set(15, 2, z, HEAD, 1); v.set(1, 2, 2, TAIL, 1); v.set(1, 2, 6, TAIL, 1);
+    },
+    police(v, P, A, r) { // cruiser with a light bar
+      wheels(v, [3, 12]);
+      v.box(0, 1, 1, 15, 3, 7, P, 0, 0.04, r);
+      v.box(4, 1, 1, 11, 3, 1, [0.95, 0.95, 0.95]); v.box(4, 1, 7, 11, 3, 7, [0.95, 0.95, 0.95]);
+      v.box(5, 4, 2, 11, 5, 6, GLASS); v.box(5, 6, 2, 11, 6, 6, [0.95, 0.95, 0.95]); v.box(6, 4, 3, 10, 5, 5, DARK); helmet(v, 8, 4, 4, A);
+      v.box(8, 7, 2, 8, 7, 3, [1, 0.15, 0.15], 1); v.box(8, 7, 5, 8, 7, 6, [0.2, 0.45, 1], 1); v.set(8, 7, 4, HUB);
+      v.box(15, 1, 2, 15, 1, 6, DARK); v.set(15, 2, 1, HEAD, 1); v.set(15, 2, 7, HEAD, 1); v.set(0, 2, 1, TAIL, 1); v.set(0, 2, 7, TAIL, 1);
+    },
+    van(v, P, A, r) { // camper van, tall box with two-tone paint
+      wheels(v, [3, 12]);
+      v.box(1, 1, 1, 15, 7, 7, P, 0, 0.04, r);
+      v.box(1, 5, 1, 15, 7, 7, A, 0, 0.04, r);
+      v.box(12, 5, 1, 15, 6, 7, GLASS); v.box(13, 5, 3, 14, 6, 5, DARK); helmet(v, 13, 5, 4, A);
+      for (const x of [3, 6, 9]) { v.box(x, 5, 0, x + 1, 6, 0, GLASS); v.box(x, 5, 8, x + 1, 6, 8, GLASS); }
+      v.box(1, 8, 2, 9, 8, 6, DARK); v.box(4, 9, 3, 6, 9, 5, HUB);
+      v.set(15, 2, 1, HEAD, 1); v.set(15, 2, 7, HEAD, 1); v.set(1, 2, 1, TAIL, 1); v.set(1, 2, 7, TAIL, 1);
+      for (let z = 2; z <= 6; z++) v.set(15, 3, z, HUB);
+    },
+    muscle(v, P, A, r) { // long hood, blower, twin stripes
+      wheels(v, [3, 12], true);
+      v.box(0, 2, 1, 15, 3, 7, P, 0, 0.04, r);
+      v.box(3, 4, 2, 7, 5, 6, GLASS); v.box(3, 6, 2, 6, 6, 6, P); v.box(4, 4, 3, 6, 5, 5, DARK); helmet(v, 5, 4, 4, A);
+      for (let x = 0; x <= 15; x++) { v.set(x, 3, 3, A); v.set(x, 3, 5, A); }
+      v.box(10, 4, 3, 12, 5, 5, HUB); v.box(11, 6, 3, 11, 6, 5, DARK);
+      v.box(0, 4, 1, 0, 4, 7, P); v.set(15, 3, 1, HEAD, 1); v.set(15, 3, 7, HEAD, 1); v.set(0, 3, 1, TAIL, 1); v.set(0, 3, 7, TAIL, 1);
+      v.box(0, 1, 2, 0, 1, 3, HUB); v.box(0, 1, 5, 0, 1, 6, HUB);
+    },
+    monster(v, P, A, r) { // monster truck: huge wheels, body up high
+      for (const xc of [3, 12]) for (const z of [0, 1, 7, 8]) { for (let x = xc - 2; x <= xc + 2; x++) for (let y = 0; y <= 4; y++) if (!((x === xc - 2 || x === xc + 2) && (y === 0 || y === 4))) v.set(x, y, z, TIRE); v.set(xc, 2, z, HUB); }
+      v.box(4, 3, 3, 11, 3, 5, DARK);
+      v.box(1, 5, 1, 14, 6, 7, P, 0, 0.05, r);
+      v.box(5, 7, 2, 10, 8, 6, GLASS); v.box(5, 9, 2, 10, 9, 6, P); v.box(6, 7, 3, 9, 8, 5, DARK); helmet(v, 7, 7, 4, A);
+      for (let x = 1; x <= 14; x++) v.set(x, 6, 4, A);
+      v.set(14, 5, 1, HEAD, 1); v.set(14, 5, 7, HEAD, 1); v.set(1, 5, 1, TAIL, 1); v.set(1, 5, 7, TAIL, 1);
+    },
+    jet(v, P, A, r) { // rocket car: needle nose, tail fin, glowing nozzle
+      wheels(v, [3, 12]);
+      v.box(2, 1, 2, 15, 3, 6, P, 0, 0.04, r); v.box(13, 1, 3, 15, 2, 5, P);
+      v.box(0, 1, 2, 2, 4, 6, HUB); v.box(0, 2, 3, 0, 3, 5, [1, 0.55, 0.15], 1);
+      v.box(6, 4, 3, 10, 4, 5, GLASS); v.box(7, 4, 4, 9, 4, 4, DARK); helmet(v, 8, 4, 4, A);
+      v.box(1, 5, 4, 4, 8, 4, A); v.box(2, 9, 4, 3, 9, 4, A);
+      v.box(2, 1, 0, 6, 1, 1, A); v.box(2, 1, 7, 6, 1, 8, A);
+      v.set(15, 2, 4, HEAD, 1);
+    },
     hover(v, P, A, r) {
       v.box(1, 0, 0, 14, 0, 8, DARK); v.clear(1, 0, 0); v.clear(14, 0, 0); v.clear(1, 0, 8); v.clear(14, 0, 8);
       v.box(1, 1, 1, 14, 2, 7, P, 0, 0.06, r);
@@ -501,6 +572,68 @@
     for (let x = 1; x < 60; x += 4) v.box(x, 0, 0, x + 1, 0, 9, hex('#6b4a2e'));
     v.box(0, 1, 2, 59, 1, 2, STEEL); v.box(0, 1, 7, 59, 1, 7, STEEL);
     return { vox: v, vs: 2.4, col: null, h: 2, top: true };
+  };
+
+  // ---------- moving hazards, pads, pickups ----------
+  P.bumper = (r, o) => {
+    const v = new Vox(11, 6, 11), c = hex(o.color || '#ff4dd8');
+    cyl(v, 5.5, 5.5, 5.5, 0, 1, () => [0.15, 0.15, 0.2]);
+    cyl(v, 5.5, 5.5, 5, 2, 3, () => [c[0], c[1], c[2], 0.9]);
+    cyl(v, 5.5, 5.5, 3.6, 4, 5, (x, y) => (y === 5 ? [1, 1, 1, 0.8] : [0.92, 0.92, 0.95]));
+    return { vox: v, vs: 3, col: { c: 16, bumper: true }, h: 18 };
+  };
+  P.spring = (r) => {
+    const v = new Vox(12, 2, 12);
+    v.box(0, 0, 0, 11, 0, 11, [0.25, 0.25, 0.3]);
+    for (let i = 0; i < 12; i++) for (let j = 0; j < 12; j++) if (Math.abs(Math.hypot(i - 5.5, j - 5.5) - 3.5) < 0.8 || Math.abs(Math.hypot(i - 5.5, j - 5.5) - 5.3) < 0.6) v.set(i, 1, j, [0.85, 0.87, 0.9]);
+    for (const [i, j] of [[5, 4], [6, 4], [4, 5], [7, 5], [5, 6], [6, 6], [5, 7], [6, 7]]) v.set(j, 1, i, [1, 0.85, 0.2], 1);
+    return { vox: v, vs: 2.6, col: null, h: 5 };
+  };
+  P.itembox = (r) => { // a glowing rainbow cube with a "?" on every side
+    const n = 8, v = new Vox(n, n, n), cols = ['#ff4d6d', '#ffd43b', '#40c057', '#4dabf7', '#cc5de8', '#ff922b'].map(hex);
+    for (let x = 0; x < n; x++) for (let y = 0; y < n; y++) for (let z = 0; z < n; z++) {
+      const c = cols[(Math.floor((x + y + z) / 2)) % 6];
+      v.set(x, y, z, c, 0.55);
+    }
+    const q = [[3, 6], [4, 6], [5, 5], [4, 4], [3, 3], [3, 1]];
+    for (const [a, b] of q) { v.set(a, b, 0, [1, 1, 1], 1); v.set(a, b, n - 1, [1, 1, 1], 1); v.set(0, b, a, [1, 1, 1], 1); v.set(n - 1, b, a, [1, 1, 1], 1); v.set(a, n - 1, 7 - b, [1, 1, 1], 1); }
+    return { vox: v, vs: 2.6, col: null, h: 21 };
+  };
+  P.vacuum = (r) => {
+    const v = new Vox(14, 4, 14);
+    cyl(v, 7, 7, 7, 0, 2, (x, y, z, d) => d > 6 ? [0.15, 0.15, 0.18] : [0.32, 0.33, 0.38]);
+    cyl(v, 7, 7, 2, 3, 3, () => [0.3, 0.9, 1, 1]); v.set(12, 2, 7, [1, 0.3, 0.3], 1);
+    return { vox: v, vs: 3, col: { c: 21 }, h: 12 };
+  };
+  P.ladybug = (r) => {
+    const v = new Vox(16, 9, 12), red = hex('#e03131');
+    sphere(v, 7, 0, 6, 6.5, (dx, dy, dz) => dy < 0 ? null : ((Math.abs(dz) < 0.6) || ((Math.floor(dx * 0.5 + 9) + Math.floor(dz * 0.5 + 9)) % 3 === 0 && dy > 2) ? [0.08, 0.08, 0.08] : red));
+    sphere(v, 13, 2, 6, 3, (dx, dy) => dy < -1 ? null : [0.08, 0.08, 0.08]); v.set(15, 4, 5, [1, 1, 1]); v.set(15, 4, 7, [1, 1, 1]);
+    return { vox: v, vs: 2.8, col: { c: 20 }, h: 25 };
+  };
+  P.train = (r) => {
+    const v = new Vox(30, 12, 9), body = hex('#c92a2a'), blk = [0.12, 0.12, 0.14];
+    v.box(0, 0, 1, 29, 1, 7, blk);
+    for (const x of [3, 9, 20, 26]) { v.box(x - 1, 0, 0, x + 1, 2, 0, blk); v.box(x - 1, 0, 8, x + 1, 2, 8, blk); }
+    v.box(14, 2, 1, 29, 6, 7, blk, 0, 0.05, r); cyl(v, 22, 4, 3.4, 7, 7, () => blk); v.box(24, 7, 3, 25, 10, 5, blk); v.set(29, 4, 4, [1, 0.95, 0.6], 1);
+    v.box(14, 7, 1, 19, 10, 7, body); v.box(14, 11, 0, 19, 11, 8, blk); v.box(15, 8, 1, 18, 9, 1, [1, 0.85, 0.45], 0.8);
+    v.box(0, 2, 1, 12, 7, 7, hex('#1971c2'), 0, 0.05, r); for (let x = 1; x < 12; x += 3) v.box(x, 5, 1, x + 1, 6, 1, [1, 0.85, 0.45], 0.8);
+    return { vox: v, vs: 3, col: { w: 90, d: 27 }, h: 40 };
+  };
+  const ARM = {
+    spoon: ['#c9ced6', '#e9ecef'], ruler: ['#ffd43b', '#343a40'], shovel: ['#1c7ed6', '#1864ab'], cue: ['#d9a066', '#5c2e0e'],
+    glow: ['#ff4dd8', '#ff4dd8', 1], wrench: ['#adb5bd', '#868e96'], usb: ['#e9ecef', '#3ff0ff'], cane: ['#e03131', '#ffffff'],
+    straw: ['#ff6b6b', '#ffffff'], barrier: ['#e03131', '#ffffff'],
+  };
+  // sweeper arm: pivot at origin, arm along +x. len in world units.
+  CR.armMesh = function (look, len) {
+    const [a, b, glow] = ARM[look] || ARM.barrier, ca = hex(a), cb = hex(b), vs = 2.4, n = Math.ceil(len / vs);
+    const v = new Vox(n + 3, 6, 5);
+    cyl(v, 2.5, 2.5, 2.5, 0, 5, () => [0.25, 0.25, 0.3]);
+    for (let x = 2; x < n + 2; x++) { const c = Math.floor(x / 3) % 2 ? cb : ca; v.box(x, 2, 1, x, 4, 3, c, glow ? 1 : 0); }
+    if (look === 'spoon') cyl(v, n, 2.5, 2.5, 2, 3, () => [ca[0], ca[1], ca[2]]);
+    v.set(2.5, 5, 2.5, [1, 0.2, 0.2], 1);
+    return G.mesh(v, vs, 2.5, 0, 2.5);
   };
 
   const cache = new Map();
