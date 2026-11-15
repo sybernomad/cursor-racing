@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#120f22">
+  <meta name="description" content="Tiny toy cars racing across kitchen tables, desks, sandboxes and pool tables. A top-down micro racer with pixel-art diorama visuals.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Cursor Racing">
+  <title>Cursor Racing</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <canvas id="cv" aria-label="Race track"></canvas>
+  <div id="ui">
+    <section id="scr-title" class="screen"></section>
+    <section id="scr-menu" class="screen"></section>
+    <section id="scr-cups" class="screen"></section>
+    <section id="scr-tracks" class="screen"></section>
+    <section id="scr-garage" class="screen"></section>
+    <section id="scr-settings" class="screen"></section>
+    <section id="scr-standings" class="screen"></section>
+    <section id="scr-results" class="screen"></section>
+    <section id="scr-hud" class="screen hud"></section>
+  </div>
+  <div id="modal" class="modal hidden"></div>
+  <div id="toast" class="toast"></div>
+  <div id="update" class="update hidden"></div>
+  <noscript><p style="color:#fff;padding:2rem">Cursor Racing needs JavaScript enabled.</p></noscript>
+  <script src="js/util.js"></script>
+  <script src="js/gl.js"></script>
+  <script src="js/models.js"></script>
+  <script src="js/tracks.js"></script>
+  <script src="js/world.js"></script>
+  <script src="js/render.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/save.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
