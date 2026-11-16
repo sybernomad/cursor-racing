@@ -21,8 +21,9 @@
   }
 
   class World {
-    constructor(def, reversed = false) {
-      this.def = def; this.reversed = reversed;
+    // opts.clean: no obstacles (moving hazards, bumpers, springs, jump gaps, spills, loose balls). Ramps and boost pads stay.
+    constructor(def, reversed = false, opts = {}) {
+      this.def = def; this.reversed = reversed; this.clean = !!opts.clean;
       this.theme = CR.THEMES[def.theme];
       this.light = CR.LIGHT[this.theme.light];
       this.W = def.W; this.H = def.H; this.width = def.width; this.hw = def.width / 2;
@@ -32,14 +33,14 @@
       this.buildLine(reversed ? def.pts.slice().reverse() : def.pts);
       this.colliders = []; this.cgrid = new Map();
       this.holes = [];
-      this.zones = (def.zones || []).map((z) => this.place(tf(z.t), z.off * (reversed ? -1 : 1), z));
+      this.zones = (this.clean ? [] : def.zones || []).map((z) => this.place(tf(z.t), z.off * (reversed ? -1 : 1), z));
       this.boosts = (def.boosts || []).map((b) => this.place(tf(b.t), b.off * (reversed ? -1 : 1), { rx: 34, ry: 26, ...b }));
       this.ramps = (def.ramps || []).map((r) => {
         const len = r.len * 3, t = reversed ? (1 - r.t - len / this.L + 1) % 1 : r.t;
-        const p = this.place(t, 0, r); p.len = len; p.hgt = 16; p.s0 = p.s; p.gapLen = r.gap || 0; return p;
+        const p = this.place(t, 0, r); p.len = len; p.hgt = 16; p.s0 = p.s; p.gapLen = this.clean ? 0 : r.gap || 0; return p;
       });
       const sg = reversed ? -1 : 1;
-      this.hazards = (def.hazards || []).map((h) => {
+      this.hazards = (this.clean ? [] : def.hazards || []).map((h) => {
         const o = this.place(tf(h.t), (h.off || 0) * sg, h);
         o.side = (h.side || 1) * sg; return o;
       });
@@ -277,7 +278,7 @@
         }
       }
       // pool balls (dynamic)
-      if (this.def.balls) {
+      if (this.def.balls && !this.clean) {
         const cols = ['#ffd43b', '#1c7ed6', '#e03131', '#7048e8', '#f76707', '#2b8a3e', '#862e9c', '#111111'];
         this.def.balls.forEach((b, i) => {
           const p = this.place(this.tf(b[0]), b[1] * (this.reversed ? -1 : 1), {});

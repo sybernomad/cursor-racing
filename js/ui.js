@@ -21,7 +21,7 @@
     root.querySelectorAll('[data-go]').forEach((b) => click(b, () => go(b.dataset.go), b.dataset.go === 'menu' ? 'back' : 'ui'));
   }
   function go(where) {
-    ({ menu: renderMenu, cups: renderCups, garage: renderGarage, settings: renderSettings, title: renderTitle })[where]();
+    ({ menu: renderMenu, cups: renderCups, shop: () => renderShop(), garage: () => renderGarage(), settings: renderSettings, title: renderTitle })[where]();
   }
   UI.toast = function (msg, ms = 2200) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(UI.tt); UI.tt = setTimeout(() => t.classList.remove('show'), ms); };
   function modal(html, after) { const m = $('#modal'); m.innerHTML = `<div class="panel">${html}</div>`; m.classList.remove('hidden'); if (after) after(m); bind(m); return m; }
@@ -64,7 +64,8 @@
         <button class="btn" id="m-quick"><span class="ico">🏁</span>Quick Race<span class="sub">1 to 19 rivals, power-ups, any open track</span></button>
         <button class="btn" id="m-tt"><span class="ico">⏱️</span>Time Trial<span class="sub">Race your own ghost</span></button>
         <button class="btn" id="m-ko"><span class="ico">💥</span>Knockout<span class="sub">Fall off screen and you're out</span></button>
-        <button class="btn cyan" id="m-garage"><span class="ico">🔧</span>Garage<span class="sub">Cars, paint and upgrades</span></button>
+        <button class="btn cyan" id="m-garage"><span class="ico">🔧</span>Garage<span class="sub">Your cars, paint and upgrades</span></button>
+        <button class="btn cyan" id="m-shop"><span class="ico">🛒</span>Car Shop<span class="sub">${CR.CARS.filter((c) => !d.owned[c.id]).length} cars to collect</span></button>
         <button class="btn ghost" id="m-set"><span class="ico">⚙️</span>Settings<span class="sub">Controls, graphics, sound</span></button>
         <button class="btn ghost" id="m-tutb"><span class="ico">🎓</span>Driving Lesson<span class="sub">${d.tutorialDone ? 'Replay the tutorial race' : 'Learn the ropes, earn 100 coins'}</span></button>
         ${UI.install ? '<button class="btn ghost" id="m-inst"><span class="ico">📲</span>Install<span class="sub">Add to your home screen</span></button>' : ''}
@@ -78,6 +79,7 @@
     click($('#m-tt'), () => renderTracks('tt'));
     click($('#m-ko'), () => renderTracks('ko'));
     click($('#m-garage'), () => renderGarage());
+    click($('#m-shop'), () => renderShop());
     click($('#m-set'), () => renderSettings());
     click($('#m-tutb'), startTutorial);
     if (UI.install) click($('#m-inst'), async () => { const p = UI.install; UI.install = null; p.prompt(); try { await p.userChoice; } catch (e) { /* */ } renderMenu(); });
@@ -128,11 +130,13 @@
         <div class="setrow"><span>Field</span><div class="seg" id="c-field">${[[3, '4 cars'], [7, '8'], [11, '12'], [19, '20']].map(([v, l]) => `<button data-v="${v}" class="${d.settings.cupRivals === v ? 'on' : ''}">${l}</button>`).join('')}</div></div>
         <div class="setrow"><span>Laps</span><div class="seg" id="c-laps">${[2, 3, 5].map((v) => `<button data-v="${v}" class="${d.settings.cupLaps === v ? 'on' : ''}">${v}</button>`).join('')}</div></div>
         <div class="setrow"><span>Power-ups</span><button class="tog ${d.settings.cupItems ? 'on' : ''}" id="c-items"></button><span class="muted small">${d.settings.cupItems ? 'Item boxes on the road' : 'Classic: pure racing'}</span></div>
+        <div class="setrow"><span>Obstacles</span><button class="tog ${d.settings.cupHazards ? 'on' : ''}" id="c-haz"></button><span class="muted small">${d.settings.cupHazards ? 'Hazards, spills and jump gaps' : 'Clear road: ramps and boost pads only'}</span></div>
       </div>
       <div class="cards" id="cuplist"></div>
       <p class="muted small" style="margin-top:12px">Three races per cup. Points: ${d.settings.cupRivals > 3 ? '25 / 18 / 15 / 12 / 10 / 8 / 6 / 4 / 2 / 1 for the top ten' : '10 / 6 / 3 / 1'}. Finish the cup on the podium to open the next one. Win it to unlock a new car. These options apply to the next cup you start.</p></div>`;
     el.querySelectorAll('#c-field button').forEach((b) => click(b, () => { d.settings.cupRivals = +b.dataset.v; Save.save(); renderCups(); }));
     el.querySelectorAll('#c-laps button').forEach((b) => click(b, () => { d.settings.cupLaps = +b.dataset.v; Save.save(); renderCups(); }));
+    click($('#c-haz', el), () => { d.settings.cupHazards = !d.settings.cupHazards; Save.save(); renderCups(); });
     click($('#c-items', el), () => { d.settings.cupItems = !d.settings.cupItems; Save.save(); renderCups(); });
     const list = $('#cuplist', el);
     CR.CUPS.forEach((cup, i) => {
@@ -155,7 +159,7 @@
     const rest = CR.RIVALS.map((r) => r.name).filter((n) => !names.includes(n)).sort(() => Math.random() - 0.5);
     while (names.length < S.cupRivals && rest.length) names.push(rest.pop());
     const pts = { You: 0 }; for (const n of names) pts[n] = 0;
-    Save.data.cupRun = { cup: cup.id, race: 0, pts, names, laps: S.cupLaps, items: !!S.cupItems }; Save.save();
+    Save.data.cupRun = { cup: cup.id, race: 0, pts, names, laps: S.cupLaps, items: !!S.cupItems, hazards: S.cupHazards !== false }; Save.save();
     continueCup();
   }
   function continueCup() {
@@ -164,7 +168,7 @@
     const lvl = Math.min(5, ci + 1);
     const names = run.names || CUP_RIVALS[cup.id]; // runs saved by older versions have no names
     const rivals = names.map((n) => ({ ...rival(n), up: { eng: lvl, grip: lvl - 1, boost: lvl - 1 } }));
-    startRace({ mode: 'race', track: t, reversed: rev, laps: run.laps || 3, items: !!run.items, ai: cup.ai, rivals, cup: ci });
+    startRace({ mode: 'race', track: t, reversed: rev, laps: run.laps || 3, items: !!run.items, hazards: run.hazards !== false, ai: cup.ai, rivals, cup: ci });
   }
 
   // ---------------------------------------------------------------------------
@@ -233,7 +237,7 @@
         const pool = mode === 'tt' ? [] : CR.RIVALS.slice().sort(() => Math.random() - 0.5).slice(0, nR);
         const top = CR.CUPS.reduce((m, c) => (Save.cupUnlocked(c.id) ? c.ai : m), 0.9);
         const lvl = CR.CUPS.filter((c) => Save.cupUnlocked(c.id)).length;
-        startRace({ mode: mode === 'quick' ? 'race' : mode, track: ti, reversed: rev, laps: mode === 'quick' ? d.settings.laps : 3, items: mode !== 'tt' && d.settings.items, ai: top, rivals: pool.map((r) => ({ ...r, up: { eng: lvl, grip: lvl - 1, boost: lvl - 1 } })), ghost: ghost && ghost.data, bestLap: b.lap, koTarget: 4, quick: mode });
+        startRace({ mode: mode === 'quick' ? 'race' : mode, track: ti, reversed: rev, laps: mode === 'quick' ? d.settings.laps : 3, items: mode !== 'tt' && d.settings.items, hazards: mode === 'tt' ? true : d.settings.hazards, ai: top, rivals: pool.map((r) => ({ ...r, up: { eng: lvl, grip: lvl - 1, boost: lvl - 1 } })), ghost: ghost && ghost.data, bestLap: b.lap, koTarget: 4, quick: mode });
       });
       else card.title = 'Open its cup in the Championship first';
       tl.appendChild(card);
@@ -250,6 +254,7 @@
       ${ko ? '' : `<div class="setrow"><span>Laps</span><div class="stepper"><button class="btn small" data-k="laps" data-d="-1">&minus;</button><b id="v-laps">${S.laps}</b><button class="btn small" data-k="laps" data-d="1">+</button></div></div>`}
       <div class="setrow"><span>Rivals</span><input type="range" id="v-riv" min="${ko ? 3 : 1}" max="${ko ? 7 : 19}" value="${n}"><b id="v-rivn">${n}</b></div>
       <div class="setrow"><span>Power-ups</span><button class="tog ${S.items ? 'on' : ''}" id="v-items"></button><span class="muted small">${S.items ? 'Item boxes on the road' : 'Pure racing'}</span></div>
+      <div class="setrow"><span>Obstacles</span><button class="tog ${S.hazards ? 'on' : ''}" id="v-haz"></button><span class="muted small">${S.hazards ? 'Hazards, spills and jump gaps' : 'Clear road: ramps and boost pads only'}</span></div>
     </div>`;
   }
   function bindSetup(el, mode) {
@@ -259,6 +264,8 @@
     if (r) r.addEventListener('input', () => { const v = +r.value; if (ko) S.koRivals = v; else S.rivals = v; $('#v-rivn', el).textContent = v; Save.save(); });
     const it = $('#v-items', el);
     if (it) click(it, () => { S.items = !S.items; Save.save(); renderTracks(mode); });
+    const hz = $('#v-haz', el);
+    if (hz) click(hz, () => { S.hazards = !S.hazards; Save.save(); renderTracks(mode); });
   }
 
   // ---------------------------------------------------------------------------
@@ -268,27 +275,32 @@
     if (!carThumbs[k]) { const c = CR.CARS.find((x) => x.id === id); carThumbs[k] = CR.voxIcon(CR.carVox(id, paint, c.paints[1]), 2).toDataURL(); }
     return carThumbs[k];
   }
+  const statBar = (v, add = 0) => `<div class="bar"><b style="width:${Math.min(100, (v + add) * 100)}%"></b><i style="width:${Math.min(100, v * 100)}%"></i></div>`;
+  const traits = (c) => [c.offroad >= 0.5 && 'Off-road', c.hover && 'Floats over spills', c.lift > 1.1 && 'Big jumps', c.charge > 1.1 && 'Fast boost charge', c.mass >= 1.2 && 'Heavyweight', c.mass <= 0.3 && 'Featherweight'].filter(Boolean);
+
+  // Garage: only the cars you own. Pick one to drive, paint it, upgrade it.
   function renderGarage(sel) {
     const d = Save.data, el = $('#scr-garage');
-    const idx = sel != null ? sel : CR.CARS.findIndex((c) => c.id === (UI.gsel || d.car));
+    const mine = CR.CARS.map((c, i) => i).filter((i) => d.owned[CR.CARS[i].id]);
+    let idx = sel != null ? sel : CR.CARS.findIndex((c) => c.id === (UI.gsel || d.car));
+    if (!mine.includes(idx)) idx = CR.CARS.findIndex((c) => c.id === d.car);
     const car = CR.CARS[idx]; UI.gsel = car.id;
-    const owned = !!d.owned[car.id], up = Save.ups(car.id), paint = Save.paintOf(car.id);
-    const st = (v, add) => `<div class="bar"><b style="width:${Math.min(100, (v + add) * 100)}%"></b><i style="width:${Math.min(100, v * 100)}%"></i></div>`;
-    const cupGift = CR.CUPS.find((c) => c.unlock === car.id);
-    const ownedN = CR.CARS.filter((c) => d.owned[c.id]).length;
+    const up = Save.ups(car.id), paint = Save.paintOf(car.id), pos = mine.indexOf(idx);
     el.innerHTML = `<div class="wrap">${topbar('Garage')}
-      <div class="carstrip" id="g-strip">${CR.CARS.map((c, i) => `<button class="${i === idx ? 'sel' : ''} ${d.owned[c.id] ? '' : 'lock'}" data-i="${i}" title="${c.name}"><img src="${carThumb(c.id)}" alt="${c.name}"></button>`).join('')}</div>
-      <p class="muted small" style="margin:0 0 10px">${ownedN} of ${CR.CARS.length} cars owned${d.car === car.id ? '' : ` · driving ${CR.CARS.find((c) => c.id === d.car).name}`}</p>
+      <div class="carstrip" id="g-strip">${mine.map((i) => `<button class="${i === idx ? 'sel' : ''} ${CR.CARS[i].id === d.car ? 'cur' : ''}" data-i="${i}" title="${CR.CARS[i].name}"><img src="${carThumb(CR.CARS[i].id)}" alt="${CR.CARS[i].name}"></button>`).join('')}
+        <button class="more" id="g-shop" title="Car Shop">+<small>Shop</small></button></div>
+      <p class="muted small" style="margin:0 0 10px">${mine.length} of ${CR.CARS.length} cars owned${d.car === car.id ? '' : ` · driving ${CR.CARS.find((c) => c.id === d.car).name}`}</p>
       <div class="garage">
-        <div class="panel showcase"><div class="carnav"><button class="btn small" id="g-prev">&larr;</button><h3>${car.name}</h3><button class="btn small" id="g-next">&rarr;</button></div>
+        <div class="panel showcase"><div class="carnav"><button class="btn small" id="g-prev" ${mine.length < 2 ? 'disabled' : ''}>&larr;</button><h3>${car.name}</h3><button class="btn small" id="g-next" ${mine.length < 2 ? 'disabled' : ''}>&rarr;</button></div>
           <canvas id="g-icon"></canvas><p class="muted small" style="text-align:center;margin:6px 0 0">${car.desc}</p>
+          <div class="tags" style="justify-content:center">${traits(car).map((t) => `<span>${t}</span>`).join('')}</div>
           <div class="paints" id="g-paint"></div></div>
         <div class="panel">
           <h2>Stats</h2>
-          <div class="stat">Speed ${st(car.top, up.eng * 0.03)}</div><div class="stat">Accel ${st(car.accel, up.eng * 0.03)}</div>
-          <div class="stat">Grip ${st(car.grip, up.grip * 0.04)}</div><div class="stat">Weight ${st(car.mass / 1.8, 0)}</div>
-          <div id="g-act" style="margin:12px 0"></div>
-          ${owned ? `<h2 style="margin-top:6px">Upgrades</h2><div id="g-up"></div>` : ''}
+          <div class="stat">Speed ${statBar(car.top, up.eng * 0.03)}</div><div class="stat">Accel ${statBar(car.accel, up.eng * 0.03)}</div>
+          <div class="stat">Grip ${statBar(car.grip, up.grip * 0.04)}</div><div class="stat">Weight ${statBar(car.mass / 1.8)}</div>
+          <div id="g-act" style="margin:12px 0">${d.car === car.id ? '<button class="btn" disabled>Selected</button>' : '<button class="btn primary" id="g-sel">Drive this car</button>'}</div>
+          <h2 style="margin-top:6px">Upgrades</h2><div id="g-up"></div>
         </div>
       </div></div>`;
     CR.voxIcon(CR.carVox(car.id, paint, car.paints[1]), 9, $('#g-icon', el));
@@ -297,30 +309,74 @@
       const s = document.createElement('div'); s.className = 'sw' + (p === paint ? ' sel' : ''); s.style.background = p;
       click(s, () => { d.paint[car.id] = p; Save.save(); renderGarage(idx); }); pl.appendChild(s);
     }
-    const act = $('#g-act', el);
-    if (owned) act.innerHTML = d.car === car.id ? '<button class="btn" disabled>Selected</button>' : '<button class="btn primary" id="g-sel">Drive this car</button>';
-    else act.innerHTML = `<button class="btn primary" id="g-buy" ${d.coins < car.price ? 'disabled' : ''}>Buy · ${car.price} coins</button>${cupGift ? `<div class="muted small" style="margin-top:6px">Or win the ${cupGift.name} to get it free.</div>` : ''}`;
     if ($('#g-sel', el)) click($('#g-sel', el), () => { d.car = car.id; Save.save(); renderGarage(idx); });
-    if ($('#g-buy', el)) click($('#g-buy', el), () => confirmBox('Buy ' + car.name + '?', `${car.price} coins.`, 'Buy', () => { d.coins -= car.price; d.owned[car.id] = true; d.car = car.id; Save.save(); Audio.play('buy'); renderGarage(idx); }), 'ui');
-    if (owned) {
-      const ul = $('#g-up', el);
-      for (const [k, name, txt] of [['eng', 'Engine', 'Top speed and acceleration'], ['grip', 'Tyres', 'Grip and steering'], ['boost', 'Turbo', 'Stronger boost, slower drain, faster charge']]) {
-        const cost = Save.upCost(car.id, k), lv = up[k];
-        const row = document.createElement('div'); row.className = 'upg';
-        row.innerHTML = `<div><b>${name}</b><span class="pips">${[0, 1, 2, 3, 4].map((i) => `<i class="${i < lv ? 'on' : ''}"></i>`).join('')}</span><div class="muted small">${txt}</div></div>
-          ${cost == null ? '<span class="gold small">MAX</span>' : `<button class="btn small ${d.coins >= cost ? 'primary' : ''}" ${d.coins < cost ? 'disabled' : ''}>${cost} <span class="coin" style="width:10px;height:10px"></span></button>`}`;
-        const b = row.querySelector('button');
-        if (b) click(b, () => { if (d.coins < cost) return; d.coins -= cost; up[k]++; Save.save(); Audio.play('buy'); renderGarage(idx); }, null);
-        ul.appendChild(row);
-      }
+    const ul = $('#g-up', el);
+    for (const [k, name, txt] of [['eng', 'Engine', 'Top speed and acceleration'], ['grip', 'Tyres', 'Grip and steering'], ['boost', 'Turbo', 'Stronger boost, slower drain, faster charge']]) {
+      const cost = Save.upCost(car.id, k), lv = up[k];
+      const row = document.createElement('div'); row.className = 'upg';
+      row.innerHTML = `<div><b>${name}</b><span class="pips">${[0, 1, 2, 3, 4].map((i) => `<i class="${i < lv ? 'on' : ''}"></i>`).join('')}</span><div class="muted small">${txt}</div></div>
+        ${cost == null ? '<span class="gold small">MAX</span>' : `<button class="btn small ${d.coins >= cost ? 'primary' : ''}" ${d.coins < cost ? 'disabled' : ''}>${cost} <span class="coin" style="width:10px;height:10px"></span></button>`}`;
+      const b = row.querySelector('button');
+      if (b) click(b, () => { if (d.coins < cost) return; d.coins -= cost; up[k]++; Save.save(); Audio.play('buy'); renderGarage(idx); }, null);
+      ul.appendChild(row);
     }
-    el.querySelectorAll('#g-strip button').forEach((b) => click(b, () => renderGarage(+b.dataset.i)));
+    el.querySelectorAll('#g-strip button[data-i]').forEach((b) => click(b, () => renderGarage(+b.dataset.i)));
+    click($('#g-shop', el), () => renderShop());
     const selB = $('#g-strip .sel', el), strip = $('#g-strip', el);
     requestAnimationFrame(() => { if (selB) strip.scrollLeft += selB.getBoundingClientRect().left - strip.getBoundingClientRect().left - strip.clientWidth / 2 + selB.clientWidth / 2; });
-    click($('#g-prev', el), () => renderGarage((idx - 1 + CR.CARS.length) % CR.CARS.length));
-    click($('#g-next', el), () => renderGarage((idx + 1) % CR.CARS.length));
+    click($('#g-prev', el), () => renderGarage(mine[(pos - 1 + mine.length) % mine.length]));
+    click($('#g-next', el), () => renderGarage(mine[(pos + 1) % mine.length]));
     bind(el); show('garage');
   }
+
+  // ---------------------------------------------------------------------------
+  // Car Shop: every car you don't own yet, with search, sorting and filters.
+  const SORTS = { price: ['Price: low to high', (a, b) => a.price - b.price], priceD: ['Price: high to low', (a, b) => b.price - a.price], top: ['Top speed', (a, b) => b.top - a.top], accel: ['Acceleration', (a, b) => b.accel - a.accel],
+    grip: ['Grip', (a, b) => b.grip - a.grip], heavy: ['Heaviest', (a, b) => b.mass - a.mass], light: ['Lightest', (a, b) => a.mass - b.mass], name: ['Name', (a, b) => a.name.localeCompare(b.name)] };
+  const FILTERS = { all: ['All', () => true], afford: ['Can afford', (c) => c.price <= Save.data.coins], offroad: ['Off-road', (c) => c.offroad >= 0.5], hover: ['Floats', (c) => !!c.hover], jump: ['Jumpers', (c) => c.lift > 1.1], charge: ['Fast boost', (c) => c.charge > 1.1], heavy: ['Heavy', (c) => c.mass >= 1.0], light: ['Light', (c) => c.mass <= 0.45] };
+  function renderShop() {
+    const d = Save.data, el = $('#scr-shop'), st = UI.shop || (UI.shop = { q: '', sort: 'price', filter: 'all' });
+    const left = CR.CARS.filter((c) => !d.owned[c.id]).length;
+    el.innerHTML = `<div class="wrap">${topbar('Car Shop')}
+      <div class="panel shopbar">
+        <input type="search" id="sh-q" placeholder="Search ${left} cars" value="${st.q.replace(/"/g, '&quot;')}" autocomplete="off" enterkeyhint="search">
+        <label class="muted small">Sort <select id="sh-sort">${Object.entries(SORTS).map(([k, v]) => `<option value="${k}" ${st.sort === k ? 'selected' : ''}>${v[0]}</option>`).join('')}</select></label>
+        <div class="chips" id="sh-f">${Object.entries(FILTERS).map(([k, v]) => `<button data-k="${k}" class="${st.filter === k ? 'on' : ''}">${v[0]}</button>`).join('')}</div>
+      </div>
+      <p class="muted small" id="sh-count" style="margin:8px 2px"></p>
+      <div class="cards shop" id="sh-list"></div></div>`;
+    const list = $('#sh-list', el);
+    const fill = () => {
+      const q = st.q.trim().toLowerCase();
+      const cars = CR.CARS.filter((c) => !d.owned[c.id] && FILTERS[st.filter][1](c) && (!q || (c.name + ' ' + c.desc + ' ' + traits(c).join(' ')).toLowerCase().includes(q))).sort(SORTS[st.sort][1]);
+      $('#sh-count', el).textContent = left === 0 ? 'You own every car. Nice collection.' : cars.length ? `${cars.length} ${cars.length === 1 ? 'car' : 'cars'}` : 'No cars match. Try another search or filter.';
+      list.innerHTML = '';
+      for (const c of cars) {
+        const gift = CR.CUPS.find((k) => k.unlock === c.id), can = d.coins >= c.price;
+        const card = document.createElement('div'); card.className = 'card shopcard';
+        card.innerHTML = `<div class="sc-top"><img src="${shopThumb(c)}" alt=""><div><h3>${c.name}</h3><div class="meta">${c.desc}</div></div></div>
+          <div class="tags">${traits(c).map((t) => `<span>${t}</span>`).join('')}</div>
+          <div class="mini"><span>Speed</span>${statBar(c.top)}<span>Accel</span>${statBar(c.accel)}<span>Grip</span>${statBar(c.grip)}<span>Weight</span>${statBar(c.mass / 1.8)}</div>
+          <button class="btn small ${can ? 'primary' : ''}" ${can ? '' : 'disabled'}>${can ? 'Buy' : 'Need ' + (c.price - d.coins).toLocaleString() + ' more'} · ${c.price.toLocaleString()} <span class="coin" style="width:10px;height:10px"></span></button>
+          ${gift ? `<div class="muted small" style="margin-top:6px">Or win the ${gift.name} to get it free.</div>` : ''}`;
+        const b = card.querySelector('button');
+        click(b, () => confirmBox('Buy ' + c.name + '?', `${c.price.toLocaleString()} coins. You have ${d.coins.toLocaleString()}.`, 'Buy', () => {
+          d.coins -= c.price; d.owned[c.id] = true; Save.save(); Audio.play('buy');
+          modal(`<h2>${c.name} is yours</h2><p class="muted">It's parked in your garage.</p><div class="actions"><button class="btn ghost" id="m-more">Keep shopping</button><button class="btn primary" id="m-drive">Drive it</button></div>`, (m) => {
+            click($('#m-more', m), () => { closeModal(); renderShop(); }); click($('#m-drive', m), () => { closeModal(); d.car = c.id; Save.save(); renderGarage(CR.CARS.indexOf(c)); });
+          });
+        }));
+        list.appendChild(card);
+      }
+    };
+    const qi = $('#sh-q', el);
+    qi.addEventListener('input', () => { st.q = qi.value; fill(); });
+    $('#sh-sort', el).addEventListener('change', (e) => { st.sort = e.target.value; Audio.play('ui'); fill(); });
+    el.querySelectorAll('#sh-f button').forEach((b) => click(b, () => { st.filter = b.dataset.k; el.querySelectorAll('#sh-f button').forEach((x) => x.classList.toggle('on', x === b)); fill(); }));
+    fill(); bind(el); show('shop');
+  }
+  const shopThumbs = {};
+  function shopThumb(c) { return shopThumbs[c.id] || (shopThumbs[c.id] = CR.voxIcon(CR.carVox(c.id, c.paints[0], c.paints[1]), 3).toDataURL()); }
 
   // ---------------------------------------------------------------------------
   function renderSettings(from) {
@@ -538,6 +594,7 @@
   // input: keyboard + touch + gamepad -> Game.input
   const keys = new Set();
   window.addEventListener('keydown', (e) => {
+    if (e.target && /^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)) return; // typing in the shop search
     if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) e.preventDefault();
     keys.add(e.key.toLowerCase());
     if ((e.key === 'Escape' || e.key === 'p') && UI.inRace) { if (Game.paused) resume(); else pause(); }
@@ -630,7 +687,7 @@
   function resume() { closeModal(); Game.paused = false; }
   UI.pause = pause;
 
-  UI.renderTitle = renderTitle; UI.renderMenu = renderMenu; UI.show = show; UI.startRace = startRace; UI.startTutorial = startTutorial; UI.renderGarage = renderGarage; UI.renderTracks = renderTracks; UI.renderCups = renderCups; UI.renderSettings = renderSettings;
-  UI.isSafe = () => !UI.inRace && ['title', 'menu', 'results', 'standings', 'cups', 'tracks', 'garage', 'settings'].includes(UI.screen);
+  UI.renderTitle = renderTitle; UI.renderMenu = renderMenu; UI.show = show; UI.startRace = startRace; UI.startTutorial = startTutorial; UI.renderGarage = renderGarage; UI.renderShop = renderShop; UI.renderTracks = renderTracks; UI.renderCups = renderCups; UI.renderSettings = renderSettings;
+  UI.isSafe = () => !UI.inRace && ['title', 'menu', 'results', 'standings', 'cups', 'tracks', 'garage', 'shop', 'settings'].includes(UI.screen);
   CR.UI = UI;
 })(window.CR);

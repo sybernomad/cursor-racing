@@ -47,11 +47,15 @@ Use a power-up with **ITEM** on touch, E or Q on a keyboard, Y or LB on a gamepa
 - **Time Trial:** solo, races against a ghost of your best lap (saved per track).
 - **Knockout:** the camera follows the leader. Anyone who falls off the screen (or off the table)
   is out of the round. Last car standing scores a point, first to 4 wins. 3 to 7 rivals, power-ups optional.
-- **Garage:** 34 cars, from the Zip hatchback to a Go-Kart, Monster truck, Rocket car, Taxi, School
-  Bus, Fire Engine, Toy Tank, Bulldozer, Speedboat, Saucer and Dragster. Pick one from the strip of
-  thumbnails at the top. Each has its own speed, grip and weight, and some have a trick (off-road,
-  hovering over puddles, bigger jumps, faster boost charge). 10 paint colours, and Engine / Tyres /
-  Turbo upgrades (5 levels each) bought with coins from races. Some cars are cup prizes; all can be bought.
+- **Garage:** the cars you own. Pick one to drive, repaint it (10 colours) and buy Engine / Tyres /
+  Turbo upgrades (5 levels each) with coins from races.
+- **Car Shop:** 64 cars to collect, from the Zip hatchback, Monster truck and Toy Tank to a shark, a
+  dragon, a burger, a pencil and a jet. Search by name or description, sort by price, top speed,
+  acceleration, grip or weight, and filter (can afford, off-road, floats, jumpers, fast boost, heavy,
+  light). Each car has its own stats and some have a trick. A few cars are also cup prizes.
+- **Obstacles toggle:** Quick Race, Knockout and the Championship each have an Obstacles switch. Off
+  gives a clear road: no moving hazards, bumpers, springs, jump gaps, spills or loose pool balls.
+  Ramps and boost pads stay. Time Trial always runs with obstacles so best laps stay comparable.
 
 ## Hazards and power-ups
 

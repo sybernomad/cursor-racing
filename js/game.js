@@ -51,7 +51,7 @@
     Game.stop();
     Game.opts = opts; Game.mode = opts.mode;
     const def = CR.TRACKS[opts.track];
-    const world = new CR.World(def, !!opts.reversed);
+    const world = new CR.World(def, !!opts.reversed, { clean: opts.hazards === false });
     R.setWorld(world);
     Game.world = world;
     Game.cars = []; Game.parts = []; Game.skids = []; Game.motes = [];
