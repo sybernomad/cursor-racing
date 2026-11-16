@@ -168,7 +168,7 @@
     const lvl = Math.min(5, ci + 1);
     const names = run.names || CUP_RIVALS[cup.id]; // runs saved by older versions have no names
     const rivals = names.map((n) => ({ ...rival(n), up: { eng: lvl, grip: lvl - 1, boost: lvl - 1 } }));
-    startRace({ mode: 'race', track: t, reversed: rev, laps: run.laps || 3, items: !!run.items, hazards: run.hazards !== false, ai: cup.ai, rivals, cup: ci });
+    startRace({ mode: 'race', track: t, reversed: rev, laps: run.laps || 3, items: !!run.items, hazards: run.hazards !== false, ai: cup.ai, rivals, cup: ci, grid: run.grid || null });
   }
 
   // ---------------------------------------------------------------------------
@@ -459,6 +459,7 @@
     if (cfg.cup != null) {
       const run = d.cupRun;
       res.order.forEach((o, i) => { run.pts[o.isPlayer ? 'You' : o.name] = (run.pts[o.isPlayer ? 'You' : o.name] || 0) + pointsFor(res.order.length, i); });
+      run.grid = res.order.map((o) => (o.isPlayer ? 'You' : o.name)); // next race starts in this order
       run.race++; Save.save();
     }
     Audio.setMusic('menu');
@@ -512,6 +513,7 @@
     el.innerHTML = `<div class="wrap" style="max-width:560px"><div class="panel"><h2>${cup.name} · ${done ? 'Final standings' : `after race ${run.race} of 3`}</h2>
       ${done ? `<div class="bigplace">${U.ordinal(myPlace)}</div>` : ''}${extra}
       <table class="table"><tr><th>#</th><th>Driver</th><th class="num">Points</th></tr>${list.map(([n, p], i) => `<tr class="${n === 'You' ? 'me' : ''}"><td>${i + 1}</td><td>${n}</td><td class="num">${p}</td></tr>`).join('')}</table>
+      ${!done && run.grid ? `<p class="muted small" style="text-align:center;margin:10px 0 0">Starting grid follows the last result: you line up ${U.ordinal(run.grid.indexOf('You') + 1)} of ${run.grid.length}.</p>` : ''}
       <div class="actions">${done ? '<button class="btn primary" id="st-cups">Cups</button>' : `<button class="btn primary" id="st-next">Next: ${CR.TRACKS[cup.races[run.race][0]].name}${cup.races[run.race][1] ? ' R' : ''}</button>`}<button class="btn ghost" id="st-menu">Menu</button></div></div></div>`;
     show('standings');
     if (done) click($('#st-cups', el), () => { Game.stop(); renderCups(); }); else click($('#st-next', el), continueCup);

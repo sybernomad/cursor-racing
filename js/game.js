@@ -68,6 +68,8 @@
     }
     Game.laps = opts.laps || 3;
     Game.items = !!opts.items;
+    // opts.grid: driver names in starting order ("You" for the player); anyone not named lines up behind
+    if (opts.grid) { const pos = (c) => { const i = opts.grid.indexOf(c.isPlayer ? 'You' : c.name); return i < 0 ? 999 : i; }; Game.cars.sort((a, b) => pos(a) - pos(b)); }
     Game.placeGrid();
     Game.pulses = [];
     X().reset(Game);
