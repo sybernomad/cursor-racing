@@ -55,7 +55,7 @@
     R.setWorld(world);
     Game.world = world;
     Game.cars = []; Game.parts = []; Game.skids = []; Game.motes = [];
-    const diffMul = [0.9, 1, 1.06][Game.settings.difficulty] ?? 1;
+    const diffMul = [0.84, 1, 1.06][Game.settings.difficulty] ?? 1; // Easy: rivals top out about 16% slower
     if (opts.mode !== 'attract') {
       const p = opts.player;
       Game.player = makeCar({ id: 0, name: 'You', player: true, car: p.car, paint: p.paint, acc: CR.CARS.find((c) => c.id === p.car).paints[1], up: p.up });
@@ -63,7 +63,7 @@
     } else Game.player = null;
     if (opts.mode !== 'tt') {
       const rv = opts.rivals || CR.RIVALS.slice(0, 3);
-      rv.forEach((r, i) => Game.cars.push(makeCar({ id: i + 1, name: r.name, car: r.car, paint: r.paint, acc: r.acc, skill: (opts.ai || 1) * diffMul * (0.97 + i * 0.015), up: r.up })));
+      rv.forEach((r, i) => Game.cars.push(makeCar({ id: i + 1, name: r.name, car: r.car, paint: r.paint, acc: r.acc, skill: (opts.ai || 1) * diffMul * (0.97 + (rv.length > 1 ? i / (rv.length - 1) : 1) * 0.045), up: r.up })));
       if (opts.mode === 'attract') Game.cars.push(makeCar({ id: 9, name: 'Zip', car: 'zip', paint: '#ff4d5e', acc: '#ffd43b', skill: 0.95 }));
     }
     Game.laps = opts.laps || 3;
@@ -228,6 +228,9 @@
     if (a.stuckT > 1.1) { a.revT = 0.8; a.stuckT = 0; a.stuckN = (a.stuckN || 0) + 1; if (a.stuckN > 3) { respawn(c); a.stuckN = 0; } }
     if (a.revT > 0) { a.revT -= dt; return { steer: -steer, throttle: 0, brake: 1, boost: false }; }
     if (spd > 60) a.stuckN = 0;
+    // a rival that has been off the road for a while (fenced in by props, say) is put back on it
+    a.offT = Math.abs(c.lat) > w.hw + 6 && !c.air ? (a.offT || 0) + dt : 0;
+    if (a.offT > 3) { a.offT = 0; respawn(c); }
     c.aiTop = skill;
     return X().aiAdjust(c, { steer, throttle, brake, boost }, dt);
   }
@@ -235,7 +238,8 @@
     if (!Game.player || Game.mode === 'attract' || Game.ko) return 1;
     const gap = c.prog - Game.player.prog;
     if (Game.player.finished) return 1.02;
-    if (gap < -350) return 1.07; if (gap < -150) return 1.03; if (gap > 500) return 0.93; if (gap > 250) return 0.97;
+    const easy = Game.settings.difficulty === 0; // on Easy, rivals who fall behind barely catch up
+    if (gap < -350) return easy ? 1.02 : 1.07; if (gap < -150) return easy ? 1.0 : 1.03; if (gap > 500) return 0.93; if (gap > 250) return 0.97;
     return 1;
   }
 

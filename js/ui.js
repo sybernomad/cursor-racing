@@ -8,7 +8,7 @@
   const POINTS_BIG = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1]; // fields of more than four
   const pointsFor = (n, i) => (n <= 4 ? POINTS[i] : POINTS_BIG[i]) || 0;
   const REWARD = [120, 80, 50, 25];
-  const CUP_RIVALS = { rookie: ['Pip', 'Moxie', 'Rusty'], pro: ['Vex', 'Moxie', 'Pip'], mirror: ['Nova', 'Vex', 'Rusty'], champ: ['Nova', 'Glitch', 'Vex'], workshop: ['Rusty', 'Moxie', 'Vex'], tour: ['Glitch', 'Nova', 'Pip'], legend: ['Nova', 'Glitch', 'Vex'] };
+  const CUP_RIVALS = { twist: ['Blaze', 'Lola', 'Ace'], rookie: ['Pip', 'Moxie', 'Rusty'], pro: ['Vex', 'Moxie', 'Pip'], mirror: ['Nova', 'Vex', 'Rusty'], champ: ['Nova', 'Glitch', 'Vex'], workshop: ['Rusty', 'Moxie', 'Vex'], tour: ['Glitch', 'Nova', 'Pip'], legend: ['Nova', 'Glitch', 'Vex'] };
   const rival = (n) => CR.RIVALS.find((r) => r.name === n);
 
   // ---------------------------------------------------------------------------
@@ -387,7 +387,7 @@
       <div class="panel">
         <div class="set"><div class="lbl"><b>Touch controls</b><span>Stick: point your thumb where to go. Buttons: classic left/right.</span></div>${seg('s-ctl', [['stick', 'Stick'], ['buttons', 'Buttons']], s.controls)}</div>
         <div class="set"><div class="lbl"><b>Auto-accelerate</b><span>Buttons mode: the car drives itself forward</span></div>${tog('s-gas', s.autoGas)}</div>
-        <div class="set"><div class="lbl"><b>Difficulty</b><span>How hard the rivals drive. Takes effect next race.</span></div>${seg('s-diff', [[0, 'Easy'], [1, 'Normal'], [2, 'Hard']], s.diff)}</div>
+        <div class="set"><div class="lbl"><b>Difficulty</b><span>How fast the rivals drive. On Easy they are slower and don't catch up as hard. Takes effect next race.</span></div>${seg('s-diff', [[0, 'Easy'], [1, 'Normal'], [2, 'Hard']], s.diff)}</div>
         <div class="set"><div class="lbl"><b>Graphics</b><span>Lower it if the game stutters</span></div>${seg('s-q', [['low', 'Low'], ['medium', 'Med'], ['high', 'High']], s.quality)}</div>
         <div class="set"><div class="lbl"><b>Tilt-shift blur</b><span>The miniature look at the top and bottom</span></div>${tog('s-dof', s.dof)}</div>
         <div class="set"><div class="lbl"><b>Bloom</b><span>Glow on lights and shiny things</span></div>${tog('s-bloom', s.bloom)}</div>

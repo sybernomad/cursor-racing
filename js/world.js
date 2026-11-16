@@ -185,6 +185,8 @@
       for (const z of this.zones) if (inEll(z, x, y)) return z.type === 'slick' ? S.slick : S.sticky;
       for (const b of this.boosts) if (inEll(b, x, y)) return S.boost;
       if (Math.abs(lat) <= this.hw) return S.track;
+      // where the road crosses itself, the other stretch of road counts as road too
+      if (this.def.cross && this.nearestGlobal(x, y, this.hw + 80).d <= this.hw) return S.track;
       return this.roughS || (this.roughS = { type: 'rough', grip: this.theme.rough.grip, top: this.theme.rough.top });
     }
     rampHeight(x, y) { // height of a ramp under a point, 0 if none. Also returns slope end flag

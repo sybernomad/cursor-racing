@@ -2,9 +2,11 @@
 
 A top-down toy-car racer with a **pixel-art diorama** look: chunky voxel cars and pixel-art sprites on a lit
 3D tabletop, with real-time shadows, bloom, a tilt-shift "miniature" blur, vignette and colour grading.
-Race tiny cars across 12 tabletops (24 courses counting mirrored versions): a kitchen table, a study
+Race tiny cars on 15 tracks (30 courses counting mirrored versions): a kitchen table, a study
 desk, a backyard sandbox, a pool table, a bathroom counter, a bedroom at night, a garage workbench, a
-gaming desk, a baking counter, a frosty windowsill, a picnic blanket and a model railway town. Drive off the edge and you drop to the floor.
+gaming desk, a baking counter, a frosty windowsill, a picnic blanket and a model railway town. Three
+of the tables have a second layout: Lucky Clover (four big loops round a central roundabout), Pretzel
+Twist (hairpin after hairpin) and Night Oval (a wide, fast oval for big fields). Drive off the edge and you drop to the floor.
 
 Installable **Progressive Web App** with offline play and automatic updates. No build step and
 no dependencies: open `index.html` or serve the folder.
@@ -37,8 +39,8 @@ Use a power-up with **ITEM** on touch, E or Q on a keyboard, Y or LB on a gamepa
 
 - **Driving Lesson:** a short guided race that teaches steering, drifting, boost and power-ups one
   step at a time. Offered on first launch, pays 100 coins the first time, replayable from the menu.
-- **Championship:** seven cups of three races: Rookie, Pro, Workshop, Mirror, Grand Tour, Champion and
-  Legend. Finish a cup on the podium to open the next one; winning some cups gives you a new car.
+- **Championship:** eight cups of three races: Rookie, Pro, Workshop, Mirror, Grand Tour, Twister, Champion
+  and Legend. Finish a cup on the podium to open the next one; winning some cups gives you a new car.
   Mirror, Champion and Legend run tracks in reverse. Options on the cup screen: field of 4, 8, 12 or
   20 cars, 2/3/5 laps, power-ups on or off. Points are 10/6/3/1 with four cars, and
   25/18/15/12/10/8/6/4/2/1 for the top ten in bigger fields. Once the Mirror Cup is open, every open
@@ -106,6 +108,7 @@ Tracks live in `js/tracks.js`. Each one is a closed loop of points on a table `W
 - `ramps`, `boosts`: placed by lap fraction,
 - `pieces`: big props at fixed spots (they are skipped, with a console warning, if they'd sit on the road),
 - `balls`: pushable pool balls.
+- `cross: true`: set this when the road crosses itself, so the other stretch counts as road at the crossing.
 - `hazards`: `sweeper` (swinging arm from one side), `shuttle` (something sliding across the road; a `train` look gets a level crossing), `bumper`, `spring`,
 - a ramp with `gap: <length>` gets a drop just past it; cars respawn on the far side.
 

@@ -211,6 +211,11 @@
     },
   };
 
+  // Clover-leaf centreline: a four-petal rose pulled slightly open (k < 1), so the petals miss the
+  // exact centre and swirl round it instead.
+  function cloverAt(cx, cy, S, k, f) { const t = f * Math.PI * 2; return [Math.round(cx + S * (Math.cos(t) + k * Math.cos(3 * t))), Math.round(cy + S * (Math.sin(t) - k * Math.sin(3 * t)))]; }
+  function clover(cx, cy, S, k, n) { const out = []; for (let i = 0; i < n; i++) out.push(cloverAt(cx, cy, S, k, i / n)); return out; }
+
   // ---------- tracks ----------
   const TRACKS = [
     {
@@ -223,7 +228,7 @@
       hazards: [{ type: 'sweeper', t: 0.3, side: 1, look: 'spoon' }, { type: 'bumper', t: 0.52, off: -32 }, { type: 'bumper', t: 0.53, off: 30 }, { type: 'spring', t: 0.88, off: -20 }],
     },
     {
-      id: 'desk', name: 'Desk Dash', theme: 'desk', W: 2400, H: 1600, width: 125, seed: 23, start: [700, 335],
+      id: 'desk', name: 'Desk Dash', theme: 'desk', W: 2400, H: 1600, width: 125, seed: 23, cross: true, start: [700, 335],
       pts: [[420, 400], [900, 300], [1200, 800], [1500, 1300], [2000, 1250], [2120, 800], [2000, 360], [1500, 300], [1200, 800], [900, 1300], [400, 1220], [300, 800]],
       zones: [{ t: 0.3, off: 0, rx: 60, ry: 45, type: 'sticky', look: 'ink' }],
       ramps: [{ t: 0.56, len: 30, look: 'ruler', gap: 46 }, { t: 0.05, len: 26, look: 'book' }],
@@ -323,6 +328,37 @@
       pieces: [['house', 1300, 750], ['house', 1150, 600, 0.6], ['house', 1700, 900], ['tree', 1450, 950], ['house', 700, 900], ['tree', 900, 750], ['house', 2000, 1250, 1.2]],
       hazards: [{ type: 'shuttle', t: 0.65, look: 'train', speed: 0.45 }, { type: 'sweeper', t: 0.25, side: 1, look: 'barrier' }],
     },
+    {
+      // Four big loops that swirl round a little roundabout in the middle. The four passes there all
+      // circle the same way, so cars cross each other's paths at right angles, never head-on.
+      id: 'clover', name: 'Lucky Clover', theme: 'picnic', W: 2500, H: 2500, width: 118, seed: 131, cross: true,
+      pts: clover(1250, 1250, 585, 0.8, 56), start: cloverAt(1250, 1250, 585, 0.8, 0.07),
+      zones: [{ t: 0.5, off: 0, rx: 80, ry: 50, type: 'slick', look: 'lemonade' }, { t: 0.985, off: 0, rx: 70, ry: 48, type: 'sticky', look: 'ketchup' }],
+      ramps: [{ t: 0.56, len: 26, look: 'bread' }],
+      boosts: [{ t: 0.3, off: 0 }, { t: 0.8, off: 0 }],
+      pieces: [['bumper', 1250, 1250], ['sandwich', 1250, 480], ['melon', 2020, 1250, 1.57], ['apple', 1250, 2020], ['juicebox', 480, 1250], ['apple', 1820, 680], ['juicebox', 680, 1820]],
+      hazards: [{ type: 'sweeper', t: 0.72, side: 1, look: 'straw' }, { type: 'shuttle', t: 0.24, look: 'beetle', speed: 0.6 }],
+    },
+    {
+      // Seven hairpins back to back, then one long straight home.
+      id: 'pretzel', name: 'Pretzel Twist', theme: 'bakery', W: 2350, H: 1720, width: 115, seed: 137,
+      pts: [[300, 1050], [300, 450], [465, 270], [630, 450], [630, 1050], [795, 1230], [960, 1050], [960, 450], [1125, 270], [1290, 450], [1290, 1050], [1455, 1230], [1620, 1050], [1620, 450], [1785, 270], [1950, 450], [1950, 1050], [2070, 1330], [1850, 1490], [1100, 1510], [480, 1490], [270, 1330]],
+      zones: [{ t: 0.3, off: 0, rx: 70, ry: 48, type: 'slick', look: 'flour' }, { t: 0.55, off: 0, rx: 60, ry: 45, type: 'sticky', look: 'batter' }],
+      ramps: [],
+      boosts: [{ t: 0.78, off: 0 }, { t: 0.93, off: 0 }],
+      pieces: [['flour', 465, 760], ['measure', 1125, 800], ['cookie', 1785, 760], ['egg', 795, 600], ['egg', 1455, 640], ['rollingpin', 2230, 600, 1.57]],
+      hazards: [{ type: 'sweeper', t: 0.42, side: 1, look: 'spoon' }, { type: 'shuttle', t: 0.86, look: 'pin', speed: 0.55 }, { type: 'spring', t: 0.12, off: 0 }],
+    },
+    {
+      // A wide, fast oval with one chicane: made for big fields and slipstreaming.
+      id: 'oval', name: 'Night Oval', theme: 'toybox', W: 2700, H: 1560, width: 150, seed: 139, start: [1350, 262],
+      pts: [[520, 300], [1350, 260], [2180, 300], [2440, 780], [2180, 1250], [1600, 1290], [1350, 1130], [1100, 1290], [520, 1250], [260, 780]],
+      zones: [{ t: 0.38, off: 30, rx: 60, ry: 40, type: 'sticky', look: 'slime' }],
+      ramps: [{ t: 0.84, len: 28, look: 'block' }],
+      boosts: [{ t: 0.22, off: 0 }, { t: 0.5, off: 0 }, { t: 0.72, off: 0 }],
+      pieces: [['lamp', 1350, 620], ['robot', 900, 780], ['robot', 1800, 780], ['lamp', 1350, 1440], ['block', 1350, 880]],
+      hazards: [{ type: 'bumper', t: 0.3, off: -40 }, { type: 'bumper', t: 0.31, off: 40 }, { type: 'sweeper', t: 0.95, side: -1, look: 'glow' }],
+    },
   ];
 
   // Cups: each race is [trackIndex, reversed]
@@ -332,6 +368,7 @@
     { id: 'workshop', name: 'Workshop Cup', races: [[6, false], [7, false], [8, false]], ai: 0.98, reward: 650, unlock: 'hover' },
     { id: 'mirror', name: 'Mirror Cup', races: [[0, true], [1, true], [2, true]], ai: 1.0, reward: 800, unlock: 'truck' },
     { id: 'tour', name: 'Grand Tour Cup', races: [[9, false], [10, false], [11, false]], ai: 1.02, reward: 1000, unlock: 'muscle' },
+    { id: 'twist', name: 'Twister Cup', races: [[12, false], [13, false], [14, false]], ai: 1.03, reward: 1100, unlock: 'dome' },
     { id: 'champ', name: 'Champion Cup', races: [[3, true], [4, true], [5, true]], ai: 1.04, reward: 1200, unlock: 'formula' },
     { id: 'legend', name: 'Legend Cup', races: [[7, true], [9, true], [11, true]], ai: 1.07, reward: 1600, unlock: 'jet' },
   ];
