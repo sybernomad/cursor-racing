@@ -25,6 +25,18 @@
   S.save = function () { try { localStorage.setItem(KEY, JSON.stringify(S.data)); } catch (e) { /* storage full or blocked */ } };
   S.reset = function () { try { localStorage.removeItem(KEY); for (const k of Object.keys(localStorage)) if (k.startsWith('cr-ghost-')) localStorage.removeItem(k); } catch (e) { /* ignore */ } S.load(); S.save(); };
 
+  // Backup code: the whole save as text, so it can be copied to another device or kept safe. Ghosts are not included.
+  S.exportCode = () => 'CR1.' + btoa(unescape(encodeURIComponent(JSON.stringify(S.data))));
+  S.importCode = (code) => {
+    try {
+      const m = String(code).trim().match(/^CR1\.([A-Za-z0-9+/=\s]+)$/); if (!m) return false;
+      const d = JSON.parse(decodeURIComponent(escape(atob(m[1].replace(/\s+/g, '')))));
+      if (!d || typeof d !== 'object' || typeof d.coins !== 'number' || !d.owned || !d.settings) return false;
+      if (!CR.CARS.some((c) => c.id === d.car)) d.car = 'zip';
+      d.owned.zip = true;
+      localStorage.setItem(KEY, JSON.stringify(d)); S.load(); return true;
+    } catch (e) { return false; }
+  };
   S.ups = (car) => S.data.up[car] || (S.data.up[car] = { eng: 0, grip: 0, boost: 0 });
   S.paintOf = (car) => S.data.paint[car] || CR.CARS.find((c) => c.id === car).paints[0];
   S.upCost = (car, kind) => { const lv = S.ups(car)[kind]; if (lv >= 5) return null; const pr = CR.CARS.find((c) => c.id === car).price; return Math.round(120 * (lv + 1) * (1 + pr / 1600) / 10) * 10; };

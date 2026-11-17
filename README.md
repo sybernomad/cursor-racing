@@ -44,7 +44,11 @@ Use a power-up with **ITEM** on touch, E or Q on a keyboard, Y or LB on a gamepa
   Mirror, Champion and Legend run tracks in reverse. Options on the cup screen: field of 4, 8, 12 or
   20 cars, 2/3/5 laps, power-ups on or off. Points are 10/6/3/1 with four cars, and
   25/18/15/12/10/8/6/4/2/1 for the top ten in bigger fields. Once the Mirror Cup is open, every open
-  track can also be raced mirrored in Quick Race, Time Trial and Knockout.
+  track can also be raced mirrored in Quick Race, Time Trial and Knockout. Each race after the first
+  starts in the previous race's finishing order. A cup gives you three retries: restarting a race, or
+  quitting and coming back, uses one, and with none left the race is forfeited (scored as last place).
+  While a cup is running, the Championship button shows its standings with Continue, Restart cup and
+  Abandon cup.
 - **Quick Race:** any open track, 1 to 9 laps, **1 to 19 rivals** (a full 20-car grid), power-ups on or off.
 - **Time Trial:** solo, races against a ghost of your best lap (saved per track).
 - **Knockout:** the camera follows the leader. Anyone who falls off the screen (or off the table)
@@ -55,6 +59,11 @@ Use a power-up with **ITEM** on touch, E or Q on a keyboard, Y or LB on a gamepa
   dragon, a burger, a pencil and a jet. Search by name or description, sort by price, top speed,
   acceleration, grip or weight, and filter (can afford, off-road, floats, jumpers, fast boost, heavy,
   light). Each car has its own stats and some have a trick. A few cars are also cup prizes.
+- **Records:** career stats, a trophy for each cup, and best lap and race times for every track.
+- **Save backup:** Settings has Back up save (a code to copy) and Restore save (paste it back, on any
+  device). Time Trial ghosts are not included.
+- **Developer options:** at the bottom of Settings, for testing: add 10,000 coins, unlock all cars,
+  open all cups, reset the driving lesson. Remove the `details.dev` block in `js/ui.js` to hide them.
 - **Obstacles toggle:** Quick Race, Knockout and the Championship each have an Obstacles switch. Off
   gives a clear road: no moving hazards, bumpers, springs, jump gaps, spills or loose pool balls.
   Ramps and boost pads stay. Time Trial always runs with obstacles so best laps stay comparable.
@@ -98,6 +107,12 @@ Progress is saved in `localStorage`.
 4. Push. Installed copies check for updates on launch, when brought back to the foreground and every
    20 minutes. The new version downloads in the background and is applied the next time the player
    is on a menu (never mid-race). Settings has a manual "Check for updates" button.
+
+## Tuning the economy
+
+Two numbers set how long the collection takes: `PRICE_SCALE` in `js/tracks.js` scales every car's
+price, and `PAY` in `js/ui.js` multiplies every race and cup payout. `CUP_RETRIES` (also `js/ui.js`)
+is the number of restarts allowed per cup.
 
 ## Adding or tuning tracks
 

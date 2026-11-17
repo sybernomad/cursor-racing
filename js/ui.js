@@ -8,6 +8,15 @@
   const POINTS_BIG = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1]; // fields of more than four
   const pointsFor = (n, i) => (n <= 4 ? POINTS[i] : POINTS_BIG[i]) || 0;
   const REWARD = [120, 80, 50, 25];
+  const PAY = 3;          // every race and cup payout is multiplied by this. Raise it to make coins come faster.
+  const CUP_RETRIES = 3;  // restarts allowed per cup
+  const retriesLeft = (run) => (run.retries == null ? CUP_RETRIES : run.retries);
+  // Rivals sometimes turn up in a different car, so the whole collection shows up on track. maxTop caps how fast a car they may pick.
+  function recast(r, maxTop = 9, chance = 0.6) {
+    if (Math.random() > chance) return r;
+    const pool = CR.CARS.filter((c) => c.top <= maxTop), c = pool[Math.floor(Math.random() * pool.length)];
+    return c ? { ...r, car: c.id, paint: c.paints[0], acc: c.paints[1] } : r;
+  }
   const CUP_RIVALS = { twist: ['Blaze', 'Lola', 'Ace'], rookie: ['Pip', 'Moxie', 'Rusty'], pro: ['Vex', 'Moxie', 'Pip'], mirror: ['Nova', 'Vex', 'Rusty'], champ: ['Nova', 'Glitch', 'Vex'], workshop: ['Rusty', 'Moxie', 'Vex'], tour: ['Glitch', 'Nova', 'Pip'], legend: ['Nova', 'Glitch', 'Vex'] };
   const rival = (n) => CR.RIVALS.find((r) => r.name === n);
 
@@ -39,7 +48,7 @@
   UI.attract = function () {
     if (Game.on && Game.mode === 'attract') return;
     const t = Math.floor(Math.random() * CR.TRACKS.length);
-    const rv = CR.RIVALS.slice().sort(() => Math.random() - 0.5).slice(0, 7);
+    const rv = CR.RIVALS.slice().sort(() => Math.random() - 0.5).slice(0, 7).map((r) => recast(r));
     Game.start({ mode: 'attract', track: t, reversed: Math.random() < 0.3, rivals: rv, ai: 1, items: true });
     Audio.setMusic('menu');
   };
@@ -67,6 +76,7 @@
         <button class="btn cyan" id="m-garage"><span class="ico">🔧</span>Garage<span class="sub">Your cars, paint and upgrades</span></button>
         <button class="btn cyan" id="m-shop"><span class="ico">🛒</span>Car Shop<span class="sub">${CR.CARS.filter((c) => !d.owned[c.id]).length} cars to collect</span></button>
         <button class="btn ghost" id="m-set"><span class="ico">⚙️</span>Settings<span class="sub">Controls, graphics, sound</span></button>
+        <button class="btn ghost" id="m-rec"><span class="ico">📊</span>Records<span class="sub">Trophies, best laps, career stats</span></button>
         <button class="btn ghost" id="m-tutb"><span class="ico">🎓</span>Driving Lesson<span class="sub">${d.tutorialDone ? 'Replay the tutorial race' : 'Learn the ropes, earn 100 coins'}</span></button>
         ${UI.install ? '<button class="btn ghost" id="m-inst"><span class="ico">📲</span>Install<span class="sub">Add to your home screen</span></button>' : ''}
         ${UI.iosHint ? '<button class="btn ghost" id="m-ios"><span class="ico">📲</span>Install<span class="sub">How to add to iPhone / iPad</span></button>' : ''}
@@ -74,7 +84,7 @@
       <p class="muted small" style="margin-top:16px">Stats: ${d.stats.races} races, ${d.stats.wins} wins, ${d.stats.cups} cups. <span class="spacer"></span><span style="float:right">v${UI.version}</span></p>
     </div>`;
     show('menu'); UI.attract();
-    click($('#m-champ'), () => (run ? continueCup() : renderCups()));
+    click($('#m-champ'), () => (run ? renderCupRun() : renderCups()));
     click($('#m-quick'), () => renderTracks('quick'));
     click($('#m-tt'), () => renderTracks('tt'));
     click($('#m-ko'), () => renderTracks('ko'));
@@ -82,6 +92,7 @@
     click($('#m-shop'), () => renderShop());
     click($('#m-set'), () => renderSettings());
     click($('#m-tutb'), startTutorial);
+    click($('#m-rec'), renderRecords);
     if (UI.install) click($('#m-inst'), async () => { const p = UI.install; UI.install = null; p.prompt(); try { await p.userChoice; } catch (e) { /* */ } renderMenu(); });
     if (UI.iosHint) click($('#m-ios'), () => modal(`<h2>Install on iPhone / iPad</h2><ol class="help"><li>Open this page in <b>Safari</b>.</li><li>Tap the <b>Share</b> button.</li><li>Choose <b>Add to Home Screen</b>.</li></ol><p class="muted small">It then runs full screen and works offline.</p><div class="actions"><button class="btn primary" id="m-ok">Got it</button></div>`, (m) => click($('#m-ok', m), closeModal)));
     if (!Save.data.seenHelp) { Save.data.seenHelp = true; Save.save(); setTimeout(() => modal(`<h2>Welcome to Cursor Racing</h2><p class="muted">New here? A two-minute driving lesson covers steering, drifting, boost and power-ups, and pays 100 coins.</p><div class="actions"><button class="btn ghost" id="m-skip">Skip</button><button class="btn primary" id="m-tut">Driving lesson</button></div>`, (m) => { click($('#m-skip', m), closeModal, 'back'); click($('#m-tut', m), () => { closeModal(); startTutorial(); }); }), 400); }
@@ -146,7 +157,7 @@
       card.innerHTML = `<img class="thumb" src="${thumb(cup.races[0][0], cup.races[0][1])}" alt="">
         <span class="tag">${open ? (st.best ? ['', 'Gold', 'Silver', 'Bronze'][st.best] || '' : 'Open') : 'Locked'}</span>
         <h3><span class="trophy g${st.best && st.best <= 3 ? st.best : 0}"></span>${cup.name}</h3><div class="meta">${tr}</div>
-        <div class="meta">Reward ${cup.reward} coins${cup.unlock ? ' + ' + CR.CARS.find((c) => c.id === cup.unlock).name : ''}${i > 0 && !open ? ' · Podium in ' + CR.CUPS[i - 1].name : ''}</div>`;
+        <div class="meta">Reward ${(cup.reward * PAY).toLocaleString()} coins${cup.unlock ? ' + ' + CR.CARS.find((c) => c.id === cup.unlock).name : ''}${i > 0 && !open ? ' · Podium in ' + CR.CUPS[i - 1].name : ''}</div>`;
       if (open) click(card, () => startCup(i));
       list.appendChild(card);
     });
@@ -159,16 +170,60 @@
     const rest = CR.RIVALS.map((r) => r.name).filter((n) => !names.includes(n)).sort(() => Math.random() - 0.5);
     while (names.length < S.cupRivals && rest.length) names.push(rest.pop());
     const pts = { You: 0 }; for (const n of names) pts[n] = 0;
-    Save.data.cupRun = { cup: cup.id, race: 0, pts, names, laps: S.cupLaps, items: !!S.cupItems, hazards: S.cupHazards !== false }; Save.save();
+    // the fill-in rivals may bring a different car (kept for the whole cup); early cups only get slower ones
+    const cars = {};
+    const cap = 0.66 + i * 0.05, topOf = (id) => CR.CARS.find((c) => c.id === id).top;
+    names.slice(3).forEach((n) => { const own = rival(n), r = recast(own, cap, topOf(own.car) > cap ? 1 : 0.6); if (r.car !== own.car) cars[n] = r.car; });
+    Save.data.cupRun = { cup: cup.id, race: 0, pts, names, cars, laps: S.cupLaps, items: !!S.cupItems, hazards: S.cupHazards !== false, retries: CUP_RETRIES, live: false }; Save.save();
     continueCup();
   }
   function continueCup() {
     const run = Save.data.cupRun, ci = CR.CUPS.findIndex((c) => c.id === run.cup), cup = CR.CUPS[ci];
+    if (run.race >= cup.races.length) return renderStandings();
+    // a race that was started and not finished (restarted, quit, or the app closed) costs a retry
+    if (run.live) {
+      if (retriesLeft(run) > 0) run.retries = retriesLeft(run) - 1;
+      else { forfeitCupRace(); return renderStandings(); }
+    }
+    run.live = true; Save.save();
     const [t, rev] = cup.races[run.race];
     const lvl = Math.min(5, ci + 1);
     const names = run.names || CUP_RIVALS[cup.id]; // runs saved by older versions have no names
-    const rivals = names.map((n) => ({ ...rival(n), up: { eng: lvl, grip: lvl - 1, boost: lvl - 1 } }));
+    const rivals = names.map((n) => {
+      const r = rival(n), cid = run.cars && run.cars[n], c = cid && CR.CARS.find((x) => x.id === cid);
+      return { ...r, ...(c ? { car: c.id, paint: c.paints[0], acc: c.paints[1] } : {}), up: { eng: lvl, grip: lvl - 1, boost: lvl - 1 } };
+    });
     startRace({ mode: 'race', track: t, reversed: rev, laps: run.laps || 3, items: !!run.items, hazards: run.hazards !== false, ai: cup.ai, rivals, cup: ci, grid: run.grid || null });
+  }
+  // out of retries: the race is scored with you last and the rivals in their current cup order
+  function forfeitCupRace() {
+    const run = Save.data.cupRun;
+    const order = Object.keys(run.pts).filter((n) => n !== 'You').sort((a, b) => run.pts[b] - run.pts[a]).concat('You');
+    order.forEach((n, i) => { run.pts[n] += pointsFor(order.length, i); });
+    run.grid = order; run.race++; run.live = false; Save.save();
+    UI.toast('Race forfeited: no retries left');
+  }
+  // the cup you're in the middle of: standings, options, and a way out
+  function renderCupRun() {
+    const d = Save.data, run = d.cupRun; if (!run) return renderCups();
+    const ci = CR.CUPS.findIndex((c) => c.id === run.cup), cup = CR.CUPS[ci];
+    if (run.race >= cup.races.length) return renderStandings();
+    const el = $('#scr-standings'), list = Object.entries(run.pts).sort((a, b) => b[1] - a[1]), [t, rev] = cup.races[run.race], left = retriesLeft(run);
+    el.innerHTML = `<div class="wrap" style="max-width:620px">${topbar(cup.name)}<div class="panel">
+      <h2>Race ${run.race + 1} of ${cup.races.length} · ${CR.TRACKS[t].name}${rev ? ' R' : ''}</h2>
+      <div class="tags" style="margin:8px 0">${[`${list.length} cars`, `${run.laps || 3} laps`, run.items ? 'Power-ups on' : 'No power-ups', run.hazards !== false ? 'Obstacles on' : 'Clear road', `${left} ${left === 1 ? 'retry' : 'retries'} left`].map((x) => `<span>${x}</span>`).join('')}</div>
+      ${run.live ? `<p class="muted small">You left a race unfinished. ${left ? 'Continuing uses one retry.' : 'You have no retries left, so continuing forfeits it.'}</p>` : ''}
+      <table class="table"><tr><th>#</th><th>Driver</th><th class="num">Points</th></tr>${list.map(([n, p], i) => `<tr class="${n === 'You' ? 'me' : ''}"><td>${i + 1}</td><td>${n}</td><td class="num">${p}</td></tr>`).join('')}</table>
+      ${run.grid ? `<p class="muted small" style="text-align:center;margin:10px 0 0">You line up ${U.ordinal(run.grid.indexOf('You') + 1)} of ${run.grid.length}.</p>` : ''}
+      <div class="actions"><button class="btn primary" id="cr-go">${run.live && !left ? 'Forfeit race' : 'Continue'}</button><button class="btn" id="cr-rst">Restart cup</button><button class="btn ghost" id="cr-quit">Abandon cup</button></div>
+    </div></div>`;
+    click($('#cr-go', el), continueCup);
+    click($('#cr-rst', el), () => confirmBox('Restart this cup?', 'Points go back to zero and you start again from race 1, with the same rivals and options.', 'Restart', () => {
+      for (const k of Object.keys(run.pts)) run.pts[k] = 0;
+      run.race = 0; run.grid = null; run.retries = CUP_RETRIES; run.live = false; Save.save(); renderCupRun();
+    }));
+    click($('#cr-quit', el), () => confirmBox('Abandon this cup?', 'Your points in this cup are lost. Coins you earned in its races are kept.', 'Abandon', () => { d.cupRun = null; Save.save(); renderCups(); }));
+    bind(el); show('standings');
   }
 
   // ---------------------------------------------------------------------------
@@ -219,31 +274,54 @@
   function renderTracks(mode) {
     const d = Save.data, el = $('#scr-tracks');
     const title = { quick: 'Quick Race', tt: 'Time Trial', ko: 'Knockout' }[mode];
-    UI.pick = UI.pick || { t: 0, rev: false };
+    const mirrorOpen = Save.cupUnlocked('mirror'), rev = mirrorOpen && !!UI.trkMirror;
     el.innerHTML = `<div class="wrap">${topbar(title)}
       ${mode !== 'tt' ? setupPanel(mode) : ''}
-      <div class="cards" id="tl"></div></div>`;
-    const tl = $('#tl', el);
-    for (const rev of [false, true]) CR.TRACKS.forEach((tr, ti) => {
-      const open = Save.trackOpen(ti, rev);
-      if (rev && !open) return;
-      const b = Save.bestOf(ti, rev), th = CR.THEMES[tr.theme];
-      const card = document.createElement('div'); card.className = 'card' + (open ? '' : ' locked');
-      card.innerHTML = `<img class="thumb" src="${thumb(ti, rev)}" alt=""><span class="tag">${open ? (rev ? 'Mirror' : th.name) : 'Locked'}</span>
-        <h3>${tr.name}${rev ? ' R' : ''}</h3><div class="meta">Best lap ${U.fmtTime(b.lap)} · Race ${U.fmtTime(b.race)}</div>`;
-      if (open) click(card, () => {
-        const ghost = mode === 'tt' ? Save.ghost(ti, rev) : null;
-        const S = d.settings, nR = mode === 'ko' ? U.clamp(S.koRivals, 3, 7) : U.clamp(S.rivals, 1, 19);
-        const pool = mode === 'tt' ? [] : CR.RIVALS.slice().sort(() => Math.random() - 0.5).slice(0, nR);
-        const top = CR.CUPS.reduce((m, c) => (Save.cupUnlocked(c.id) ? c.ai : m), 0.9);
-        const lvl = CR.CUPS.filter((c) => Save.cupUnlocked(c.id)).length;
-        startRace({ mode: mode === 'quick' ? 'race' : mode, track: ti, reversed: rev, laps: mode === 'quick' ? d.settings.laps : 3, items: mode !== 'tt' && d.settings.items, hazards: mode === 'tt' ? true : d.settings.hazards, ai: top, rivals: pool.map((r) => ({ ...r, up: { eng: lvl, grip: lvl - 1, boost: lvl - 1 } })), ghost: ghost && ghost.data, bestLap: b.lap, koTarget: 4, quick: mode });
-      });
-      else card.title = 'Open its cup in the Championship first';
-      tl.appendChild(card);
+      ${mirrorOpen ? `<div class="row" style="margin-bottom:4px"><div class="seg" id="t-dir"><button data-v="0" class="${rev ? '' : 'on'}">Normal</button><button data-v="1" class="${rev ? 'on' : ''}">Mirror</button></div><span class="muted small">Mirror runs every track the other way round.</span></div>` : ''}
+      <div id="tl"></div></div>`;
+    const tl = $('#tl', el), seen = new Set();
+    // grouped by the cup that opens them
+    CR.CUPS.forEach((cup, ci) => {
+      const tis = cup.races.filter(([t, r]) => !r && !seen.has(t)).map(([t]) => t);
+      if (!tis.length) return;
+      tis.forEach((t) => seen.add(t));
+      const cupOpen = Save.cupUnlocked(cup.id), how = ci ? `Finish on the podium in the ${CR.CUPS[ci - 1].name} to open these.` : '';
+      const h = document.createElement('h2'); h.className = 'grp'; h.innerHTML = `${cup.name}${cupOpen ? '' : ` <span>Locked</span>`}`; tl.appendChild(h);
+      if (!cupOpen) { const p = document.createElement('p'); p.className = 'muted small'; p.style.margin = '0 0 8px'; p.textContent = how; tl.appendChild(p); }
+      const box = document.createElement('div'); box.className = 'cards'; tl.appendChild(box);
+      for (const ti of tis) {
+        const tr = CR.TRACKS[ti], open = Save.trackOpen(ti, rev), b = Save.bestOf(ti, rev), th = CR.THEMES[tr.theme];
+        const card = document.createElement('div'); card.className = 'card' + (open ? '' : ' locked');
+        card.innerHTML = `<img class="thumb" src="${thumb(ti, rev)}" alt=""><span class="tag">${open ? (rev ? 'Mirror' : th.name) : 'Locked'}</span>
+          <h3>${tr.name}${rev ? ' R' : ''}</h3><div class="meta">${open ? `Best lap ${U.fmtTime(b.lap)} · Race ${U.fmtTime(b.race)}` : `Opens with the ${cup.name}`}</div>`;
+        if (open) click(card, () => {
+          const ghost = mode === 'tt' ? Save.ghost(ti, rev) : null;
+          const S = d.settings, nR = mode === 'ko' ? U.clamp(S.koRivals, 3, 7) : U.clamp(S.rivals, 1, 19);
+          const pool = mode === 'tt' ? [] : CR.RIVALS.slice().sort(() => Math.random() - 0.5).slice(0, nR).map((r) => recast(r));
+          const top = CR.CUPS.reduce((m, c) => (Save.cupUnlocked(c.id) ? c.ai : m), 0.9);
+          const lvl = CR.CUPS.filter((c) => Save.cupUnlocked(c.id)).length;
+          startRace({ mode: mode === 'quick' ? 'race' : mode, track: ti, reversed: rev, laps: mode === 'quick' ? d.settings.laps : 3, items: mode !== 'tt' && d.settings.items, hazards: mode === 'tt' ? true : d.settings.hazards, ai: top, rivals: pool.map((r) => ({ ...r, up: { eng: lvl, grip: lvl - 1, boost: lvl - 1 } })), ghost: ghost && ghost.data, bestLap: b.lap, koTarget: 4, quick: mode });
+        });
+        else click(card, () => UI.toast(`Opens with the ${cup.name}. ${how}`, 3200), 'error');
+        box.appendChild(card);
+      }
     });
+    el.querySelectorAll('#t-dir button').forEach((b) => click(b, () => { UI.trkMirror = b.dataset.v === '1'; renderTracks(mode); }));
     bindSetup(el, mode);
     bind(el); show('tracks');
+  }
+
+  // Records: career stats, trophies and best times in one place
+  function renderRecords() {
+    const d = Save.data, el = $('#scr-records'), s = d.stats, mirror = Save.cupUnlocked('mirror');
+    const box = (l, v) => `<div><b>${v}</b><span>${l}</span></div>`;
+    el.innerHTML = `<div class="wrap">${topbar('Records')}
+      <div class="panel"><h2>Career</h2><div class="statgrid">${box('Races', s.races)}${box('Wins', s.wins)}${box('Podiums', s.podiums)}${box('Cups won', s.cups)}${box('Knockout wins', s.koWins)}${box('Coins earned', s.coinsEarned.toLocaleString())}${box('Cars owned', CR.CARS.filter((c) => d.owned[c.id]).length + ' / ' + CR.CARS.length)}</div></div>
+      <div class="panel" style="margin-top:12px"><h2>Trophies</h2><div class="trophies">${CR.CUPS.map((c) => { const st = d.cups[c.id] || {}; return `<div class="${st.unlocked ? '' : 'off'}"><span class="trophy g${st.best || 0}"></span><b>${c.name}</b><span class="muted small">${st.best ? ['', 'Gold', 'Silver', 'Bronze'][st.best] : st.unlocked ? 'No trophy yet' : 'Locked'}</span></div>`; }).join('')}</div></div>
+      <div class="panel" style="margin-top:12px"><h2>Track records</h2><table class="table"><tr><th>Track</th><th class="num">Best lap</th><th class="num">Best race</th>${mirror ? '<th class="num">Mirror lap</th>' : ''}</tr>
+        ${CR.TRACKS.map((t, i) => { const a = Save.bestOf(i, false), m = Save.bestOf(i, true); return `<tr><td>${t.name}</td><td class="num">${U.fmtTime(a.lap)}</td><td class="num">${U.fmtTime(a.race)}</td>${mirror ? `<td class="num">${U.fmtTime(m.lap)}</td>` : ''}</tr>`; }).join('')}</table>
+        <p class="muted small" style="margin-bottom:0">Best race is your quickest finish at any lap count.</p></div></div>`;
+    bind(el); show('records');
   }
 
   // race setup: laps, field size, power-ups
@@ -397,7 +475,8 @@
         <div class="set"><div class="lbl"><b>Sound effects</b></div><input type="range" id="s-sfx" min="0" max="1" step="0.05" value="${s.sfx}"></div>
         <div class="set"><div class="lbl"><b>Music</b></div><input type="range" id="s-mus" min="0" max="1" step="0.05" value="${s.music}"></div>
       </div>
-      <div class="actions"><button class="btn" id="s-help">How to play</button><button class="btn" id="s-tut">Driving lesson</button><button class="btn" id="s-upd">Check for updates</button><button class="btn" id="s-cred">Credits</button><button class="btn ghost" id="s-reset">Reset progress</button></div>
+      <div class="actions"><button class="btn" id="s-help">How to play</button><button class="btn" id="s-tut">Driving lesson</button><button class="btn" id="s-upd">Check for updates</button><button class="btn" id="s-cred">Credits</button><button class="btn" id="s-bak">Back up save</button><button class="btn" id="s-rst">Restore save</button><button class="btn ghost" id="s-reset">Reset progress</button></div>
+      <details class="dev" ${UI.devOpen ? 'open' : ''}><summary>Developer options</summary><p class="muted small">For testing. These change your save.</p><div class="actions"><button class="btn small" id="d-coins">+10,000 coins</button><button class="btn small" id="d-cars">Unlock all cars</button><button class="btn small" id="d-cups">Open all cups</button><button class="btn small" id="d-tut">Reset driving lesson</button></div></details>
       <p class="muted small" style="text-align:center;margin-top:14px">Cursor Racing v${UI.version}</p></div>`;
     const segBind = (id, key, fn) => el.querySelectorAll(`#${id} button`).forEach((b) => click(b, () => { const v = b.dataset.v; s[key] = isNaN(+v) ? v : +v; Save.save(); applySettings(); if (fn) fn(); renderSettings(); }));
     const togBind = (id, key) => click($('#' + id, el), () => { s[key] = !s[key]; Save.save(); applySettings(); renderSettings(); });
@@ -411,6 +490,20 @@
     click($('#s-upd', el), () => (UI.checkUpdate ? UI.checkUpdate(true) : UI.toast('Updates work once the game is installed or served over https')));
     click($('#s-cred', el), () => modal(`<h2>Credits</h2><p>Cursor Racing is made from scratch: hand-written JavaScript, WebGL and Web Audio. Every car, prop, sprite, sound and song is generated in code. No third-party libraries, fonts, images or audio.</p>
       <p class="muted small">Inspired by classic top-down toy-car racers. Not affiliated with or endorsed by any of them. All trademarks belong to their owners.</p><p class="muted small">MIT licence. See LICENSE and CREDITS.md.</p><div class="actions"><button class="btn primary" id="m-ok">Close</button></div>`, (m) => click($('#m-ok', m), closeModal)));
+    click($('#s-bak', el), () => modal(`<h2>Back up save</h2><p class="muted small">Copy this code and keep it somewhere safe. Paste it into Restore save, on this or another device, to get your progress back. Time Trial ghosts are not included.</p><textarea id="bk" readonly rows="6">${Save.exportCode()}</textarea><div class="actions"><button class="btn ghost" id="m-ok">Close</button><button class="btn primary" id="m-copy">Copy code</button></div>`, (m) => {
+      click($('#m-ok', m), closeModal, 'back');
+      click($('#m-copy', m), async () => { const ta = $('#bk', m); ta.focus(); ta.select(); try { await navigator.clipboard.writeText(ta.value); UI.toast('Copied'); } catch (e) { try { document.execCommand('copy'); UI.toast('Copied'); } catch (e2) { UI.toast('Select the code and copy it by hand'); } } });
+    }));
+    click($('#s-rst', el), () => modal(`<h2>Restore save</h2><p class="muted small">Paste a backup code. This replaces all progress on this device.</p><textarea id="bk" rows="6" placeholder="CR1..."></textarea><div class="actions"><button class="btn ghost" id="m-no">Cancel</button><button class="btn primary" id="m-yes">Restore</button></div>`, (m) => {
+      click($('#m-no', m), closeModal, 'back');
+      click($('#m-yes', m), () => { if (!Save.importCode($('#bk', m).value)) { Audio.play('error'); UI.toast('That is not a valid backup code'); return; } closeModal(); applySettings(); UI.toast('Save restored'); renderMenu(); }, null);
+    }));
+    $('details.dev', el).addEventListener('toggle', (e) => { UI.devOpen = e.target.open; });
+    const dev = (id, msg, fn) => click($('#' + id, el), () => { fn(Save.data); Save.save(); UI.toast(msg); renderSettings(); }, 'coin');
+    dev('d-coins', '+10,000 coins', (d) => { d.coins += 10000; });
+    dev('d-cars', 'All cars unlocked', (d) => { for (const c of CR.CARS) d.owned[c.id] = true; });
+    dev('d-cups', 'All cups open', (d) => { for (const c of CR.CUPS) if (!d.cups[c.id]) d.cups[c.id] = { unlocked: true, best: 0 }; else d.cups[c.id].unlocked = true; });
+    dev('d-tut', 'Driving lesson reset', (d) => { d.tutorialDone = false; d.seenHelp = false; });
     click($('#s-reset', el), () => confirmBox('Reset progress?', 'This deletes coins, cars, upgrades, cups, best times and ghosts. It cannot be undone.', 'Reset', () => { Save.reset(); applySettings(); UI.toast('Progress reset'); renderMenu(); }));
     bind(el); show('settings');
   }
@@ -445,13 +538,14 @@
     if (cfg.mode === 'tt') {
       const nb = Save.setBest(cfg.track, cfg.reversed, res.bestLap, res.total);
       if (res.ghost && nb) { Save.setGhost(cfg.track, cfg.reversed, { data: res.ghost.data, time: res.ghost.time }); }
-      if (nb) { coins = 60; notes.push('New best lap!'); }
-      coins += 20;
+      if (nb) { coins = 60 * PAY; notes.push('New best lap!'); }
+      coins += 20 * PAY;
     } else if (cfg.mode === 'ko') {
-      if (res.place === 1) { coins = 180; d.stats.koWins++; d.stats.wins++; } else coins = 30 + me.points * 20;
+      if (res.place === 1) { coins = 180 * PAY; d.stats.koWins++; d.stats.wins++; } else coins = (30 + me.points * 20) * PAY;
     } else {
       const m = cfg.cup != null ? 1 + cfg.cup * 0.25 : 0.6, N = res.order.length;
       coins = N === 4 ? Math.round(REWARD[res.place - 1] * m) : Math.round((N - res.place + 1) / N * (60 + N * 9) * Math.max(m, 0.8) + 10);
+      coins *= PAY;
       if (res.place === 1) d.stats.wins++; if (res.place <= 3) d.stats.podiums++;
       if (Save.setBest(cfg.track, cfg.reversed, res.bestLap, res.total)) notes.push('New best lap!');
     }
@@ -460,7 +554,7 @@
       const run = d.cupRun;
       res.order.forEach((o, i) => { run.pts[o.isPlayer ? 'You' : o.name] = (run.pts[o.isPlayer ? 'You' : o.name] || 0) + pointsFor(res.order.length, i); });
       run.grid = res.order.map((o) => (o.isPlayer ? 'You' : o.name)); // next race starts in this order
-      run.race++; Save.save();
+      run.race++; run.live = false; Save.save();
     }
     Audio.setMusic('menu');
     renderResults(cfg, res, coins, notes);
@@ -501,7 +595,7 @@
       if (myPlace <= 3 && (!st.best || myPlace < st.best)) st.best = myPlace;
       let coins = 0, gifts = [];
       if (myPlace <= 3) {
-        coins = Math.round(cup.reward * [1, 0.6, 0.4][myPlace - 1]); d.stats.cups += myPlace === 1 ? 1 : 0;
+        coins = Math.round(cup.reward * PAY * [1, 0.6, 0.4][myPlace - 1]); d.stats.cups += myPlace === 1 ? 1 : 0;
         const next = CR.CUPS[ci + 1];
         if (next && !Save.cupUnlocked(next.id)) { d.cups[next.id] = { unlocked: true, best: 0 }; gifts.push(`${next.name} unlocked`); if (next.id === 'mirror') gifts.push('Mirror tracks open in Quick Race'); }
         if (myPlace === 1 && cup.unlock && !d.owned[cup.unlock]) { d.owned[cup.unlock] = true; gifts.push(`New car: ${CR.CARS.find((c) => c.id === cup.unlock).name}`); }
@@ -680,16 +774,23 @@
   function pause() {
     if (!UI.inRace || Game.paused || !Game.on) return;
     Game.paused = true; Audio.engine(0, 0, false, false); Audio.skid(0);
-    modal(`<h2>Paused</h2><div class="actions" style="flex-direction:column"><button class="btn primary" id="p-res">Resume</button><button class="btn" id="p-rst">Restart</button><button class="btn" id="p-help">How to drive</button><button class="btn ghost" id="p-quit">Quit to menu</button></div>`, (m) => {
-      click($('#p-res', m), resume); click($('#p-rst', m), () => { closeModal(); Game.paused = false; if (UI.lesson) startTutorial(); else startRace({ ...UI.last }); });
-      click($('#p-help', m), help);
-      click($('#p-quit', m), () => { closeModal(); UI.inRace = false; UI.lesson = null; teardownTouch(); Game.stop(); if (UI.last.cup != null) { /* leave the cup run saved */ } Audio.setMusic('menu'); renderMenu(); }, 'back');
+    const cupRace = !!(UI.last && UI.last.cup != null && Save.data.cupRun), left = cupRace ? retriesLeft(Save.data.cupRun) : 0;
+    modal(`<h2>Paused</h2>${cupRace ? `<p class="muted small">Cup race: ${left} ${left === 1 ? 'retry' : 'retries'} left. Restarting, or quitting and coming back, uses one.${left ? '' : ' With none left, quitting forfeits this race.'}</p>` : ''}
+      <div class="actions" style="flex-direction:column"><button class="btn primary" id="p-res">Resume</button><button class="btn" id="p-rst" ${cupRace && !left ? 'disabled' : ''}>Restart${cupRace ? ` (${left} left)` : ''}</button><button class="btn" id="p-help">How to drive</button><button class="btn ghost" id="p-quit">${cupRace && !left ? 'Forfeit race' : 'Quit to menu'}</button></div>`, (m) => {
+      click($('#p-res', m), resume);
+      click($('#p-rst', m), () => { closeModal(); Game.paused = false; if (UI.lesson) startTutorial(); else if (cupRace) continueCup(); else startRace({ ...UI.last }); });
+      // the help box replaces this one; closing it brings the pause menu back
+      click($('#p-help', m), () => { help(); const ok = $('#m-ok'); if (ok) ok.addEventListener('click', () => { Game.paused = false; pause(); }); });
+      click($('#p-quit', m), () => {
+        closeModal(); UI.inRace = false; UI.lesson = null; teardownTouch(); Game.stop(); Audio.setMusic('menu');
+        if (cupRace && !left) { forfeitCupRace(); renderStandings(); } else renderMenu();
+      }, 'back');
     });
   }
   function resume() { closeModal(); Game.paused = false; }
   UI.pause = pause;
 
-  UI.renderTitle = renderTitle; UI.renderMenu = renderMenu; UI.show = show; UI.startRace = startRace; UI.startTutorial = startTutorial; UI.renderGarage = renderGarage; UI.renderShop = renderShop; UI.renderTracks = renderTracks; UI.renderCups = renderCups; UI.renderSettings = renderSettings;
-  UI.isSafe = () => !UI.inRace && ['title', 'menu', 'results', 'standings', 'cups', 'tracks', 'garage', 'shop', 'settings'].includes(UI.screen);
+  UI.renderTitle = renderTitle; UI.renderMenu = renderMenu; UI.show = show; UI.startRace = startRace; UI.startTutorial = startTutorial; UI.renderGarage = renderGarage; UI.renderShop = renderShop; UI.renderRecords = renderRecords; UI.renderCupRun = renderCupRun; UI.renderTracks = renderTracks; UI.renderCups = renderCups; UI.renderSettings = renderSettings;
+  UI.isSafe = () => !UI.inRace && ['title', 'menu', 'results', 'standings', 'cups', 'tracks', 'garage', 'shop', 'records', 'settings'].includes(UI.screen);
   CR.UI = UI;
 })(window.CR);

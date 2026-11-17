@@ -443,6 +443,9 @@
     { id: 'stealth', name: 'Blackout', desc: 'All sharp edges. Enormous grip at enormous speed.', top: 0.92, accel: 0.8, grip: 0.92, mass: 0.6, price: 5800, paints: ['#212529', '#cc5de8'] },
     { id: 'afterburner', name: 'Afterburner', desc: 'A jet with its wings clipped. The fastest thing in the box.', top: 1.04, accel: 0.82, grip: 0.46, mass: 0.5, lift: 1.3, charge: 1.2, price: 7000, paints: ['#adb5bd', '#e03131'] },
   ];
+  // Shop prices: the numbers above are the relative values; this scales them all. Raise it to make cars dearer.
+  const PRICE_SCALE = 0.6;
+  for (const c of CARS) c.price = Math.round(c.price * PRICE_SCALE / 50) * 50;
   const PAINTS = ['#ff4d5e', '#ff922b', '#ffd43b', '#40c057', '#4dabf7', '#9775fa', '#e64980', '#f8f9fa', '#343a40', '#3ff0ff'];
   // Rivals. The championship uses the first ones named per cup; custom races draw up to 19.
   const RIVALS = [
