@@ -385,3 +385,19 @@ details.dev .actions { margin-top: 8px; }
 }
 
 /* the stick and buttons sit clear of the screen edges, where phones start their back gesture */
+/* main menu sideways, take 2: every tile keeps its description; the grid fills the screen */
+@media (orientation: landscape) and (max-height: 600px) {
+  .menu-top { margin-bottom: 6px; } .menu-top .menu-logo { margin: 0; }
+  .menu-stats { margin-right: 10px; white-space: nowrap; }
+  .menu-grid { height: calc(100dvh - 66px - var(--safe-t) - var(--safe-b)); max-height: 380px; grid-auto-rows: 1fr; }
+  .menu-grid.m8 { grid-template-columns: 1.3fr repeat(4, 1fr); grid-template-rows: 1fr 1fr; }
+  .menu-grid.m9 { grid-template-columns: 1.3fr repeat(3, 1fr); grid-template-rows: 1fr 1fr 1fr; }
+  .menu-grid.m8 #m-champ { grid-row: 1 / span 2; } .menu-grid.m9 #m-champ { grid-row: 1 / span 3; }
+  .menu-grid .btn:not(#m-champ) { display: block; min-height: 0; padding: 9px 10px; font-size: 13px; line-height: 1.15; overflow: hidden; }
+  .menu-grid .btn:not(#m-champ) .sub { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; font-size: 11px; line-height: 1.25; margin-top: 4px; }
+  .menu-grid.m9 .btn:not(#m-champ) .sub { -webkit-line-clamp: 2; }
+  .menu-grid .btn:not(#m-champ) .ico { float: right; align-self: auto; font-size: 18px; margin: 0 0 2px 4px; }
+}
+@media (orientation: landscape) and (max-height: 380px) { .menu-grid .btn:not(#m-champ) { min-height: 0; } .menu-stats { display: none; } }
+@media (max-width: 520px) { .menu-stats { display: none; } }
+.tbtn.itembtn.full { font-size: 30px; }

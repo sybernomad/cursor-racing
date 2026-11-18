@@ -67,22 +67,19 @@
     const d = Save.data, run = d.cupRun;
     const el = $('#scr-menu');
     el.innerHTML = `<div class="wrap">
-      <div class="row"><div class="logo menu-logo"><span class="cur"></span>Cursor Racing</div><span class="spacer"></span>${coinsHTML()}</div>
-      <div class="menu-grid">
+      <div class="row menu-top"><div class="logo menu-logo"><span class="cur"></span>Cursor Racing</div><span class="spacer"></span><span class="muted small menu-stats">${d.stats.races} races · ${d.stats.wins} wins · v${UI.version}</span>${coinsHTML()}</div>
+      <div class="menu-grid ${UI.install || UI.iosHint ? 'm9' : 'm8'}">
         <button class="btn primary wide" id="m-champ"><span class="ico">🏆</span>Championship<span class="sub">${run ? `Continue ${CR.CUPS.find((c) => c.id === run.cup).name}: race ${run.race + 1} of 3` : 'Win cups to unlock new cars and mirrored tracks'}</span></button>
-        <button class="btn" id="m-quick"><span class="ico">🏁</span>Quick Race<span class="sub">1 to 19 rivals, power-ups, any open track</span></button>
+        <button class="btn" id="m-quick"><span class="ico">🏁</span>Quick Race<span class="sub">Up to 19 rivals on any open track</span></button>
         <button class="btn" id="m-tt"><span class="ico">⏱️</span>Time Trial<span class="sub">Race your own ghost</span></button>
         <button class="btn" id="m-ko"><span class="ico">💥</span>Knockout<span class="sub">Fall off screen and you're out</span></button>
         <button class="btn cyan" id="m-garage"><span class="ico">🔧</span>Garage<span class="sub">Your cars, paint and upgrades</span></button>
         <button class="btn cyan" id="m-shop"><span class="ico">🛒</span>Car Shop<span class="sub">${CR.CARS.filter((c) => !d.owned[c.id]).length} cars to collect</span></button>
         <button class="btn ghost" id="m-rec"><span class="ico">📊</span>Records<span class="sub">Trophies, best laps, career stats</span></button>
-      </div>
-      <div class="menu-foot">
-        <button class="btn small ghost" id="m-tutb">🎓 ${d.tutorialDone ? 'Driving lesson' : 'Driving lesson <b class="gold">+100</b>'}</button>
-        <button class="btn small ghost" id="m-set">⚙️ Settings</button>
-        ${UI.install ? '<button class="btn small ghost" id="m-inst">📲 Install</button>' : ''}
-        ${UI.iosHint ? '<button class="btn small ghost" id="m-ios">📲 Install</button>' : ''}
-        <span class="spacer"></span><span class="muted small">${d.stats.races} races · ${d.stats.wins} wins · v${UI.version}</span>
+        <button class="btn ghost" id="m-tutb"><span class="ico">🎓</span>Driving Lesson<span class="sub">${d.tutorialDone ? 'Replay the tutorial race' : 'Learn the ropes, earn 100 coins'}</span></button>
+        <button class="btn ghost" id="m-set"><span class="ico">⚙️</span>Settings<span class="sub">Controls, screen, graphics, sound</span></button>
+        ${UI.install ? '<button class="btn ghost" id="m-inst"><span class="ico">📲</span>Install<span class="sub">Add to your home screen</span></button>' : ''}
+        ${UI.iosHint ? '<button class="btn ghost" id="m-ios"><span class="ico">📲</span>Install<span class="sub">How to add to iPhone / iPad</span></button>' : ''}
       </div>
     </div>`;
     show('menu'); UI.attract();
@@ -653,7 +650,7 @@
       <div class="hud-top">
         <div class="hud-box">${ko ? '<div class="ko-pips" id="h-ko"></div>' : `<div class="hud-pos" id="h-pos">1<sup>st</sup><small>/4</small></div><div class="hud-lap" id="h-lap">LAP 1/3</div>`}<div class="hud-time" id="h-time">0:00.00</div>
           <div class="boostbar" id="h-bb"><i id="h-boost"></i></div></div>
-        ${cfg.items ? '<div class="hud-item" id="h-item" role="button" aria-label="Use item"></div>' : ''}
+        ${cfg.items && !UI.touch ? '<div class="hud-item" id="h-item" role="button" aria-label="Use item"></div>' : ''}
         <span class="spacer"></span><canvas class="minimap" id="h-map"></canvas><div class="hud-pause" id="h-pause" role="button" aria-label="Pause"></div>
       </div>
       <div class="hud-board" id="h-board"></div>
@@ -692,7 +689,10 @@
     const b = Math.round(p.boost * 100);
     if (c.b !== b) { c.b = b; H.boost.style.width = b + '%'; H.bb.classList.toggle('full', b >= 99); if (H.boostBtn) H.boostBtn.style.setProperty('--p', b + '%'); }
     // power-up slot
-    if (H.item) { const it = p.item || ''; if (c.item !== it) { c.item = it; H.item.innerHTML = it ? CR.Extras.ITEMS[it].icon : ''; H.item.classList.toggle('full', !!it); if (H.itemBtn) { H.itemBtn.innerHTML = it ? CR.Extras.ITEMS[it].icon : 'ITEM'; H.itemBtn.classList.toggle('full', !!it); } } }
+    // touch screens: the ITEM button shows what you're holding; otherwise a slot in the top-left does
+    if (Game.items) { const it = p.item || ''; if (c.item !== it) { c.item = it; const icon = it ? CR.Extras.ITEMS[it].icon : '';
+      if (H.item) { H.item.innerHTML = icon; H.item.classList.toggle('full', !!it); }
+      if (H.itemBtn) { H.itemBtn.innerHTML = icon || 'ITEM'; H.itemBtn.classList.toggle('full', !!it); } } }
     // running order: the top few and you, a few times a second
     if (H.board && !Game.ko && (!c.boardT || Game.time - c.boardT > 0.25)) {
       c.boardT = Game.time;
