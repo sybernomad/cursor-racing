@@ -247,6 +247,7 @@
       b.x += b.vx * dt; b.y += b.vy * dt; b.rot += Math.hypot(b.vx, b.vy) * dt / 7;
       let dead = b.life <= 0 || !w.inTable(b.x, b.y, -10) || w.surface(b.x, b.y, 0).type === 'void';
       for (const k of w.collidersNear(b.x, b.y)) {
+        if (k.soft) continue;
         let nx, ny, pen;
         if (k.r) { const dx = b.x - k.x, dy = b.y - k.y, d = Math.hypot(dx, dy); if (d > k.r + 7 || d === 0) continue; nx = dx / d; ny = dy / d; pen = k.r + 7 - d; }
         else { const dx = b.x - k.x, dy = b.y - k.y, u = dx * k.c + dy * k.s, v = -dx * k.s + dy * k.c, cu = U.clamp(u, -k.hw, k.hw), cv = U.clamp(v, -k.hd, k.hd), lu = u - cu, lv = v - cv, d = Math.hypot(lu, lv); if (d > 7 || d < 0.001) continue; const nu = lu / d, nv = lv / d; nx = nu * k.c - nv * k.s; ny = nu * k.s + nv * k.c; pen = 7 - d; }

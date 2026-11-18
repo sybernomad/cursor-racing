@@ -43,7 +43,7 @@
   A.play = function (name, o = {}) {
     if (!A.enabled || !ac) return;
     const now = performance.now();
-    const gap = { bump: 70, wall: 80, tick: 40, coin: 50, splash: 200, land: 120 }[name] || 0;
+    const gap = { rumble: 85, bump: 70, wall: 80, tick: 40, coin: 50, splash: 200, land: 120 }[name] || 0;
     if (gap && last[name] && now - last[name] < gap) return;
     last[name] = now;
     const v = o.vol ?? 1;
@@ -77,6 +77,7 @@
       case 'shield': tone('sine', 600, 1800, 0.3, 0.12 * v); noise(0.3, 0.12 * v, 4000, 2, 'bandpass', 0, 8000); break;
       case 'shock': noise(0.5, 0.6 * v, 200, 0.6, 'lowpass', 0, 60); tone('sine', 90, 30, 0.45, 0.4 * v); tone('sawtooth', 600, 80, 0.3, 0.08 * v); break;
       case 'shoot': tone('square', 1200, 300, 0.12, 0.08 * v); noise(0.08, 0.15 * v, 3000, 1); break;
+      case 'rumble': noise(0.09, 0.22 * v, 260, 0.8, 'lowpass'); tone('square', 70 + Math.random() * 30, 50, 0.06, 0.05 * v); break;
       case 'wrong': tone('square', 330, 0, 0.12, 0.07); tone('square', 262, 0, 0.12, 0.07, 0.14); break;
     }
   };

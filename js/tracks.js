@@ -204,7 +204,7 @@
       },
       track: { fill: '#55585e', edgeA: '#f1f3f5', edgeB: '#55585e', line: 'rgba(255,212,59,0.7)' },
       rough: { grip: 0.85, top: 0.7 },
-      border: [{ name: 'tree', spacing: 70, offset: 22, chance: 0.5 }],
+      border: [{ name: 'tree', spacing: 70, offset: 22, chance: 0.5, hard: true }],
       scatter: [{ name: 'house', count: 14 }, { name: 'tree', count: 30 }, { name: 'rails', count: 5 }],
       sprites: [{ name: 'person', count: 22, size: 1.1, near: true }, { name: 'flowerR', count: 12, size: 1.1 }],
       decals: 'paths',

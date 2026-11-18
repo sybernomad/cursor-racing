@@ -100,12 +100,14 @@
 
   function help() {
     modal(`<h2>How to drive</h2><ul class="help">
-      <li><b>Touch:</b> put your thumb on the left side and point it where you want to go. The car turns that way and drives.</li>
+      <li><b>Touch:</b> push the stick in the bottom-left corner toward where you want to go. The car turns that way and drives. (Settings has a floating stick and arrow buttons too.)</li>
+      <li><b>Off the road:</b> small clutter like cereal, pebbles and nuts can be driven over, it just slows you down. Pencils, glow sticks, trees and walls are solid.</li>
       <li><b>Boost:</b> drift through corners (brake while turning) to fill the meter, then hold <b>BOOST</b>.</li>
       <li><b>Power-ups:</b> drive through the rainbow boxes, then tap <b>ITEM</b> (E on a keyboard): turbo, oil slick, shield, shockwave or a marble to fire.</li>
       <li><b>Launch:</b> press the gas in the last half-second of the countdown for a perfect start. Too early and you stall.</li>
       <li><b>Slipstream:</b> tuck in behind a car to go faster and charge boost.</li>
-      <li><b>Keyboard:</b> arrows or WASD, Space to boost, E to use an item, Esc to pause. Gamepads work too.</li>
+      <li><b>Stuck off the road?</b> You're put back after a few seconds, or use <b>Back to track</b> in the pause menu (R on a keyboard, Select on a gamepad).</li>
+      <li><b>Keyboard:</b> arrows or WASD, Space to boost, E to use an item, R back to track, Esc to pause. Gamepads work too.</li>
       <li>Watch the edges: drive off the table and you drop to the floor.</li>
       <li><b>Knockout:</b> the camera follows the leader. Fall off the screen and you're out of the round.</li></ul>
       <div class="actions"><button class="btn primary" id="m-ok">Let's race</button></div>`, (m) => click($('#m-ok', m), closeModal));
@@ -230,7 +232,7 @@
   // Driving lesson: a short guided race. Each step waits until the player has done the thing.
   const touchy = () => UI.touch;
   const LESSON = [
-    { text: () => (touchy() ? (Save.data.settings.controls === 'stick' ? 'Put your thumb on the left side of the screen and point it where you want to go.' : 'Steer with the arrow buttons. The car drives itself forward.') : 'Drive with the arrow keys or WASD.'), goal: 'Follow the road', done: (p, t) => t.dist > 700 },
+    { text: () => (touchy() ? ({ fixed: 'Push the stick in the bottom-left corner toward where you want to go. The car turns that way and drives.', stick: 'Put your thumb on the left side of the screen and point it where you want to go.' }[Save.data.settings.controls] || 'Steer with the arrow buttons. The car drives itself forward.') : 'Drive with the arrow keys or WASD.'), goal: 'Follow the road', done: (p, t) => t.dist > 700 },
     { text: () => `Corners: hold ${touchy() ? 'BRAKE' : 'Down or S'} while turning at speed and the tail slides out. That is a drift, and it fills the boost meter.`, goal: 'Drift through a corner', done: (p, t) => t.drift > 0.5, hint: 16 },
     { text: () => `Your boost meter is topped up. Hold ${touchy() ? 'BOOST' : 'Space'} on a straight.`, goal: 'Use your boost', start: (p) => { p.boost = 1; }, done: (p, t) => t.boost > 0.6 },
     { text: () => `Drive through a rainbow box to pick up a power-up, then ${touchy() ? 'tap ITEM' : 'press E'} to use it.`, goal: 'Use a power-up', done: (p, t) => p.usedItems > t.items0, hint: 25, onHint: (p) => { if (!p.item) { p.item = 'turbo'; Game.msg('HAVE A TURBO', 1, 'info'); } } },
@@ -463,7 +465,8 @@
     const tog = (id, on) => `<button class="tog ${on ? 'on' : ''}" id="${id}" aria-pressed="${on}"></button>`;
     el.innerHTML = `<div class="wrap">${topbar('Settings', UI.inRace ? 'menu' : 'menu')}
       <div class="panel">
-        <div class="set"><div class="lbl"><b>Touch controls</b><span>Stick: point your thumb where to go. Buttons: classic left/right.</span></div>${seg('s-ctl', [['stick', 'Stick'], ['buttons', 'Buttons']], s.controls)}</div>
+        <div class="set"><div class="lbl"><b>Touch controls</b><span>Stick: a joystick in the bottom-left corner. Float: put your thumb anywhere on the left and point. Buttons: left and right arrows.</span></div>${seg('s-ctl', [['fixed', 'Stick'], ['stick', 'Float'], ['buttons', 'Buttons']], s.controls)}</div>
+        <div class="set"><div class="lbl"><b>Screen</b><span>${screen.orientation && screen.orientation.lock ? 'Lock the game sideways or upright. Locking works once the game is installed.' : 'This browser can\'t lock the screen: use your phone\'s rotation lock instead.'}</span></div>${seg('s-or', [['auto', 'Auto'], ['landscape', 'Sideways'], ['portrait', 'Upright']], s.orient)}</div>
         <div class="set"><div class="lbl"><b>Auto-accelerate</b><span>Buttons mode: the car drives itself forward</span></div>${tog('s-gas', s.autoGas)}</div>
         <div class="set"><div class="lbl"><b>Difficulty</b><span>How fast the rivals drive. On Easy they are slower and don't catch up as hard. Takes effect next race.</span></div>${seg('s-diff', [[0, 'Easy'], [1, 'Normal'], [2, 'Hard']], s.diff)}</div>
         <div class="set"><div class="lbl"><b>Graphics</b><span>Lower it if the game stutters</span></div>${seg('s-q', [['low', 'Low'], ['medium', 'Med'], ['high', 'High']], s.quality)}</div>
@@ -480,7 +483,7 @@
       <p class="muted small" style="text-align:center;margin-top:14px">Cursor Racing v${UI.version}</p></div>`;
     const segBind = (id, key, fn) => el.querySelectorAll(`#${id} button`).forEach((b) => click(b, () => { const v = b.dataset.v; s[key] = isNaN(+v) ? v : +v; Save.save(); applySettings(); if (fn) fn(); renderSettings(); }));
     const togBind = (id, key) => click($('#' + id, el), () => { s[key] = !s[key]; Save.save(); applySettings(); renderSettings(); });
-    segBind('s-ctl', 'controls'); segBind('s-diff', 'diff'); segBind('s-q', 'quality');
+    segBind('s-ctl', 'controls'); segBind('s-or', 'orient', () => applyOrientation(true)); segBind('s-diff', 'diff'); segBind('s-q', 'quality');
     togBind('s-gas', 'autoGas'); togBind('s-dof', 'dof'); togBind('s-bloom', 'bloom'); togBind('s-shad', 'shadows'); togBind('s-shake', 'shake'); togBind('s-vib', 'vib');
     $('#s-sfx', el).addEventListener('input', (e) => { s.sfx = +e.target.value; applySettings(); Save.save(); });
     $('#s-sfx', el).addEventListener('change', () => Audio.play('coin'));
@@ -513,7 +516,17 @@
     R.setQuality(s.quality, { dof: s.dof, bloom: s.bloom, shadows: s.shadows });
     Audio.enabled = s.sfx > 0; Audio.vol = s.sfx; Audio.music = s.music > 0; Audio.musicVol = s.music; Audio.vib = s.vib; Audio.apply();
     Game.settings.difficulty = s.diff; Game.settings.shake = s.shake; Game.settings.autoGas = s.autoGas;
+    applyOrientation();
   }
+  // Lock the screen sideways or upright. Browsers only allow it full screen or in the installed app,
+  // so a refusal is quiet unless the player has just changed the setting.
+  function applyOrientation(loud) {
+    const o = Save.data.settings.orient, so = screen.orientation;
+    if (!so || !so.lock) return;
+    if (o === 'auto') { try { so.unlock(); } catch (e) { /* not locked */ } return; }
+    so.lock(o).catch(() => { if (loud) UI.toast('Install the game to lock the screen, or use your phone\'s rotation lock'); });
+  }
+  UI.applyOrientation = applyOrientation;
   UI.applySettings = applySettings;
 
   // ---------------------------------------------------------------------------
@@ -694,6 +707,7 @@
     if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) e.preventDefault();
     keys.add(e.key.toLowerCase());
     if ((e.key === 'Escape' || e.key === 'p') && UI.inRace) { if (Game.paused) resume(); else pause(); }
+    if (e.key.toLowerCase() === 'r' && UI.inRace && !Game.paused && !e.repeat) Game.rescue();
   });
   window.addEventListener('keyup', (e) => keys.delete(e.key.toLowerCase()));
   window.addEventListener('blur', () => keys.clear());
@@ -716,6 +730,26 @@
     if (s.controls === 'buttons') {
       hold(mk('left', '&#9664;'), 'left'); hold(mk('right', '&#9654;'), 'right');
       if (!s.autoGas) hold(mk('gas', 'GAS'), 'gas');
+    } else if (s.controls === 'fixed') {
+      // a joystick that always sits in the bottom-left corner; a touch near it grabs it
+      const base = document.createElement('div'); base.className = 'stick-base fixed'; base.innerHTML = '<div class="stick-knob"></div><span>DRIVE</span>'; layer.appendChild(base);
+      if (UI.stickUsed) base.classList.add('used');
+      const knob = base.firstChild; let cx = 0, cy = 0;
+      const set = (e) => {
+        const dx = e.clientX - cx, dy = e.clientY - cy, max = 50, ll = Math.min(max, Math.hypot(dx, dy)), a = Math.atan2(dy, dx);
+        knob.style.transform = `translate(${Math.cos(a) * ll}px, ${Math.sin(a) * ll}px)`;
+        T.stick.mag = ll / max; T.stick.on = ll > 8; T.stick.x = Math.cos(a); T.stick.y = Math.sin(a);
+      };
+      layer.addEventListener('pointerdown', (e) => {
+        if (e.target !== layer || T.stick.id != null) return;
+        const r = base.getBoundingClientRect(); cx = r.left + r.width / 2; cy = r.top + r.height / 2;
+        if (Math.hypot(e.clientX - cx, e.clientY - cy) > 150 && e.clientX > window.innerWidth * 0.45) return;
+        e.preventDefault(); Audio.init(); layer.setPointerCapture(e.pointerId);
+        T.stick.id = e.pointerId; base.classList.add('on', 'used'); UI.stickUsed = true; set(e);
+      });
+      layer.addEventListener('pointermove', (e) => { if (e.pointerId === T.stick.id) set(e); });
+      const end = (e) => { if (e.pointerId !== T.stick.id) return; T.stick.id = null; T.stick.on = false; T.stick.mag = 0; knob.style.transform = ''; base.classList.remove('on'); };
+      layer.addEventListener('pointerup', end); layer.addEventListener('pointercancel', end);
     } else {
       const base = document.createElement('div'); base.className = 'stick-base'; base.innerHTML = '<div class="stick-knob"></div>'; layer.appendChild(base);
       const hint = document.createElement('div'); hint.className = 'stick-hint'; hint.textContent = 'Touch & point to drive'; layer.appendChild(hint);
@@ -765,6 +799,8 @@
       if ((gp.buttons[3] && gp.buttons[3].pressed) || (gp.buttons[4] && gp.buttons[4].pressed)) item = true;
       if (gp.buttons[9] && gp.buttons[9].pressed && !UI.padStart && UI.inRace) { UI.padStart = true; Game.paused ? resume() : pause(); }
       if (gp.buttons[9] && !gp.buttons[9].pressed) UI.padStart = false;
+      if (gp.buttons[8] && gp.buttons[8].pressed && !UI.padBack && UI.inRace && !Game.paused) { UI.padBack = true; Game.rescue(); }
+      if (gp.buttons[8] && !gp.buttons[8].pressed) UI.padBack = false;
     }
     I.steer = U.clamp(steer, -1, 1); I.throttle = thr; I.brake = brk; I.boost = boost; I.item = item;
     I.stick = T.stick.on ? T.stick : null;
@@ -776,8 +812,9 @@
     Game.paused = true; Audio.engine(0, 0, false, false); Audio.skid(0);
     const cupRace = !!(UI.last && UI.last.cup != null && Save.data.cupRun), left = cupRace ? retriesLeft(Save.data.cupRun) : 0;
     modal(`<h2>Paused</h2>${cupRace ? `<p class="muted small">Cup race: ${left} ${left === 1 ? 'retry' : 'retries'} left. Restarting, or quitting and coming back, uses one.${left ? '' : ' With none left, quitting forfeits this race.'}</p>` : ''}
-      <div class="actions" style="flex-direction:column"><button class="btn primary" id="p-res">Resume</button><button class="btn" id="p-rst" ${cupRace && !left ? 'disabled' : ''}>Restart${cupRace ? ` (${left} left)` : ''}</button><button class="btn" id="p-help">How to drive</button><button class="btn ghost" id="p-quit">${cupRace && !left ? 'Forfeit race' : 'Quit to menu'}</button></div>`, (m) => {
+      <div class="actions" style="flex-direction:column"><button class="btn primary" id="p-res">Resume</button><button class="btn" id="p-rst" ${cupRace && !left ? 'disabled' : ''}>Restart${cupRace ? ` (${left} left)` : ''}</button><button class="btn" id="p-back">Back to track</button><button class="btn" id="p-help">How to drive</button><button class="btn ghost" id="p-quit">${cupRace && !left ? 'Forfeit race' : 'Quit to menu'}</button></div>`, (m) => {
       click($('#p-res', m), resume);
+      click($('#p-back', m), () => { resume(); Game.rescue(); });
       click($('#p-rst', m), () => { closeModal(); Game.paused = false; if (UI.lesson) startTutorial(); else if (cupRace) continueCup(); else startRace({ ...UI.last }); });
       // the help box replaces this one; closing it brings the pause menu back
       click($('#p-help', m), () => { help(); const ok = $('#m-ok'); if (ok) ok.addEventListener('click', () => { Game.paused = false; pause(); }); });

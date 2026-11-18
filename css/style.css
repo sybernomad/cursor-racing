@@ -261,3 +261,24 @@ h2.grp span { font-size: 10px; padding: 2px 7px; border-radius: 6px; background:
 details.dev { margin-top: 14px; border: 1px dashed var(--line2); border-radius: 12px; padding: 10px 14px; background: rgba(18, 16, 36, .7); }
 details.dev summary { cursor: pointer; font-weight: 800; font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
 details.dev .actions { margin-top: 8px; }
+/* fixed joystick, bottom-left */
+.stick-base.fixed { display: block; left: calc(86px + var(--safe-l)); top: calc(100% - 92px - var(--safe-b)); opacity: .85; transition: opacity .2s; }
+.stick-base.fixed.on { opacity: 1; }
+.stick-base.fixed .stick-knob { transition: transform .08s ease-out; }
+.stick-base.fixed.on .stick-knob { transition: none; }
+.stick-base.fixed > span { position: absolute; left: 0; right: 0; top: -22px; text-align: center; font-size: 11px; font-weight: 800; letter-spacing: .2em; color: var(--cyan); text-shadow: 0 1px 2px #000; animation: blink 1.4s ease-in-out infinite; }
+.stick-base.fixed.used > span { display: none; }
+/* short landscape screens */
+@media (max-height: 520px) {
+  .menu-grid .btn { min-height: 60px; padding: 11px 14px; font-size: 15px; }
+  .menu-logo { margin: 0 0 8px; font-size: 30px; }
+  .showcase { min-height: 0; }
+  .showcase canvas { width: auto; max-width: 80%; max-height: 130px; }
+  .logo { font-size: clamp(40px, 13vh, 80px); }
+  .tap { margin-top: 18px; }
+  .hud-pos { font-size: 30px; }
+  .minimap { width: 96px; }
+  .stick-base.fixed { left: calc(80px + var(--safe-l)); top: calc(100% - 82px - var(--safe-b)); }
+  .modal .panel { max-height: 94vh; padding: 10px 14px; }
+  .modal .actions .btn { padding: 9px 14px; }
+}

@@ -320,7 +320,7 @@
     } else {
       c.vz -= GRAV * dt; c.z += c.vz * dt;
       if (c.z <= 0) {
-        c.z = 0; c.air = false;
+        c.z = 0; c.air = false; c.landed = true;
         const s2 = w.surface(c.x, c.y, c.lat);
         if (c.vz < -120) { emit('dust', c.x, c.y, 1, 8); if (c.isPlayer) { Audio.play('land'); shake(5); Audio.vibrate(20); } }
         c.vz = 0;
@@ -328,6 +328,14 @@
       }
     }
     staticCollide(c, ox, oy);
+    if (c.onSoft && !c.air) {
+      // bumping over clutter: lose speed fast (off-road cars cope better), rattle the car about
+      const k = Math.exp(-(5.5 - 3 * (st.offroad || 0)) * dt); c.vx *= k; c.vy *= k;
+      c.bumpT = 0.15;
+      if (Math.random() < 0.3) emit('dust', c.x, c.y, 2, 1);
+      if (c.isPlayer) { Audio.play('rumble'); if (Math.random() < 0.1) shake(1.5); }
+    }
+    if (c.bumpT > 0) c.bumpT -= dt;
     // visuals: pitch with accel, roll with cornering
     const ap = c.onRamp ? -Math.atan(c.rampSlope || 0) : (c.air ? U.clamp(c.vz / 900, -0.35, 0.3) * -1 : 0);
     c.vis.pitch += ((c.onRamp || c.air ? ap : -inp.throttle * 0.03 + (inp.brake > 0 ? 0.05 : 0)) - c.vis.pitch) * Math.min(1, dt * 8);
@@ -347,8 +355,13 @@
     skid(c, false);
     if (c.isPlayer) { Audio.play('fall'); Audio.vibrate(40); Game.msg('OOPS!', 1, 'warn'); }
   }
-  function respawn(c) {
-    const w = Game.world, s = X().safeS((c.goodS ?? c.s) - 20);
+  // Put a car back on the road. Normally where it last was on the road; if it has got further along
+  // (it jumped over a barrier further up the track), at the spot level with it, so nobody loses ground.
+  function respawn(c, forward = false) {
+    const w = Game.world;
+    let at = (c.goodS ?? c.s) - 20;
+    if (forward && c.goodS != null) { let ds = c.s - c.goodS; if (ds < -w.L / 2) ds += w.L; if (ds > w.L / 2) ds -= w.L; if (ds > 0 && ds < 600) at = c.s + 10; }
+    const s = X().safeS(at);
     const p = w.at(s);
     c.x = p.x; c.y = p.y; c.h = Math.atan2(p.ty, p.tx); c.z = 0; c.vx = c.vy = c.vz = 0; c.air = false; c.onRamp = false;
     // nudge sideways if another car sits on the spot
@@ -362,6 +375,7 @@
 
   function staticCollide(c, ox, oy) {
     const w = Game.world;
+    c.onSoft = false;
     for (const k of w.collidersNear(c.x, c.y)) {
       if (c.z > k.h) continue;
       let nx, ny, pen;
@@ -381,6 +395,7 @@
         } else pen = CAR_R - d;
         const nu = lu / d, nv = lv / d; nx = nu * k.c - nv * k.s; ny = nu * k.s + nv * k.c;
       }
+      if (k.soft) { c.onSoft = true; continue; } // drive-over clutter: slows you (below), doesn't stop you
       c.x += nx * pen; c.y += ny * pen;
       const vn = c.vx * nx + c.vy * ny;
       if (k.bumper) { if (vn < 0) { c.vx -= vn * nx; c.vy -= vn * ny; } if (!k.cool || Game.time - k.cool > 0.15) { k.cool = Game.time; X().bumper(c, k, nx, ny); } continue; }
@@ -443,6 +458,7 @@
       const sp = Math.hypot(b.vx, b.vy); if (sp > 1) { b.dir = Math.atan2(b.vy, b.vx); b.rot -= sp * dt / b.r; }
       for (const h of w.holes) if (Math.hypot(b.x - h.x, b.y - h.y) < h.r - 4) { b.out = 3; Audio.play('splash', { vol: 0.4 }); }
       for (const col of w.collidersNear(b.x, b.y)) {
+        if (col.soft) continue;
         if (col.r) { const dx = b.x - col.x, dy = b.y - col.y, d = Math.hypot(dx, dy), rr = col.r + b.r; if (d < rr && d > 0) { const nx = dx / d, ny = dy / d; b.x += nx * (rr - d); b.y += ny * (rr - d); const vn = b.vx * nx + b.vy * ny; if (vn < 0) { b.vx -= 1.8 * vn * nx; b.vy -= 1.8 * vn * ny; } } }
         else {
           const dx = b.x - col.x, dy = b.y - col.y, u = dx * col.c + dy * col.s, v = -dx * col.s + dy * col.c;
@@ -480,6 +496,7 @@
     let ds = pr.s - c.s; if (ds > w.L / 2) ds -= w.L; if (ds < -w.L / 2) ds += w.L;
     c.prog += ds; c.s = pr.s; c.lat = pr.lat;
     if (Math.abs(pr.lat) < w.hw && !c.air) { c.goodS = c.s; }
+    rescueCheck(c, dt);
     // wrong way
     const tdot = Math.cos(c.h) * w.tx[c.ix] + Math.sin(c.h) * w.ty[c.ix];
     const sp = c.vx * w.tx[c.ix] + c.vy * w.ty[c.ix];
@@ -505,6 +522,30 @@
       }
     }
   }
+  // Cars fenced in off the road (a jump over the barrier, a spin into the scenery) get put back.
+  // Landing a jump outside the barrier: back on the road almost at once. Stuck off the road and
+  // not getting anywhere for a few seconds: same. Anyone can also ask for it (pause menu, R key).
+  function offRoad(c) {
+    const w = Game.world, edge = w.hw + 26;
+    if (c.air || Math.abs(c.lat) <= edge) return false;
+    return !w.def.cross || w.nearestGlobal(c.x, c.y, edge + 100).d > edge; // the other stretch at a crossing is road
+  }
+  function rescueCheck(c, dt) {
+    if (c.landed) {
+      c.landed = false;
+      // over a wall you can't drive back through: straight back to the road. Over drive-over clutter, drive yourself back.
+      if (Game.world.hardBorder && offRoad(c)) { c.strandT = 0.6; if (c.isPlayer) Game.msg('BACK ON TRACK', 0.9, 'info'); }
+    }
+    if (c.strandT > 0) { c.strandT -= dt; c.vx *= 0.9; c.vy *= 0.9; if (c.strandT <= 0) respawn(c, true); return; }
+    if (offRoad(c)) {
+      if (!c.offT) { c.offT = 0; c.offProg = c.prog; }
+      c.offT += dt;
+      if (c.offT > 3 && c.prog - c.offProg < 120) { c.offT = 0; if (c.isPlayer) Game.msg('BACK ON TRACK', 0.9, 'info'); respawn(c, true); }
+      else if (c.offT > 3) { c.offT = 0.01; c.offProg = c.prog; } // still making headway: check again in a moment
+    } else c.offT = 0;
+  }
+  Game.rescue = function () { const p = Game.player; if (p && p.state === 'race' && !p.finished && !(Game.ko && p.out) && Game.state === 'race') { respawn(p); Game.msg('BACK ON TRACK', 0.9, 'info'); } };
+
   function place(c) {
     const order = Game.standings();
     return order.indexOf(c) + 1;
@@ -672,7 +713,8 @@
     for (const c of Game.cars) {
       if (Game.ko && c.out) continue;
       const bob = c.st.hover ? 3 + Math.sin(Game.time * 7 + c.id) * 1.2 : (c.state === 'race' && !c.air ? Math.abs(Math.sin(Game.time * 30 + c.id)) * Math.min(1, Math.hypot(c.vx, c.vy) / 300) * 0.4 : 0);
-      R.carMatrix(c.x, c.y, c.z + bob, c.h, c.vis.pitch, c.vis.roll, c.m);
+      const rat = c.bumpT > 0 ? (Math.random() - 0.5) : 0; // rattling over clutter
+      R.carMatrix(c.x, c.y, c.z + bob + Math.abs(rat) * 4, c.h, c.vis.pitch + rat * 0.12, c.vis.roll + rat * 0.18, c.m);
       cars.push({ mesh: c.mesh, m: c.m, flicker: c.inv > 0 });
       if (c.boosting) lights.push({ x: c.x - Math.cos(c.h) * 22, y: 10 + c.z, z: c.y - Math.sin(c.h) * 22, col: [1.6, 0.8, 0.25], rad: 110 });
       if (Game.world.light === CR.LIGHT.night || Game.world.light === CR.LIGHT.monitor || Game.world.light === CR.LIGHT.dusk) lights.push({ x: c.x + Math.cos(c.h) * 30, y: 8 + c.z, z: c.y + Math.sin(c.h) * 30, col: [0.7, 0.68, 0.5], rad: 90 });

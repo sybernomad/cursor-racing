@@ -24,9 +24,10 @@ Needs a browser with WebGL 2 (current Chrome, Safari 15+, Edge, Firefox).
 
 ## Controls
 
-- **Touch, Stick mode (default):** put your thumb anywhere on the left side and point it where you
-  want to go. The car turns that way and drives. **BOOST** and **BRAKE** are on the right.
-- **Touch, Buttons mode:** left/right buttons, optional auto-accelerate (Settings).
+- **Touch, Stick (default):** a joystick in the bottom-left corner. Push it toward where you want to
+  go; the car turns that way and drives. **BOOST** and **BRAKE** are on the right.
+- **Touch, Float:** put your thumb anywhere on the left side and point; the stick appears under it.
+- **Touch, Buttons:** left/right buttons, optional auto-accelerate (Settings).
 - **Keyboard:** arrows or WASD, Space/Shift to boost, Esc or P to pause.
 - **Gamepad:** left stick steers, A or RT accelerates, B or LT brakes, X or RB boosts, Start pauses.
 
@@ -34,6 +35,12 @@ Brake while turning at speed to drift. Drifting fills the boost meter. Chevron p
 Tuck in behind another car to slipstream (a little extra speed, and the boost meter charges). Press the
 gas in the last half-second of the countdown for a perfect start; press it too early and you stall.
 Use a power-up with **ITEM** on touch, E or Q on a keyboard, Y or LB on a gamepad.
+Small clutter beside the road (cereal, pebbles, nuts, keycaps, chocolate chips, snow, grapes and the
+like) can be driven over: it just slows you down, so you can drive yourself back onto the road. Long
+barriers (pencils, glow sticks), trees, big props and table walls are solid. If you land a jump on the
+far side of a solid barrier you're put back on the road straight away, and a car stuck off the road is
+put back after 3 seconds. **Back to track** in the pause menu (R, or Select on a gamepad)
+does it on demand.
 
 ## Modes
 
@@ -84,7 +91,8 @@ Ember Grid's rival themes): surf rock in the sandbox, lounge jazz on the pool ta
 gaming desk, a polka at the bakery, a parade in Tiny Town, and more. The final lap kicks the song up a
 gear. Songs live in the `SONGS` table: tempo, key, chord progression and per-step patterns.
 
-Settings: control scheme, difficulty, graphics quality (Low/Med/High), tilt-shift, bloom, shadows,
+Settings: control scheme, screen orientation (Auto, or locked Sideways or Upright: locking works in
+the installed app on Android; on iPhone use the phone's rotation lock), difficulty (Easy by default), graphics quality (Low/Med/High), tilt-shift, bloom, shadows,
 screen shake, vibration, sound and music volume, update check, reset progress. If the game runs
 slowly on first launch it lowers the graphics quality once on its own.
 
@@ -121,6 +129,7 @@ Tracks live in `js/tracks.js`. Each one is a closed loop of points on a table `W
 - `start`: optional `[x, y]` for the start line (otherwise the straightest stretch is used),
 - `zones`: puddles (`slick`) and goo (`sticky`) at a lap fraction `t`, lateral offset and size,
 - `ramps`, `boosts`: placed by lap fraction,
+- in a theme's `border`, `hard: true` makes small border props solid instead of drive-over,
 - `pieces`: big props at fixed spots (they are skipped, with a console warning, if they'd sit on the road),
 - `balls`: pushable pool balls.
 - `cross: true`: set this when the road crosses itself, so the other stretch counts as road at the crossing.

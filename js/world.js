@@ -251,8 +251,9 @@
         }
       }
       this.itemMesh = G.upload(gl, CR.prop('itembox', {}, 1).bld);
-      // border dressing
+      // border dressing. Long props (pencils, glow sticks) and anything marked hard are walls; the rest you can drive over.
       for (const b of T.border) this.dressBorder(b);
+      this.hardBorder = T.border.some((b) => b.wall || b.hard);
       // set pieces
       for (const p of (this.def.pieces || [])) {
         const pr = CR.prop(p[0], p[4] || {}, Math.floor(p[1] + p[2]));
@@ -267,7 +268,7 @@
           const pr = CR.prop(sc.name, sc.opt || {}, i % 5 + 1);
           const rad = pr.col ? (pr.col.c || Math.max(pr.col.w, pr.col.d)) : Math.max(pr.size[0], pr.size[2]) / 2;
           if (this.onTrackish(x, y, rad + 14) || this.holeNear(x, y, rad + 20)) continue;
-          this.addProp(pr, x, y, rnd() * 6.28, 0, true); i++;
+          this.addProp(pr, x, y, rnd() * 6.28, 0, true, rad <= 14); i++;
         }
       }
       for (const sp of T.sprites) {
@@ -309,11 +310,12 @@
       if (!c) { c = { bld: new G.Builder(8192), cx: (i + 0.5) * CHUNK, cy: (j + 0.5) * CHUNK }; this.chunks.set(k, c); }
       return c.bld;
     }
-    addProp(pr, x, y, ang, z = 0, collide = true) {
+    // soft: small clutter you can drive over; it only slows you down. Everything else is solid.
+    addProp(pr, x, y, ang, z = 0, collide = true, soft = false) {
       this.chunk(x, y).append(pr.bld, x, z, y, -ang, 1);
       if (collide && pr.col) {
-        if (pr.col.c) this.addCol({ x, y, r: pr.col.c, h: pr.h + z, bumper: !!pr.col.bumper });
-        else this.addCol({ x, y, hw: pr.col.w / 2, hd: pr.col.d / 2, ang, h: pr.h + z, c: Math.cos(ang), s: Math.sin(ang) });
+        if (pr.col.c) this.addCol({ x, y, r: pr.col.c, h: pr.h + z, bumper: !!pr.col.bumper, soft: soft && !pr.col.bumper });
+        else this.addCol({ x, y, hw: pr.col.w / 2, hd: pr.col.d / 2, ang, h: pr.h + z, c: Math.cos(ang), s: Math.sin(ang), soft });
       }
       if (pr.light) this.lights.push({ x, y: (pr.lightY || 12) + z, z: y, col: pr.light.map((v) => v * 1.4), rad: pr.lightY ? 420 : 150 });
     }
@@ -346,7 +348,7 @@
           } else {
             const rad = pr.col ? pr.col.c || 6 : 6;
             if (this.onTrackish(x, y, rad - 1)) continue;
-            this.addProp(pr, x, y, rnd() * 6.28, 0, true);
+            this.addProp(pr, x, y, rnd() * 6.28, 0, true, !b.hard);
           }
         }
       }

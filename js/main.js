@@ -15,6 +15,8 @@
   UI.applySettings();
   UI.renderTitle();
 
+  // re-apply an orientation lock when the app goes full screen (some browsers only allow it then)
+  document.addEventListener('fullscreenchange', () => UI.applyOrientation && UI.applyOrientation());
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) { if (UI.inRace) UI.pause(); Audio.suspend(); } else Audio.resume();
   });
