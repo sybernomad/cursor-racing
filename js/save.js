@@ -6,7 +6,7 @@
   const fresh = () => ({
     v: 1, coins: 150, car: 'zip', paint: {}, owned: { zip: true }, up: {},
     cups: { rookie: { unlocked: true, best: 0 } }, best: {}, cupRun: null,
-    settings: { controls: 'fixed', ctl2: true, orient: 'auto', autoGas: true, diff: 0, quality: null, dof: true, bloom: true, shadows: true, shake: true, vib: true, sfx: 0.8, music: 0.5, laps: 3, rivals: 5, koRivals: 3, items: true, cupRivals: 3, cupLaps: 3, cupItems: false, hazards: true, cupHazards: true },
+    settings: { controls: 'fixed', ctl2: true, orient: 'landscape', orient2: true, autoGas: true, diff: 0, quality: null, dof: true, bloom: true, shadows: true, shake: true, vib: true, sfx: 0.8, music: 0.5, laps: 3, rivals: 5, koRivals: 3, items: true, cupRivals: 3, cupLaps: 3, cupItems: false, hazards: true, cupHazards: true },
     stats: { races: 0, wins: 0, podiums: 0, cups: 0, koWins: 0, coinsEarned: 0 },
     seenHelp: false, tutorialDone: false,
   });
@@ -16,13 +16,15 @@
     const f = fresh();
     if (!d || typeof d !== 'object') d = f;
     for (const k of Object.keys(f)) if (d[k] === undefined) d[k] = f[k];
-    const oldCtl2 = !!(d.settings && d.settings.ctl2) || d === f;
+    const oldCtl2 = !!(d.settings && d.settings.ctl2) || d === f, oldOr2 = !!(d.settings && d.settings.orient2) || d === f;
     d.settings = Object.assign(f.settings, d.settings || {}); d.stats = Object.assign(f.stats, d.stats || {});
     // cups open in order: if a later cup is open (e.g. after new cups were added), open the ones before it
     let last = -1; CR.CUPS.forEach((c, i) => { if (d.cups[c.id] && d.cups[c.id].unlocked) last = i; });
     for (let i = 0; i <= last; i++) if (!d.cups[CR.CUPS[i].id]) d.cups[CR.CUPS[i].id] = { unlocked: true, best: 0 };
     // 1.8: the fixed stick became the default touch control; players on the old default move to it once
     if (!oldCtl2) { if (d.settings.controls === 'stick') d.settings.controls = 'fixed'; d.settings.ctl2 = true; }
+    // 1.9: sideways became the default way to play
+    if (!oldOr2) { d.settings.orient = 'landscape'; d.settings.orient2 = true; }
     S.data = d; return d;
   };
   S.save = function () { try { localStorage.setItem(KEY, JSON.stringify(S.data)); } catch (e) { /* storage full or blocked */ } };

@@ -91,8 +91,11 @@ Ember Grid's rival themes): surf rock in the sandbox, lounge jazz on the pool ta
 gaming desk, a polka at the bakery, a parade in Tiny Town, and more. The final lap kicks the song up a
 gear. Songs live in the `SONGS` table: tempo, key, chord progression and per-step patterns.
 
-Settings: control scheme, screen orientation (Auto, or locked Sideways or Upright: locking works in
-the installed app on Android; on iPhone use the phone's rotation lock), difficulty (Easy by default), graphics quality (Low/Med/High), tilt-shift, bloom, shadows,
+The game is made to be played **sideways**. Held upright, it asks you to turn the phone, with a "Play
+upright instead" button; every screen has a layout for both.
+
+Settings: control scheme, screen (Sideways by default, Upright, or Auto; the installed app on Android
+locks the screen to match, on iPhone turn rotation lock off), difficulty (Easy by default), graphics quality (Low/Med/High), tilt-shift, bloom, shadows,
 screen shake, vibration, sound and music volume, update check, reset progress. If the game runs
 slowly on first launch it lowers the graphics quality once on its own.
 

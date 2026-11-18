@@ -75,13 +75,15 @@
         <button class="btn" id="m-ko"><span class="ico">💥</span>Knockout<span class="sub">Fall off screen and you're out</span></button>
         <button class="btn cyan" id="m-garage"><span class="ico">🔧</span>Garage<span class="sub">Your cars, paint and upgrades</span></button>
         <button class="btn cyan" id="m-shop"><span class="ico">🛒</span>Car Shop<span class="sub">${CR.CARS.filter((c) => !d.owned[c.id]).length} cars to collect</span></button>
-        <button class="btn ghost" id="m-set"><span class="ico">⚙️</span>Settings<span class="sub">Controls, graphics, sound</span></button>
         <button class="btn ghost" id="m-rec"><span class="ico">📊</span>Records<span class="sub">Trophies, best laps, career stats</span></button>
-        <button class="btn ghost" id="m-tutb"><span class="ico">🎓</span>Driving Lesson<span class="sub">${d.tutorialDone ? 'Replay the tutorial race' : 'Learn the ropes, earn 100 coins'}</span></button>
-        ${UI.install ? '<button class="btn ghost" id="m-inst"><span class="ico">📲</span>Install<span class="sub">Add to your home screen</span></button>' : ''}
-        ${UI.iosHint ? '<button class="btn ghost" id="m-ios"><span class="ico">📲</span>Install<span class="sub">How to add to iPhone / iPad</span></button>' : ''}
       </div>
-      <p class="muted small" style="margin-top:16px">Stats: ${d.stats.races} races, ${d.stats.wins} wins, ${d.stats.cups} cups. <span class="spacer"></span><span style="float:right">v${UI.version}</span></p>
+      <div class="menu-foot">
+        <button class="btn small ghost" id="m-tutb">🎓 ${d.tutorialDone ? 'Driving lesson' : 'Driving lesson <b class="gold">+100</b>'}</button>
+        <button class="btn small ghost" id="m-set">⚙️ Settings</button>
+        ${UI.install ? '<button class="btn small ghost" id="m-inst">📲 Install</button>' : ''}
+        ${UI.iosHint ? '<button class="btn small ghost" id="m-ios">📲 Install</button>' : ''}
+        <span class="spacer"></span><span class="muted small">${d.stats.races} races · ${d.stats.wins} wins · v${UI.version}</span>
+      </div>
     </div>`;
     show('menu'); UI.attract();
     click($('#m-champ'), () => (run ? renderCupRun() : renderCups()));
@@ -138,15 +140,15 @@
   // ---------------------------------------------------------------------------
   function renderCups() {
     const d = Save.data, el = $('#scr-cups');
-    el.innerHTML = `<div class="wrap">${topbar('Championship')}
+    el.innerHTML = `<div class="wrap">${topbar('Championship')}<div class="split"><aside>
       <div class="panel setup">
         <div class="setrow"><span>Field</span><div class="seg" id="c-field">${[[3, '4 cars'], [7, '8'], [11, '12'], [19, '20']].map(([v, l]) => `<button data-v="${v}" class="${d.settings.cupRivals === v ? 'on' : ''}">${l}</button>`).join('')}</div></div>
         <div class="setrow"><span>Laps</span><div class="seg" id="c-laps">${[2, 3, 5].map((v) => `<button data-v="${v}" class="${d.settings.cupLaps === v ? 'on' : ''}">${v}</button>`).join('')}</div></div>
         <div class="setrow"><span>Power-ups</span><button class="tog ${d.settings.cupItems ? 'on' : ''}" id="c-items"></button><span class="muted small">${d.settings.cupItems ? 'Item boxes on the road' : 'Classic: pure racing'}</span></div>
         <div class="setrow"><span>Obstacles</span><button class="tog ${d.settings.cupHazards ? 'on' : ''}" id="c-haz"></button><span class="muted small">${d.settings.cupHazards ? 'Hazards, spills and jump gaps' : 'Clear road: ramps and boost pads only'}</span></div>
       </div>
-      <div class="cards" id="cuplist"></div>
-      <p class="muted small" style="margin-top:12px">Three races per cup. Points: ${d.settings.cupRivals > 3 ? '25 / 18 / 15 / 12 / 10 / 8 / 6 / 4 / 2 / 1 for the top ten' : '10 / 6 / 3 / 1'}. Finish the cup on the podium to open the next one. Win it to unlock a new car. These options apply to the next cup you start.</p></div>`;
+      <p class="muted small side-note">Three races per cup. Points: ${d.settings.cupRivals > 3 ? '25 / 18 / 15 / 12 / 10 / 8 / 6 / 4 / 2 / 1 for the top ten' : '10 / 6 / 3 / 1'}. Finish the cup on the podium to open the next one. Win it to unlock a new car. These options apply to the next cup you start.</p></aside>
+      <div class="cards" id="cuplist"></div></div></div>`;
     el.querySelectorAll('#c-field button').forEach((b) => click(b, () => { d.settings.cupRivals = +b.dataset.v; Save.save(); renderCups(); }));
     el.querySelectorAll('#c-laps button').forEach((b) => click(b, () => { d.settings.cupLaps = +b.dataset.v; Save.save(); renderCups(); }));
     click($('#c-haz', el), () => { d.settings.cupHazards = !d.settings.cupHazards; Save.save(); renderCups(); });
@@ -211,13 +213,13 @@
     const ci = CR.CUPS.findIndex((c) => c.id === run.cup), cup = CR.CUPS[ci];
     if (run.race >= cup.races.length) return renderStandings();
     const el = $('#scr-standings'), list = Object.entries(run.pts).sort((a, b) => b[1] - a[1]), [t, rev] = cup.races[run.race], left = retriesLeft(run);
-    el.innerHTML = `<div class="wrap" style="max-width:620px">${topbar(cup.name)}<div class="panel">
+    el.innerHTML = `<div class="wrap res-wrap">${topbar(cup.name)}<div class="panel res"><div class="r-head">
       <h2>Race ${run.race + 1} of ${cup.races.length} · ${CR.TRACKS[t].name}${rev ? ' R' : ''}</h2>
       <div class="tags" style="margin:8px 0">${[`${list.length} cars`, `${run.laps || 3} laps`, run.items ? 'Power-ups on' : 'No power-ups', run.hazards !== false ? 'Obstacles on' : 'Clear road', `${left} ${left === 1 ? 'retry' : 'retries'} left`].map((x) => `<span>${x}</span>`).join('')}</div>
-      ${run.live ? `<p class="muted small">You left a race unfinished. ${left ? 'Continuing uses one retry.' : 'You have no retries left, so continuing forfeits it.'}</p>` : ''}
-      <table class="table"><tr><th>#</th><th>Driver</th><th class="num">Points</th></tr>${list.map(([n, p], i) => `<tr class="${n === 'You' ? 'me' : ''}"><td>${i + 1}</td><td>${n}</td><td class="num">${p}</td></tr>`).join('')}</table>
-      ${run.grid ? `<p class="muted small" style="text-align:center;margin:10px 0 0">You line up ${U.ordinal(run.grid.indexOf('You') + 1)} of ${run.grid.length}.</p>` : ''}
-      <div class="actions"><button class="btn primary" id="cr-go">${run.live && !left ? 'Forfeit race' : 'Continue'}</button><button class="btn" id="cr-rst">Restart cup</button><button class="btn ghost" id="cr-quit">Abandon cup</button></div>
+      ${run.live ? `<p class="muted small">You left a race unfinished. ${left ? 'Continuing uses one retry.' : 'You have no retries left, so continuing forfeits it.'}</p>` : ''}</div>
+      <div class="r-main"><table class="table"><tr><th>#</th><th>Driver</th><th class="num">Points</th></tr>${list.map(([n, p], i) => `<tr class="${n === 'You' ? 'me' : ''}"><td>${i + 1}</td><td>${n}</td><td class="num">${p}</td></tr>`).join('')}</table></div>
+      <div class="r-foot">${run.grid ? `<p class="muted small" style="text-align:center;margin:10px 0 0">You line up ${U.ordinal(run.grid.indexOf('You') + 1)} of ${run.grid.length}.</p>` : ''}
+      <div class="actions"><button class="btn primary" id="cr-go">${run.live && !left ? 'Forfeit race' : 'Continue'}</button><button class="btn" id="cr-rst">Restart cup</button><button class="btn ghost" id="cr-quit">Abandon cup</button></div></div>
     </div></div>`;
     click($('#cr-go', el), continueCup);
     click($('#cr-rst', el), () => confirmBox('Restart this cup?', 'Points go back to zero and you start again from race 1, with the same rivals and options.', 'Restart', () => {
@@ -278,9 +280,9 @@
     const title = { quick: 'Quick Race', tt: 'Time Trial', ko: 'Knockout' }[mode];
     const mirrorOpen = Save.cupUnlocked('mirror'), rev = mirrorOpen && !!UI.trkMirror;
     el.innerHTML = `<div class="wrap">${topbar(title)}
-      ${mode !== 'tt' ? setupPanel(mode) : ''}
-      ${mirrorOpen ? `<div class="row" style="margin-bottom:4px"><div class="seg" id="t-dir"><button data-v="0" class="${rev ? '' : 'on'}">Normal</button><button data-v="1" class="${rev ? 'on' : ''}">Mirror</button></div><span class="muted small">Mirror runs every track the other way round.</span></div>` : ''}
-      <div id="tl"></div></div>`;
+      ${mode !== 'tt' || mirrorOpen ? `<div class="split"><aside>${mode !== 'tt' ? setupPanel(mode) : ''}
+      ${mirrorOpen ? `<div class="row mirror-row"><div class="seg" id="t-dir"><button data-v="0" class="${rev ? '' : 'on'}">Normal</button><button data-v="1" class="${rev ? 'on' : ''}">Mirror</button></div><span class="muted small">Mirror runs every track the other way round.</span></div>` : ''}</aside>
+      <div id="tl"></div></div>` : '<div id="tl"></div>'}</div>`;
     const tl = $('#tl', el), seen = new Set();
     // grouped by the cup that opens them
     CR.CUPS.forEach((cup, ci) => {
@@ -466,7 +468,7 @@
     el.innerHTML = `<div class="wrap">${topbar('Settings', UI.inRace ? 'menu' : 'menu')}
       <div class="panel">
         <div class="set"><div class="lbl"><b>Touch controls</b><span>Stick: a joystick in the bottom-left corner. Float: put your thumb anywhere on the left and point. Buttons: left and right arrows.</span></div>${seg('s-ctl', [['fixed', 'Stick'], ['stick', 'Float'], ['buttons', 'Buttons']], s.controls)}</div>
-        <div class="set"><div class="lbl"><b>Screen</b><span>${screen.orientation && screen.orientation.lock ? 'Lock the game sideways or upright. Locking works once the game is installed.' : 'This browser can\'t lock the screen: use your phone\'s rotation lock instead.'}</span></div>${seg('s-or', [['auto', 'Auto'], ['landscape', 'Sideways'], ['portrait', 'Upright']], s.orient)}</div>
+        <div class="set"><div class="lbl"><b>Screen</b><span>Sideways is the default. Upright works too. Auto follows how you hold the phone.${screen.orientation && screen.orientation.lock ? '' : ' On iPhone, turn rotation lock off so the game can turn.'}</span></div>${seg('s-or', [['landscape', 'Sideways'], ['portrait', 'Upright'], ['auto', 'Auto']], s.orient)}</div>
         <div class="set"><div class="lbl"><b>Auto-accelerate</b><span>Buttons mode: the car drives itself forward</span></div>${tog('s-gas', s.autoGas)}</div>
         <div class="set"><div class="lbl"><b>Difficulty</b><span>How fast the rivals drive. On Easy they are slower and don't catch up as hard. Takes effect next race.</span></div>${seg('s-diff', [[0, 'Easy'], [1, 'Normal'], [2, 'Hard']], s.diff)}</div>
         <div class="set"><div class="lbl"><b>Graphics</b><span>Lower it if the game stutters</span></div>${seg('s-q', [['low', 'Low'], ['medium', 'Med'], ['high', 'High']], s.quality)}</div>
@@ -517,6 +519,7 @@
     Audio.enabled = s.sfx > 0; Audio.vol = s.sfx; Audio.music = s.music > 0; Audio.musicVol = s.music; Audio.vib = s.vib; Audio.apply();
     Game.settings.difficulty = s.diff; Game.settings.shake = s.shake; Game.settings.autoGas = s.autoGas;
     applyOrientation();
+    if ($('#rotate')) checkRotate();
   }
   // Lock the screen sideways or upright. Browsers only allow it full screen or in the installed app,
   // so a refusal is quiet unless the player has just changed the setting.
@@ -527,6 +530,19 @@
     so.lock(o).catch(() => { if (loud) UI.toast('Install the game to lock the screen, or use your phone\'s rotation lock'); });
   }
   UI.applyOrientation = applyOrientation;
+  // Set to sideways but held upright (the lock isn't allowed in a browser tab, or on iPhone): ask the player to turn the phone.
+  function checkRotate() {
+    const el = $('#rotate'), want = Save.data.settings.orient === 'landscape' && UI.touch && window.innerHeight > window.innerWidth * 1.05;
+    if (want && el.classList.contains('hidden')) {
+      el.innerHTML = '<div class="rot-phone"></div><h2>Turn your phone sideways</h2><p class="muted small">Cursor Racing is made for playing sideways.</p><button class="btn small ghost" id="rot-up">Play upright instead</button>';
+      el.classList.remove('hidden');
+      $('#rot-up', el).addEventListener('click', () => { Save.data.settings.orient = 'portrait'; Save.save(); applyOrientation(); el.classList.add('hidden'); Audio.play('ui'); if (UI.screen === 'settings') renderSettings(); });
+      if (UI.inRace && !Game.paused) pause();
+    } else if (!want) el.classList.add('hidden');
+  }
+  UI.checkRotate = checkRotate;
+  window.addEventListener('resize', () => setTimeout(checkRotate, 120));
+  window.addEventListener('orientationchange', () => setTimeout(checkRotate, 300));
   UI.applySettings = applySettings;
 
   // ---------------------------------------------------------------------------
@@ -582,10 +598,10 @@
       <td class="num">${ko ? o.points + ' pts' : (o.est ? '~' : '') + U.fmtTime(o.time)}</td>${cfg.cup != null ? `<td class="num gold">${pointsFor(res.order.length, i) ? '+' + pointsFor(res.order.length, i) : ''}</td>` : ''}</tr>`).join('');
     const laps = tt && Game.player ? Game.player.lapTimes.map((t, i) => `Lap ${i + 1}: ${U.fmtTime(t)}`).join(' · ') : '';
     const cupNext = cfg.cup != null;
-    el.innerHTML = `<div class="wrap" style="max-width:620px"><div class="panel">${head}
-      ${tt ? `<p class="muted small" style="text-align:center">${laps}</p>` : `<table class="table"><tr><th>#</th><th>Driver</th><th>Car</th><th class="num">${ko ? 'Score' : 'Time'}</th>${cupNext ? '<th class="num">Pts</th>' : ''}</tr>${rows}</table>`}
-      <p class="reward">${notes.join(' ')} +${coins} <span class="coin"></span></p>
-      <div class="actions">${cupNext ? '<button class="btn primary" id="r-next">Standings</button>' : `<button class="btn primary" id="r-again">${tt ? 'Try again' : 'Race again'}</button><button class="btn" id="r-tracks">Tracks</button>`}<button class="btn ghost" id="r-menu">Menu</button></div>
+    el.innerHTML = `<div class="wrap res-wrap"><div class="panel res"><div class="r-head">${head}</div>
+      <div class="r-main">${tt ? `<p class="muted small" style="text-align:center">${laps}</p>` : `<table class="table"><tr><th>#</th><th>Driver</th><th>Car</th><th class="num">${ko ? 'Score' : 'Time'}</th>${cupNext ? '<th class="num">Pts</th>' : ''}</tr>${rows}</table>`}</div>
+      <div class="r-foot"><p class="reward">${notes.join(' ')} +${coins} <span class="coin"></span></p>
+      <div class="actions">${cupNext ? '<button class="btn primary" id="r-next">Standings</button>' : `<button class="btn primary" id="r-again">${tt ? 'Try again' : 'Race again'}</button><button class="btn" id="r-tracks">Tracks</button>`}<button class="btn ghost" id="r-menu">Menu</button></div></div>
     </div></div>`;
     show('results');
     if (cupNext) click($('#r-next', el), renderStandings);
@@ -617,11 +633,11 @@
       extra = `<div class="reward">${myPlace <= 3 ? `<span class="trophy g${myPlace}"></span>${['Gold', 'Silver', 'Bronze'][myPlace - 1]} trophy! +${coins} <span class="coin"></span>` : 'Off the podium. Try the cup again.'}</div>${gifts.map((g) => `<div class="reward" style="color:var(--cyan)">${g}</div>`).join('')}`;
       if (myPlace === 1) Audio.play('win');
     }
-    el.innerHTML = `<div class="wrap" style="max-width:560px"><div class="panel"><h2>${cup.name} · ${done ? 'Final standings' : `after race ${run.race} of 3`}</h2>
-      ${done ? `<div class="bigplace">${U.ordinal(myPlace)}</div>` : ''}${extra}
-      <table class="table"><tr><th>#</th><th>Driver</th><th class="num">Points</th></tr>${list.map(([n, p], i) => `<tr class="${n === 'You' ? 'me' : ''}"><td>${i + 1}</td><td>${n}</td><td class="num">${p}</td></tr>`).join('')}</table>
-      ${!done && run.grid ? `<p class="muted small" style="text-align:center;margin:10px 0 0">Starting grid follows the last result: you line up ${U.ordinal(run.grid.indexOf('You') + 1)} of ${run.grid.length}.</p>` : ''}
-      <div class="actions">${done ? '<button class="btn primary" id="st-cups">Cups</button>' : `<button class="btn primary" id="st-next">Next: ${CR.TRACKS[cup.races[run.race][0]].name}${cup.races[run.race][1] ? ' R' : ''}</button>`}<button class="btn ghost" id="st-menu">Menu</button></div></div></div>`;
+    el.innerHTML = `<div class="wrap res-wrap"><div class="panel res"><div class="r-head"><h2>${cup.name} · ${done ? 'Final standings' : `after race ${run.race} of 3`}</h2>
+      ${done ? `<div class="bigplace">${U.ordinal(myPlace)}</div>` : ''}${extra}</div>
+      <div class="r-main"><table class="table"><tr><th>#</th><th>Driver</th><th class="num">Points</th></tr>${list.map(([n, p], i) => `<tr class="${n === 'You' ? 'me' : ''}"><td>${i + 1}</td><td>${n}</td><td class="num">${p}</td></tr>`).join('')}</table></div>
+      <div class="r-foot">${!done && run.grid ? `<p class="muted small" style="text-align:center;margin:10px 0 0">Starting grid follows the last result: you line up ${U.ordinal(run.grid.indexOf('You') + 1)} of ${run.grid.length}.</p>` : ''}
+      <div class="actions">${done ? '<button class="btn primary" id="st-cups">Cups</button>' : `<button class="btn primary" id="st-next">Next: ${CR.TRACKS[cup.races[run.race][0]].name}${cup.races[run.race][1] ? ' R' : ''}</button>`}<button class="btn ghost" id="st-menu">Menu</button></div></div></div></div>`;
     show('standings');
     if (done) click($('#st-cups', el), () => { Game.stop(); renderCups(); }); else click($('#st-next', el), continueCup);
     click($('#st-menu', el), () => { Game.stop(); renderMenu(); }, 'back');
