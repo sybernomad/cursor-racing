@@ -91,6 +91,9 @@ Ember Grid's rival themes): surf rock in the sandbox, lounge jazz on the pool ta
 gaming desk, a polka at the bakery, a parade in Tiny Town, and more. The final lap kicks the song up a
 gear. Songs live in the `SONGS` table: tempo, key, chord progression and per-step patterns.
 
+A back gesture or back button never drops you out of the game by accident: mid-race it pauses, in a
+menu it goes up a screen, and on the main menu you swipe back twice to close the game.
+
 The game is made to be played **sideways**. Held upright, it asks you to turn the phone, with a "Play
 upright instead" button; every screen has a layout for both.
 

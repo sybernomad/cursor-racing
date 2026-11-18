@@ -157,12 +157,12 @@ input[type=range] { width: 140px; accent-color: var(--gold); }
 .tbtn { position: absolute; border-radius: 50%; border: 2px solid rgba(255, 255, 255, .28); background: rgba(10, 8, 22, .35); display: grid; place-items: center;
   font-weight: 900; font-size: 12px; letter-spacing: .1em; color: rgba(255, 255, 255, .9); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); text-shadow: 0 1px 2px #000; }
 .tbtn.on { background: rgba(255, 211, 122, .4); border-color: var(--gold); }
-.tbtn.boost { width: 86px; height: 86px; right: calc(22px + var(--safe-r)); bottom: calc(26px + var(--safe-b)); border-color: rgba(255, 180, 80, .6); }
+.tbtn.boost { width: 86px; height: 86px; right: calc(40px + var(--safe-r)); bottom: calc(26px + var(--safe-b)); border-color: rgba(255, 180, 80, .6); }
 .tbtn.boost .ring { position: absolute; inset: -6px; border-radius: 50%; background: conic-gradient(#ffd43b var(--p, 0%), transparent 0); -webkit-mask: radial-gradient(circle, transparent 58%, #000 60%); mask: radial-gradient(circle, transparent 58%, #000 60%); }
-.tbtn.brake { width: 66px; height: 66px; right: calc(122px + var(--safe-r)); bottom: calc(22px + var(--safe-b)); }
+.tbtn.brake { width: 66px; height: 66px; right: calc(140px + var(--safe-r)); bottom: calc(22px + var(--safe-b)); }
 .tbtn.gas { width: 76px; height: 76px; right: calc(30px + var(--safe-r)); bottom: calc(128px + var(--safe-b)); }
 .tbtn.left, .tbtn.right { width: 78px; height: 78px; bottom: calc(26px + var(--safe-b)); font-size: 26px; }
-.tbtn.left { left: calc(20px + var(--safe-l)); } .tbtn.right { left: calc(112px + var(--safe-l)); }
+.tbtn.left { left: calc(40px + var(--safe-l)); } .tbtn.right { left: calc(132px + var(--safe-l)); }
 .stick-base { position: absolute; width: 120px; height: 120px; margin: -60px 0 0 -60px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, .25); background: radial-gradient(circle, rgba(63, 240, 255, .12), rgba(10, 8, 22, .25)); pointer-events: none; display: none; }
 .stick-knob { position: absolute; left: 50%; top: 50%; width: 52px; height: 52px; margin: -26px 0 0 -26px; border-radius: 50%; background: radial-gradient(circle at 40% 35%, #c9fbff, #3ff0ff 60%, #148da3); box-shadow: 0 0 16px rgba(63, 240, 255, .6); }
 .stick-hint { position: absolute; left: calc(20px + var(--safe-l)); bottom: calc(30px + var(--safe-b)); font-size: 11px; font-weight: 800; letter-spacing: .14em; color: rgba(255, 255, 255, .55); text-transform: uppercase; pointer-events: none; }
@@ -204,7 +204,7 @@ input[type=range] { width: 140px; accent-color: var(--gold); }
 .hud-board i { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
 .hud-song { position: absolute; left: 50%; bottom: calc(14px + var(--safe-b)); transform: translateX(-50%); font-size: 12px; font-weight: 700; color: var(--muted); opacity: 0; animation: songIn 5s ease 1s both; pointer-events: none; text-shadow: 0 1px 2px #000; white-space: nowrap; }
 @keyframes songIn { 10%, 75% { opacity: .9; } 100% { opacity: 0; } }
-.tbtn.itembtn { width: 64px; height: 64px; right: calc(118px + var(--safe-r)); bottom: calc(100px + var(--safe-b)); font-size: 22px; }
+.tbtn.itembtn { width: 64px; height: 64px; right: calc(136px + var(--safe-r)); bottom: calc(100px + var(--safe-b)); font-size: 22px; }
 .tbtn.itembtn.full { border-color: var(--gold); background: rgba(255, 211, 122, .3); }
 @media (max-height: 520px) { .hud-board { display: none; } }
 /* garage car picker */
@@ -262,7 +262,7 @@ details.dev { margin-top: 14px; border: 1px dashed var(--line2); border-radius: 
 details.dev summary { cursor: pointer; font-weight: 800; font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
 details.dev .actions { margin-top: 8px; }
 /* fixed joystick, bottom-left */
-.stick-base.fixed { display: block; left: calc(86px + var(--safe-l)); top: calc(100% - 92px - var(--safe-b)); opacity: .85; transition: opacity .2s; }
+.stick-base.fixed { display: block; left: calc(110px + var(--safe-l)); top: calc(100% - 92px - var(--safe-b)); opacity: .85; transition: opacity .2s; }
 .stick-base.fixed.on { opacity: 1; }
 .stick-base.fixed .stick-knob { transition: transform .08s ease-out; }
 .stick-base.fixed.on .stick-knob { transition: none; }
@@ -278,7 +278,7 @@ details.dev .actions { margin-top: 8px; }
   .tap { margin-top: 18px; }
   .hud-pos { font-size: 30px; }
   .minimap { width: 96px; }
-  .stick-base.fixed { left: calc(80px + var(--safe-l)); top: calc(100% - 82px - var(--safe-b)); }
+  .stick-base.fixed { left: calc(108px + var(--safe-l)); top: calc(100% - 82px - var(--safe-b)); }
   .modal .panel { max-height: 94vh; padding: 10px 14px; }
   .modal .actions .btn { padding: 9px 14px; }
 }
@@ -383,3 +383,5 @@ details.dev .actions { margin-top: 8px; }
   #scr-settings .set { grid-template-columns: 1fr; gap: 6px; align-content: start; }
   #scr-settings .set > :last-child { justify-self: start; }
 }
+
+/* the stick and buttons sit clear of the screen edges, where phones start their back gesture */

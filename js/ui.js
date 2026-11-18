@@ -59,8 +59,8 @@
     el.innerHTML = `<div class="logo"><span class="cur"></span>Cursor<br>Racing<small>tiny cars · big tables</small></div>
       <div class="tap">Tap to start</div><div class="ver">v${UI.version}</div><div class="titlefoot">A toy-car racer</div>`;
     show('title'); UI.attract();
-    const start = () => { Audio.init(); Audio.play('go'); Audio.setMusic('menu'); renderMenu(); el.removeEventListener('pointerup', start); };
-    el.addEventListener('pointerup', start);
+    const start = () => { Audio.init(); Audio.play('go'); Audio.setMusic('menu'); renderMenu(); el.removeEventListener('click', start); };
+    el.addEventListener('click', start); // click, not pointerup: the same tap must not also land on the menu that replaces this screen
   }
 
   function renderMenu() {
@@ -771,7 +771,7 @@
       const hint = document.createElement('div'); hint.className = 'stick-hint'; hint.textContent = 'Touch & point to drive'; layer.appendChild(hint);
       const knob = base.firstChild; let ox = 0, oy = 0;
       layer.addEventListener('pointerdown', (e) => {
-        if (e.target !== layer || T.stick.id != null || e.clientX > window.innerWidth * 0.62) return;
+        if (e.target !== layer || T.stick.id != null || e.clientX > window.innerWidth * 0.62 || e.clientX < 28) return; // not at the very edge: that's the phone's back gesture
         e.preventDefault(); Audio.init(); layer.setPointerCapture(e.pointerId);
         T.stick.id = e.pointerId; ox = e.clientX; oy = e.clientY; base.style.left = ox + 'px'; base.style.top = oy + 'px'; base.style.display = 'block'; knob.style.transform = ''; hint.style.display = 'none';
       });
@@ -844,6 +844,30 @@
   UI.pause = pause;
 
   UI.renderTitle = renderTitle; UI.renderMenu = renderMenu; UI.show = show; UI.startRace = startRace; UI.startTutorial = startTutorial; UI.renderGarage = renderGarage; UI.renderShop = renderShop; UI.renderRecords = renderRecords; UI.renderCupRun = renderCupRun; UI.renderTracks = renderTracks; UI.renderCups = renderCups; UI.renderSettings = renderSettings;
+  // ---------------------------------------------------------------------------
+  // Back gestures. On phones a swipe from the screen edge (Android) or the browser's swipe-back (iPhone)
+  // means "go back", and for a one-page game that means leaving it. So the page keeps one extra history
+  // entry on top: a back gesture lands on the entry below, fires popstate, and the game handles it here
+  // (pause the race, close a box, go up a screen) and puts the entry back. On the main menu a second back
+  // within a couple of seconds is let through, so the game can still be closed that way.
+  // Browsers only keep entries added after a tap, so the entry is (re)added on taps and key presses.
+  const onTrap = () => !!(history.state && history.state.cr);
+  function trap() { if (!onTrap()) { try { history.pushState({ cr: 1 }, ''); } catch (e) { /* not allowed here */ } } }
+  ['pointerup', 'keydown'].forEach((t) => window.addEventListener(t, trap, true));
+  window.addEventListener('popstate', () => { if (handleBack()) trap(); });
+  function handleBack() {
+    if (!$('#rotate').classList.contains('hidden')) return true;
+    if (!$('#modal').classList.contains('hidden')) { if (!(UI.inRace && Game.paused)) { closeModal(); Audio.play('back'); } return true; }
+    if (UI.inRace) { pause(); return true; }
+    if (UI.screen === 'menu' || UI.screen === 'title') {
+      if (UI.exitArm && Date.now() - UI.exitArm < 2500) { UI.exitArm = 0; try { history.back(); } catch (e) { /* first entry */ } return false; }
+      UI.exitArm = Date.now(); UI.toast('Swipe back again to close the game'); return true;
+    }
+    const scr = $('#scr-' + UI.screen), b = scr && (scr.querySelector('.topbar [data-go]') || scr.querySelector('#r-menu, #st-menu'));
+    if (b) b.click(); else renderMenu();
+    return true;
+  }
+
   UI.isSafe = () => !UI.inRace && ['title', 'menu', 'results', 'standings', 'cups', 'tracks', 'garage', 'shop', 'records', 'settings'].includes(UI.screen);
   CR.UI = UI;
 })(window.CR);
