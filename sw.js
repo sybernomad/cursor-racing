@@ -2,7 +2,7 @@
  * To ship an update: change VERSION below (or run `node tools/bump-version.mjs`) and push.
  * Installed apps notice the changed worker, download the new files in the background,
  * and the page switches to them on the next menu screen (never mid-race). */
-const VERSION = '1.9.4';
+const VERSION = '1.9.5';
 const CACHE = `cursorracing-${VERSION}`;
 const ASSETS = [
   './',
