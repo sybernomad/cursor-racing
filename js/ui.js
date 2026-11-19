@@ -17,7 +17,7 @@
     const pool = CR.CARS.filter((c) => c.top <= maxTop), c = pool[Math.floor(Math.random() * pool.length)];
     return c ? { ...r, car: c.id, paint: c.paints[0], acc: c.paints[1] } : r;
   }
-  const CUP_RIVALS = { twist: ['Blaze', 'Lola', 'Ace'], rookie: ['Pip', 'Moxie', 'Rusty'], pro: ['Vex', 'Moxie', 'Pip'], mirror: ['Nova', 'Vex', 'Rusty'], champ: ['Nova', 'Glitch', 'Vex'], workshop: ['Rusty', 'Moxie', 'Vex'], tour: ['Glitch', 'Nova', 'Pip'], legend: ['Nova', 'Glitch', 'Vex'] };
+  const CUP_RIVALS = { paper: ['Pip', 'Tinker', 'Lola'], twist: ['Blaze', 'Lola', 'Ace'], rookie: ['Pip', 'Moxie', 'Rusty'], pro: ['Vex', 'Moxie', 'Pip'], mirror: ['Nova', 'Vex', 'Rusty'], champ: ['Nova', 'Glitch', 'Vex'], workshop: ['Rusty', 'Moxie', 'Vex'], tour: ['Glitch', 'Nova', 'Pip'], legend: ['Nova', 'Glitch', 'Vex'] };
   const rival = (n) => CR.RIVALS.find((r) => r.name === n);
 
   // ---------------------------------------------------------------------------

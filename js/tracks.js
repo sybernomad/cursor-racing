@@ -359,6 +359,16 @@
       pieces: [['lamp', 1350, 620], ['robot', 900, 780], ['robot', 1800, 780], ['lamp', 1350, 1440], ['block', 1350, 880]],
       hazards: [{ type: 'bumper', t: 0.3, off: -40 }, { type: 'bumper', t: 0.31, off: 40 }, { type: 'sweeper', t: 0.95, side: -1, look: 'glow' }],
     },
+    {
+      id: 'paperchase', name: 'Paper Chase', theme: 'desk', W: 2400, H: 1600, width: 125, seed: 151, start: [900, 290],
+      pts: [[350, 350], [1100, 280], [1800, 330], [2100, 600], [1900, 850], [1400, 800], [1150, 1000], [1400, 1220],
+            [1950, 1200], [2080, 1380], [1500, 1450], [700, 1420], [320, 1150], [280, 700]],
+      zones: [{ t: 0.4, off: 0, rx: 60, ry: 45, type: 'sticky', look: 'ink' }],
+      ramps: [{ t: 0.72, len: 28, look: 'ruler' }],
+      boosts: [{ t: 0.2, off: 0 }, { t: 0.62, off: 0 }],
+      pieces: [['mugpens', 700, 850], ['book', 1500, 1020, 0.3, { w: 36, d: 24, h: 8 }], ['eraser', 2150, 1000]],
+      hazards: [{ type: 'sweeper', t: 0.28, side: 1, look: 'ruler' }, { type: 'bumper', t: 0.52, off: -30 }, { type: 'bumper', t: 0.53, off: 30 }],
+    },
   ];
 
   // Cups: each race is [trackIndex, reversed]
@@ -369,6 +379,7 @@
     { id: 'mirror', name: 'Mirror Cup', races: [[0, true], [1, true], [2, true]], ai: 1.0, reward: 800, unlock: 'truck' },
     { id: 'tour', name: 'Grand Tour Cup', races: [[9, false], [10, false], [11, false]], ai: 1.02, reward: 1000, unlock: 'muscle' },
     { id: 'twist', name: 'Twister Cup', races: [[12, false], [13, false], [14, false]], ai: 1.03, reward: 1100, unlock: 'dome' },
+    { id: 'paper', name: 'Paper Cup', races: [[15, false], [1, false], [15, true]], ai: 1.0, reward: 900, unlock: 'cart' },
     { id: 'champ', name: 'Champion Cup', races: [[3, true], [4, true], [5, true]], ai: 1.04, reward: 1200, unlock: 'formula' },
     { id: 'legend', name: 'Legend Cup', races: [[7, true], [9, true], [11, true]], ai: 1.07, reward: 1600, unlock: 'jet' },
   ];
@@ -442,6 +453,7 @@
     { id: 'twin', name: 'Double Trouble', desc: 'Two engines. Twice the shove off every corner.', top: 0.9, accel: 0.96, grip: 0.5, mass: 0.9, price: 5200, paints: ['#1971c2', '#f8f9fa'] },
     { id: 'stealth', name: 'Blackout', desc: 'All sharp edges. Enormous grip at enormous speed.', top: 0.92, accel: 0.8, grip: 0.92, mass: 0.6, price: 5800, paints: ['#212529', '#cc5de8'] },
     { id: 'afterburner', name: 'Afterburner', desc: 'A jet with its wings clipped. The fastest thing in the box.', top: 1.04, accel: 0.82, grip: 0.46, mass: 0.5, lift: 1.3, charge: 1.2, price: 7000, paints: ['#adb5bd', '#e03131'] },
+    { id: 'cart', name: 'Trolley Dash', desc: 'A shopping cart. Turns on a coin, rattles at speed.', top: 0.58, accel: 0.78, grip: 0.86, mass: 0.35, price: 900, paints: ['#adb5bd', '#e03131'] },
   ];
   // Shop prices: the numbers above are the relative values; this scales them all. Raise it to make cars dearer.
   const PRICE_SCALE = 0.6;

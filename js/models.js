@@ -542,6 +542,21 @@
       for (let i = 0; i < 4; i++) v.set(13 - i, 3 + i, 4, HUB); v.box(10, 7, 2, 10, 7, 6, A); v.set(14, 3, 4, HEAD, 1);
       helmet(v, 4, 4, 4, A); v.box(2, 3, 4, 2, 7, 4, HUB); v.box(1, 2, 2, 6, 2, 2, A); v.box(1, 2, 6, 6, 2, 6, A); v.box(9, 5, 4, 9, 5, 4, A);
     },
+    cart(v, P, A, r) { // a shopping cart
+      wheels(v, [2, 13], false, 1, 7);            // small wheels, tucked in
+      v.box(1, 1, 2, 14, 1, 6, HUB);               // the chassis rails
+      // the basket: open wire walls in the body colour
+      for (let x = 2; x <= 14; x++) for (let y = 2; y <= 6; y++) {
+        if ((x + y) % 2) continue;                 // every other block: a wire grid
+        v.set(x, y, 1, P); v.set(x, y, 7, P);       // the two sides
+      }
+      for (let y = 2; y <= 6; y++) for (let z = 1; z <= 7; z++) if ((y + z) % 2 === 0) v.set(14, y, z, P);   // the front wall
+      v.box(2, 2, 2, 13, 2, 6, P, 0, 0.05, r);     // the basket floor
+      v.box(0, 6, 1, 1, 6, 7, A);                  // the handle, in the accent colour
+      v.set(0, 5, 1, HUB); v.set(0, 5, 7, HUB);
+      helmet(v, 7, 3, 4, A);                       // the driver, sitting in the basket
+      v.set(14, 3, 2, HEAD, 1); v.set(14, 3, 6, HEAD, 1);   // headlights
+    },
     hover(v, P, A, r) {
       v.box(1, 0, 0, 14, 0, 8, DARK); v.clear(1, 0, 0); v.clear(14, 0, 0); v.clear(1, 0, 8); v.clear(14, 0, 8);
       v.box(1, 1, 1, 14, 2, 7, P, 0, 0.06, r);

@@ -130,6 +130,9 @@ is the number of restarts allowed per cup.
 
 ## Adding or tuning tracks
 
+For a step-by-step guide to adding new cars and tracks, with a worked example of each, see
+[docs/adding-cars-and-tracks.md](docs/adding-cars-and-tracks.md). Quick reference:
+
 Tracks live in `js/tracks.js`. Each one is a closed loop of points on a table `W x H`, plus:
 
 - `start`: optional `[x, y]` for the start line (otherwise the straightest stretch is used),
