@@ -25,6 +25,13 @@
     if (!oldCtl2) { if (d.settings.controls === 'stick') d.settings.controls = 'fixed'; d.settings.ctl2 = true; }
     // 1.9: sideways became the default way to play
     if (!oldOr2) { d.settings.orient = 'landscape'; d.settings.orient2 = true; }
+    // 1.9.6: Time Trial keeps its own best lap (it used to share one with races), and race bests are kept
+    // per lap count. The ghost's time is the old Time Trial best; old race bests had no lap count, so they go.
+    for (const [k, b] of Object.entries(d.best || {})) {
+      if (!b || typeof b !== 'object' || b.v2) continue;
+      if (b.tt == null) { try { const g = JSON.parse(localStorage.getItem('cr-ghost-' + k)); if (g && typeof g.time === 'number') b.tt = g.time; } catch (e) { /* no ghost */ } }
+      delete b.race; b.v2 = true;
+    }
     S.data = d; return d;
   };
   S.save = function () { try { localStorage.setItem(KEY, JSON.stringify(S.data)); } catch (e) { /* storage full or blocked */ } };
@@ -47,13 +54,22 @@
   S.upCost = (car, kind) => { const lv = S.ups(car)[kind]; if (lv >= 5) return null; const pr = CR.CARS.find((c) => c.id === car).price; return Math.round(120 * (lv + 1) * (1 + pr / 1600) / 10) * 10; };
   S.addCoins = (n) => { S.data.coins += n; S.data.stats.coinsEarned += Math.max(0, n); S.save(); };
   S.trackKey = (ti, rev) => `${CR.TRACKS[ti].id}${rev ? '-r' : ''}`;
+  // Per track: lap = fastest lap in any mode, tt = fastest Time Trial lap (the one the ghost replays),
+  // races = fastest finish for each lap count ({ 3: 95.2, 5: 160.1 }).
   S.bestOf = (ti, rev) => S.data.best[S.trackKey(ti, rev)] || {};
-  S.setBest = (ti, rev, lap, race) => {
-    const k = S.trackKey(ti, rev), b = S.data.best[k] || (S.data.best[k] = {});
+  S.raceBest = (ti, rev, laps) => { const r = S.bestOf(ti, rev).races; return r ? r[laps] : undefined; };
+  S.setBest = (ti, rev, lap, race, laps) => {
+    const k = S.trackKey(ti, rev), b = S.data.best[k] || (S.data.best[k] = { v2: true });
     let nb = false;
     if (lap != null && (b.lap == null || lap < b.lap)) { b.lap = lap; nb = true; }
-    if (race != null && (b.race == null || race < b.race)) b.race = race;
+    if (race != null && laps) { const r = b.races || (b.races = {}); if (r[laps] == null || race < r[laps]) r[laps] = race; }
     S.save(); return nb;
+  };
+  // Time Trial only: true when this beats the Time Trial best (and so becomes the ghost)
+  S.setTT = (ti, rev, lap) => {
+    const k = S.trackKey(ti, rev), b = S.data.best[k] || (S.data.best[k] = { v2: true });
+    if (lap == null || (b.tt != null && lap >= b.tt)) return false;
+    b.tt = lap; S.save(); return true;
   };
   S.ghost = (ti, rev) => { try { return JSON.parse(localStorage.getItem('cr-ghost-' + S.trackKey(ti, rev))); } catch (e) { return null; } };
   S.setGhost = (ti, rev, g) => { try { localStorage.setItem('cr-ghost-' + S.trackKey(ti, rev), JSON.stringify(g)); } catch (e) { /* ignore */ } };

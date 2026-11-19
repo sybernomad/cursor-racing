@@ -468,7 +468,7 @@
     }
     // cars vs balls
     for (const c of cs) for (const b of Game.world.balls) {
-      if (c.state !== 'race' || b.out > 0 || c.z > 18) continue;
+      if (c.state !== 'race' || c.out || b.out > 0 || c.z > 18) continue;
       const dx = b.x - c.x, dy = b.y - c.y, d = Math.hypot(dx, dy), rr = CAR_R + b.r;
       if (d >= rr || d === 0) continue;
       const nx = dx / d, ny = dy / d, pen = rr - d, tot = c.st.mass + b.mass;

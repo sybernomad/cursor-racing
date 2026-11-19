@@ -2,11 +2,12 @@
 
 A top-down toy-car racer with a **pixel-art diorama** look: chunky voxel cars and pixel-art sprites on a lit
 3D tabletop, with real-time shadows, bloom, a tilt-shift "miniature" blur, vignette and colour grading.
-Race tiny cars on 15 tracks (30 courses counting mirrored versions): a kitchen table, a study
+Race tiny cars on 16 tracks (32 courses counting mirrored versions): a kitchen table, a study
 desk, a backyard sandbox, a pool table, a bathroom counter, a bedroom at night, a garage workbench, a
-gaming desk, a baking counter, a frosty windowsill, a picnic blanket and a model railway town. Three
+gaming desk, a baking counter, a frosty windowsill, a picnic blanket and a model railway town. Four
 of the tables have a second layout: Lucky Clover (four big loops round a central roundabout), Pretzel
-Twist (hairpin after hairpin) and Night Oval (a wide, fast oval for big fields). Drive off the edge and you drop to the floor.
+Twist (hairpin after hairpin), Night Oval (a wide, fast oval for big fields) and Paper Chase (a
+second layout on the study desk). Drive off the edge and you drop to the floor.
 
 Installable **Progressive Web App** with offline play and automatic updates. No build step and
 no dependencies: open `index.html` or serve the folder.
@@ -46,9 +47,9 @@ does it on demand.
 
 - **Driving Lesson:** a short guided race that teaches steering, drifting, boost and power-ups one
   step at a time. Offered on first launch, pays 100 coins the first time, replayable from the menu.
-- **Championship:** eight cups of three races: Rookie, Pro, Workshop, Mirror, Grand Tour, Twister, Champion
-  and Legend. Finish a cup on the podium to open the next one; winning some cups gives you a new car.
-  Mirror, Champion and Legend run tracks in reverse. Options on the cup screen: field of 4, 8, 12 or
+- **Championship:** nine cups of three races: Rookie, Pro, Workshop, Mirror, Grand Tour, Twister, Paper,
+  Champion and Legend. Finish a cup on the podium to open the next one; winning some cups gives you a new car.
+  Mirror, Champion and Legend run tracks in reverse (Paper runs Paper Chase both ways). Options on the cup screen: field of 4, 8, 12 or
   20 cars, 2/3/5 laps, power-ups on or off. Points are 10/6/3/1 with four cars, and
   25/18/15/12/10/8/6/4/2/1 for the top ten in bigger fields. Once the Mirror Cup is open, every open
   track can also be raced mirrored in Quick Race, Time Trial and Knockout. Each race after the first
@@ -57,16 +58,17 @@ does it on demand.
   While a cup is running, the Championship button shows its standings with Continue, Restart cup and
   Abandon cup.
 - **Quick Race:** any open track, 1 to 9 laps, **1 to 19 rivals** (a full 20-car grid), power-ups on or off.
-- **Time Trial:** solo, races against a ghost of your best lap (saved per track).
+- **Time Trial:** solo, races against a ghost of your best Time Trial lap (saved per track). Time Trial
+  keeps its own best lap, so laps from races (with power-ups or a clear road) never count against it.
 - **Knockout:** the camera follows the leader. Anyone who falls off the screen (or off the table)
   is out of the round. Last car standing scores a point, first to 4 wins. 3 to 7 rivals, power-ups optional.
 - **Garage:** the cars you own. Pick one to drive, repaint it (10 colours) and buy Engine / Tyres /
   Turbo upgrades (5 levels each) with coins from races.
-- **Car Shop:** 64 cars to collect, from the Zip hatchback, Monster truck and Toy Tank to a shark, a
+- **Car Shop:** 65 cars to collect, from the Zip hatchback, Monster truck and Toy Tank to a shark, a
   dragon, a burger, a pencil and a jet. Search by name or description, sort by price, top speed,
   acceleration, grip or weight, and filter (can afford, off-road, floats, jumpers, fast boost, heavy,
   light). Each car has its own stats and some have a trick. A few cars are also cup prizes.
-- **Records:** career stats, a trophy for each cup, and best lap and race times for every track.
+- **Records:** career stats, a trophy for each cup, and best lap and best 3-lap race time for every track.
 - **Save backup:** Settings has Back up save (a code to copy) and Restore save (paste it back, on any
   device). Time Trial ghosts are not included.
 - **Developer options:** at the bottom of Settings, for testing: add 10,000 coins, unlock all cars,

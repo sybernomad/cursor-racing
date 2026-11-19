@@ -292,17 +292,17 @@
       if (!cupOpen) { const p = document.createElement('p'); p.className = 'muted small'; p.style.margin = '0 0 8px'; p.textContent = how; tl.appendChild(p); }
       const box = document.createElement('div'); box.className = 'cards'; tl.appendChild(box);
       for (const ti of tis) {
-        const tr = CR.TRACKS[ti], open = Save.trackOpen(ti, rev), b = Save.bestOf(ti, rev), th = CR.THEMES[tr.theme];
+        const tr = CR.TRACKS[ti], open = Save.trackOpen(ti, rev), b = Save.bestOf(ti, rev), th = CR.THEMES[tr.theme], rl = mode === 'quick' ? d.settings.laps : 3;
         const card = document.createElement('div'); card.className = 'card' + (open ? '' : ' locked');
         card.innerHTML = `<img class="thumb" src="${thumb(ti, rev)}" alt=""><span class="tag">${open ? (rev ? 'Mirror' : th.name) : 'Locked'}</span>
-          <h3>${tr.name}${rev ? ' R' : ''}</h3><div class="meta">${open ? `Best lap ${U.fmtTime(b.lap)} · Race ${U.fmtTime(b.race)}` : `Opens with the ${cup.name}`}</div>`;
+          <h3>${tr.name}${rev ? ' R' : ''}</h3><div class="meta">${open ? (mode === 'tt' ? `Best lap ${U.fmtTime(b.tt)}` : mode === 'ko' ? `Best lap ${U.fmtTime(b.lap)}` : `Best lap ${U.fmtTime(b.lap)} · <span class="rb" data-ti="${ti}">${raceLabel(ti, rev, rl)}</span>`) : `Opens with the ${cup.name}`}</div>`;
         if (open) click(card, () => {
           const ghost = mode === 'tt' ? Save.ghost(ti, rev) : null;
           const S = d.settings, nR = mode === 'ko' ? U.clamp(S.koRivals, 3, 7) : U.clamp(S.rivals, 1, 19);
           const pool = mode === 'tt' ? [] : CR.RIVALS.slice().sort(() => Math.random() - 0.5).slice(0, nR).map((r) => recast(r));
           const top = CR.CUPS.reduce((m, c) => (Save.cupUnlocked(c.id) ? c.ai : m), 0.9);
           const lvl = CR.CUPS.filter((c) => Save.cupUnlocked(c.id)).length;
-          startRace({ mode: mode === 'quick' ? 'race' : mode, track: ti, reversed: rev, laps: mode === 'quick' ? d.settings.laps : 3, items: mode !== 'tt' && d.settings.items, hazards: mode === 'tt' ? true : d.settings.hazards, ai: top, rivals: pool.map((r) => ({ ...r, up: { eng: lvl, grip: lvl - 1, boost: lvl - 1 } })), ghost: ghost && ghost.data, ghostCar: ghost && ghost.car, bestLap: b.lap, koTarget: 4, quick: mode });
+          startRace({ mode: mode === 'quick' ? 'race' : mode, track: ti, reversed: rev, laps: mode === 'quick' ? d.settings.laps : 3, items: mode !== 'tt' && d.settings.items, hazards: mode === 'tt' ? true : d.settings.hazards, ai: top, rivals: pool.map((r) => ({ ...r, up: { eng: lvl, grip: lvl - 1, boost: lvl - 1 } })), ghost: ghost && ghost.data, ghostCar: ghost && ghost.car, bestLap: b.tt, koTarget: 4, quick: mode });
         });
         else click(card, () => UI.toast(`Opens with the ${cup.name}. ${how}`, 3200), 'error');
         box.appendChild(card);
@@ -321,8 +321,8 @@
       <div class="panel"><h2>Career</h2><div class="statgrid">${box('Races', s.races)}${box('Wins', s.wins)}${box('Podiums', s.podiums)}${box('Cups won', s.cups)}${box('Knockout wins', s.koWins)}${box('Coins earned', s.coinsEarned.toLocaleString())}${box('Cars owned', CR.CARS.filter((c) => d.owned[c.id]).length + ' / ' + CR.CARS.length)}</div></div>
       <div class="panel" style="margin-top:12px"><h2>Trophies</h2><div class="trophies">${CR.CUPS.map((c) => { const st = d.cups[c.id] || {}; return `<div class="${st.unlocked ? '' : 'off'}"><span class="trophy g${st.best || 0}"></span><b>${c.name}</b><span class="muted small">${st.best ? ['', 'Gold', 'Silver', 'Bronze'][st.best] : st.unlocked ? 'No trophy yet' : 'Locked'}</span></div>`; }).join('')}</div></div>
       <div class="panel" style="margin-top:12px"><h2>Track records</h2><table class="table"><tr><th>Track</th><th class="num">Best lap</th><th class="num">Best race</th>${mirror ? '<th class="num">Mirror lap</th>' : ''}</tr>
-        ${CR.TRACKS.map((t, i) => { const a = Save.bestOf(i, false), m = Save.bestOf(i, true); return `<tr><td>${t.name}</td><td class="num">${U.fmtTime(a.lap)}</td><td class="num">${U.fmtTime(a.race)}</td>${mirror ? `<td class="num">${U.fmtTime(m.lap)}</td>` : ''}</tr>`; }).join('')}</table>
-        <p class="muted small" style="margin-bottom:0">Best race is your quickest finish at any lap count.</p></div></div>`;
+        ${CR.TRACKS.map((t, i) => { const a = Save.bestOf(i, false), m = Save.bestOf(i, true); return `<tr><td>${t.name}</td><td class="num">${U.fmtTime(a.lap)}</td><td class="num">${U.fmtTime(Save.raceBest(i, false, 3))}</td>${mirror ? `<td class="num">${U.fmtTime(m.lap)}</td>` : ''}</tr>`; }).join('')}</table>
+        <p class="muted small" style="margin-bottom:0">Best race is your quickest 3-lap finish. Best lap counts every mode; Time Trial keeps its own best for the ghost.</p></div></div>`;
     bind(el); show('records');
   }
 
@@ -337,9 +337,11 @@
       <div class="setrow"><span>Obstacles</span><button class="tog ${S.hazards ? 'on' : ''}" id="v-haz"></button><span class="muted small">${S.hazards ? 'Hazards, spills and jump gaps' : 'Clear road: ramps and boost pads only'}</span></div>
     </div>`;
   }
+  const raceLabel = (ti, rev, laps) => `${laps} lap${laps === 1 ? '' : 's'} ${U.fmtTime(Save.raceBest(ti, rev, laps))}`;
   function bindSetup(el, mode) {
     const S = Save.data.settings, ko = mode === 'ko';
-    el.querySelectorAll('.stepper button').forEach((b) => click(b, () => { S.laps = U.clamp(S.laps + +b.dataset.d, 1, 9); Save.save(); $('#v-laps', el).textContent = S.laps; }));
+    el.querySelectorAll('.stepper button').forEach((b) => click(b, () => { S.laps = U.clamp(S.laps + +b.dataset.d, 1, 9); Save.save(); $('#v-laps', el).textContent = S.laps;
+      const rev = Save.cupUnlocked('mirror') && !!UI.trkMirror; el.querySelectorAll('.rb').forEach((x) => (x.textContent = raceLabel(+x.dataset.ti, rev, S.laps))); }));
     const r = $('#v-riv', el);
     if (r) r.addEventListener('input', () => { const v = +r.value; if (ko) S.koRivals = v; else S.rivals = v; $('#v-rivn', el).textContent = v; Save.save(); });
     const it = $('#v-items', el);
@@ -563,7 +565,8 @@
     let coins = 0, notes = [];
     d.stats.races++;
     if (cfg.mode === 'tt') {
-      const nb = Save.setBest(cfg.track, cfg.reversed, res.bestLap, res.total);
+      Save.setBest(cfg.track, cfg.reversed, res.bestLap, res.total, cfg.laps || 3);
+      const nb = Save.setTT(cfg.track, cfg.reversed, res.bestLap);
       if (res.ghost && nb) { Save.setGhost(cfg.track, cfg.reversed, { data: res.ghost.data, time: res.ghost.time, car: res.ghost.car }); }
       if (nb) { coins = 60 * PAY; notes.push('New best lap!'); }
       coins += 20 * PAY;
@@ -574,7 +577,7 @@
       coins = N === 4 ? Math.round(REWARD[res.place - 1] * m) : Math.round((N - res.place + 1) / N * (60 + N * 9) * Math.max(m, 0.8) + 10);
       coins *= PAY;
       if (res.place === 1) d.stats.wins++; if (res.place <= 3) d.stats.podiums++;
-      if (Save.setBest(cfg.track, cfg.reversed, res.bestLap, res.total)) notes.push('New best lap!');
+      if (Save.setBest(cfg.track, cfg.reversed, res.bestLap, res.total, cfg.laps || 3)) notes.push('New best lap!');
     }
     Save.addCoins(coins);
     if (cfg.cup != null) {
@@ -608,7 +611,7 @@
     </div></div>`;
     show('results');
     if (cupNext) click($('#r-next', el), renderStandings);
-    else { click($('#r-again', el), () => { const c = { ...UI.last }; if (c.mode === 'tt') { const g = Save.ghost(c.track, c.reversed); c.ghost = g && g.data; c.ghostCar = g && g.car; c.bestLap = Save.bestOf(c.track, c.reversed).lap; } startRace(c); }); click($('#r-tracks', el), () => renderTracks(cfg.quick || 'quick')); }
+    else { click($('#r-again', el), () => { const c = { ...UI.last }; if (c.mode === 'tt') { const g = Save.ghost(c.track, c.reversed); c.ghost = g && g.data; c.ghostCar = g && g.car; c.bestLap = Save.bestOf(c.track, c.reversed).tt; } startRace(c); }); click($('#r-tracks', el), () => renderTracks(cfg.quick || 'quick')); }
     click($('#r-menu', el), () => { if (cupNext) renderStandings(); else { Game.stop(); renderMenu(); } }, 'back');
     if (res.place === 1 && !tt) { Audio.play('win'); } else if (!tt && res.place === res.order.length) Audio.play('lose');
   }

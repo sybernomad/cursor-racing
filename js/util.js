@@ -28,7 +28,8 @@ window.CR = window.CR || {};
     shade: (c, k) => [c[0] * k, c[1] * k, c[2] * k],
     fmtTime(t) {
       if (t == null || !isFinite(t)) return '--:--.--';
-      const m = Math.floor(t / 60), s = t - m * 60;
+      // round to hundredths first, so 59.996 shows as 1:00.00 rather than 0:60.00
+      const cs = Math.round(t * 100), m = Math.floor(cs / 6000), s = (cs - m * 6000) / 100;
       return `${m}:${s < 10 ? '0' : ''}${s.toFixed(2)}`;
     },
     ordinal(n) { return n + (['th', 'st', 'nd', 'rd'][(n % 100 - 20) % 10] || ['th', 'st', 'nd', 'rd'][n % 100] || 'th'); },
