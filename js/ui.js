@@ -66,10 +66,11 @@
   function renderMenu() {
     const d = Save.data, run = d.cupRun;
     const el = $('#scr-menu');
-    el.innerHTML = `<div class="wrap">
+    const won = CR.CUPS.filter((c) => d.cups[c.id] && d.cups[c.id].best).length;
+    el.innerHTML = `<div class="wrap menu-wrap">
       <div class="row menu-top"><div class="logo menu-logo"><span class="cur"></span>Cursor Racing</div><span class="spacer"></span><span class="muted small menu-stats">${d.stats.races} races · ${d.stats.wins} wins · v${UI.version}</span>${coinsHTML()}</div>
-      <div class="menu-grid ${UI.install || UI.iosHint ? 'm9' : 'm8'}">
-        <button class="btn primary wide" id="m-champ"><span class="ico">🏆</span>Championship<span class="sub">${run ? `Continue ${CR.CUPS.find((c) => c.id === run.cup).name}: race ${run.race + 1} of 3` : 'Win cups to unlock new cars and mirrored tracks'}</span></button>
+      <button class="btn primary menu-hero" id="m-champ"><span class="ico">🏆</span><span class="ttl">Championship</span><span class="sub">${run ? `Continue ${CR.CUPS.find((c) => c.id === run.cup).name}: race ${run.race + 1} of 3` : 'Win cups to unlock new cars and mirrored tracks'}</span><span class="cupdots">${CR.CUPS.map((c) => { const b = (d.cups[c.id] || {}).best || 0; return `<i class="g${b}"></i>`; }).join('')}<b>${won} / ${CR.CUPS.length} cups</b></span></button>
+      <div class="menu-grid">
         <button class="btn" id="m-quick"><span class="ico">🏁</span>Quick Race<span class="sub">Up to 19 rivals on any open track</span></button>
         <button class="btn" id="m-tt"><span class="ico">⏱️</span>Time Trial<span class="sub">Race your own ghost</span></button>
         <button class="btn" id="m-ko"><span class="ico">💥</span>Knockout<span class="sub">Fall off screen and you're out</span></button>
@@ -78,9 +79,9 @@
         <button class="btn ghost" id="m-rec"><span class="ico">📊</span>Records<span class="sub">Trophies, best laps, career stats</span></button>
         <button class="btn ghost" id="m-tutb"><span class="ico">🎓</span>Driving Lesson<span class="sub">${d.tutorialDone ? 'Replay the tutorial race' : 'Learn the ropes, earn 100 coins'}</span></button>
         <button class="btn ghost" id="m-set"><span class="ico">⚙️</span>Settings<span class="sub">Controls, screen, graphics, sound</span></button>
-        ${UI.install ? '<button class="btn ghost" id="m-inst"><span class="ico">📲</span>Install<span class="sub">Add to your home screen</span></button>' : ''}
-        ${UI.iosHint ? '<button class="btn ghost" id="m-ios"><span class="ico">📲</span>Install<span class="sub">How to add to iPhone / iPad</span></button>' : ''}
       </div>
+      ${UI.install ? '<button class="btn ghost small menu-inst" id="m-inst">📲 Install the game</button>' : ''}
+      ${UI.iosHint ? '<button class="btn ghost small menu-inst" id="m-ios">📲 Add to your home screen</button>' : ''}
     </div>`;
     show('menu'); UI.attract();
     click($('#m-champ'), () => (run ? renderCupRun() : renderCups()));
@@ -144,7 +145,7 @@
         <div class="setrow"><span>Power-ups</span><button class="tog ${d.settings.cupItems ? 'on' : ''}" id="c-items"></button><span class="muted small">${d.settings.cupItems ? 'Item boxes on the road' : 'Classic: pure racing'}</span></div>
         <div class="setrow"><span>Obstacles</span><button class="tog ${d.settings.cupHazards ? 'on' : ''}" id="c-haz"></button><span class="muted small">${d.settings.cupHazards ? 'Hazards, spills and jump gaps' : 'Clear road: ramps and boost pads only'}</span></div>
       </div>
-      <p class="muted small side-note">Three races per cup. Points: ${d.settings.cupRivals > 3 ? '25 / 18 / 15 / 12 / 10 / 8 / 6 / 4 / 2 / 1 for the top ten' : '10 / 6 / 3 / 1'}. Finish the cup on the podium to open the next one. Win it to unlock a new car. These options apply to the next cup you start.</p></aside>
+      <p class="muted small side-note panel">Three races per cup. Points: ${d.settings.cupRivals > 3 ? '25 / 18 / 15 / 12 / 10 / 8 / 6 / 4 / 2 / 1 for the top ten' : '10 / 6 / 3 / 1'}. Finish the cup on the podium to open the next one. Win it to unlock a new car. These options apply to the next cup you start.</p></aside>
       <div class="cards" id="cuplist"></div></div></div>`;
     el.querySelectorAll('#c-field button').forEach((b) => click(b, () => { d.settings.cupRivals = +b.dataset.v; Save.save(); renderCups(); }));
     el.querySelectorAll('#c-laps button').forEach((b) => click(b, () => { d.settings.cupLaps = +b.dataset.v; Save.save(); renderCups(); }));
@@ -301,7 +302,7 @@
           const pool = mode === 'tt' ? [] : CR.RIVALS.slice().sort(() => Math.random() - 0.5).slice(0, nR).map((r) => recast(r));
           const top = CR.CUPS.reduce((m, c) => (Save.cupUnlocked(c.id) ? c.ai : m), 0.9);
           const lvl = CR.CUPS.filter((c) => Save.cupUnlocked(c.id)).length;
-          startRace({ mode: mode === 'quick' ? 'race' : mode, track: ti, reversed: rev, laps: mode === 'quick' ? d.settings.laps : 3, items: mode !== 'tt' && d.settings.items, hazards: mode === 'tt' ? true : d.settings.hazards, ai: top, rivals: pool.map((r) => ({ ...r, up: { eng: lvl, grip: lvl - 1, boost: lvl - 1 } })), ghost: ghost && ghost.data, bestLap: b.lap, koTarget: 4, quick: mode });
+          startRace({ mode: mode === 'quick' ? 'race' : mode, track: ti, reversed: rev, laps: mode === 'quick' ? d.settings.laps : 3, items: mode !== 'tt' && d.settings.items, hazards: mode === 'tt' ? true : d.settings.hazards, ai: top, rivals: pool.map((r) => ({ ...r, up: { eng: lvl, grip: lvl - 1, boost: lvl - 1 } })), ghost: ghost && ghost.data, ghostCar: ghost && ghost.car, bestLap: b.lap, koTarget: 4, quick: mode });
         });
         else click(card, () => UI.toast(`Opens with the ${cup.name}. ${how}`, 3200), 'error');
         box.appendChild(card);
@@ -563,7 +564,7 @@
     d.stats.races++;
     if (cfg.mode === 'tt') {
       const nb = Save.setBest(cfg.track, cfg.reversed, res.bestLap, res.total);
-      if (res.ghost && nb) { Save.setGhost(cfg.track, cfg.reversed, { data: res.ghost.data, time: res.ghost.time }); }
+      if (res.ghost && nb) { Save.setGhost(cfg.track, cfg.reversed, { data: res.ghost.data, time: res.ghost.time, car: res.ghost.car }); }
       if (nb) { coins = 60 * PAY; notes.push('New best lap!'); }
       coins += 20 * PAY;
     } else if (cfg.mode === 'ko') {
@@ -593,16 +594,21 @@
       : `<div class="bigplace">${U.ordinal(res.place)}</div><div class="reward">${ko ? (res.place === 1 ? 'Knockout champion!' : `You scored ${me.points}`) : (res.place === 1 ? 'Winner!' : res.place <= 3 ? 'Podium!' : res.place <= res.order.length / 2 ? 'Solid drive' : 'Keep at it')}</div>`;
     const rows = res.order.map((o, i) => `<tr class="${o.isPlayer ? 'me' : ''}"><td>${i + 1}</td><td><span class="chip" style="background:${o.paint}"></span>${o.name}</td><td class="muted small">${o.car}</td>
       <td class="num">${ko ? o.points + ' pts' : (o.est ? '~' : '') + U.fmtTime(o.time)}</td>${cfg.cup != null ? `<td class="num gold">${pointsFor(res.order.length, i) ? '+' + pointsFor(res.order.length, i) : ''}</td>` : ''}</tr>`).join('');
-    const laps = tt && Game.player ? Game.player.lapTimes.map((t, i) => `Lap ${i + 1}: ${U.fmtTime(t)}`).join(' · ') : '';
+    // time trial: each lap, the fastest marked, and how it compares with your best before this run
+    const lt = tt && Game.player ? Game.player.lapTimes : [], fast = Math.min(...lt), pb = Game.prevBest;
+    const laps = lt.map((t, i) => `<tr class="${t === fast ? 'me' : ''}"><td>Lap ${i + 1}${i === 0 ? ' <span class="muted small">from the grid</span>' : ''}</td><td class="num">${U.fmtTime(t)}</td>
+      <td class="num ${pb == null ? 'muted' : t < pb ? 'ahead' : 'behind'}">${pb == null ? '' : (t < pb ? '-' : '+') + Math.abs(t - pb).toFixed(2)}</td></tr>`).join('');
+    const ttTable = `<h3 class="tt-track">${CR.TRACKS[cfg.track].name}${cfg.reversed ? ' (mirrored)' : ''}</h3><table class="table tt-laps"><tr><th>Lap</th><th class="num">Time</th><th class="num">${pb == null ? '' : 'vs best ' + U.fmtTime(pb)}</th></tr>${laps}</table>
+      <p class="muted small" style="margin:8px 0 0">${res.ghost ? 'Your best lap is now the ghost for this track.' : pb == null ? '' : 'Beat your best lap and it becomes the ghost.'}</p>`;
     const cupNext = cfg.cup != null;
     el.innerHTML = `<div class="wrap res-wrap"><div class="panel res"><div class="r-head">${head}</div>
-      <div class="r-main">${tt ? `<p class="muted small" style="text-align:center">${laps}</p>` : `<table class="table"><tr><th>#</th><th>Driver</th><th>Car</th><th class="num">${ko ? 'Score' : 'Time'}</th>${cupNext ? '<th class="num">Pts</th>' : ''}</tr>${rows}</table>`}</div>
+      <div class="r-main">${tt ? ttTable : `<table class="table"><tr><th>#</th><th>Driver</th><th>Car</th><th class="num">${ko ? 'Score' : 'Time'}</th>${cupNext ? '<th class="num">Pts</th>' : ''}</tr>${rows}</table>`}</div>
       <div class="r-foot"><p class="reward">${notes.join(' ')} +${coins} <span class="coin"></span></p>
       <div class="actions">${cupNext ? '<button class="btn primary" id="r-next">Standings</button>' : `<button class="btn primary" id="r-again">${tt ? 'Try again' : 'Race again'}</button><button class="btn" id="r-tracks">Tracks</button>`}<button class="btn ghost" id="r-menu">Menu</button></div></div>
     </div></div>`;
     show('results');
     if (cupNext) click($('#r-next', el), renderStandings);
-    else { click($('#r-again', el), () => { const c = { ...UI.last }; if (c.mode === 'tt') { const g = Save.ghost(c.track, c.reversed); c.ghost = g && g.data; c.bestLap = Save.bestOf(c.track, c.reversed).lap; } startRace(c); }); click($('#r-tracks', el), () => renderTracks(cfg.quick || 'quick')); }
+    else { click($('#r-again', el), () => { const c = { ...UI.last }; if (c.mode === 'tt') { const g = Save.ghost(c.track, c.reversed); c.ghost = g && g.data; c.ghostCar = g && g.car; c.bestLap = Save.bestOf(c.track, c.reversed).lap; } startRace(c); }); click($('#r-tracks', el), () => renderTracks(cfg.quick || 'quick')); }
     click($('#r-menu', el), () => { if (cupNext) renderStandings(); else { Game.stop(); renderMenu(); } }, 'back');
     if (res.place === 1 && !tt) { Audio.play('win'); } else if (!tt && res.place === res.order.length) Audio.play('lose');
   }
@@ -645,10 +651,10 @@
   const H = {};
   function buildHUD(cfg) {
     const el = $('#scr-hud'), s = Save.data.settings;
-    const ko = cfg.mode === 'ko';
+    const ko = cfg.mode === 'ko', tt = cfg.mode === 'tt';
     el.innerHTML = `<div class="touch" id="touch"></div>
       <div class="hud-top">
-        <div class="hud-box">${ko ? '<div class="ko-pips" id="h-ko"></div>' : `<div class="hud-pos" id="h-pos">1<sup>st</sup><small>/4</small></div><div class="hud-lap" id="h-lap">LAP 1/3</div>`}<div class="hud-time" id="h-time">0:00.00</div>
+        <div class="hud-box">${ko ? '<div class="ko-pips" id="h-ko"></div>' : tt ? `<div class="hud-gap" id="h-gap"><small>GHOST</small><span>--</span></div><div class="hud-lap" id="h-lap">LAP 1/3</div>` : `<div class="hud-pos" id="h-pos">1<sup>st</sup><small>/4</small></div><div class="hud-lap" id="h-lap">LAP 1/3</div>`}<div class="hud-time" id="h-time">0:00.00</div>${tt ? '<div class="hud-time" id="h-best"></div>' : ''}
           <div class="boostbar" id="h-bb"><i id="h-boost"></i></div></div>
         ${cfg.items && !UI.touch ? '<div class="hud-item" id="h-item" role="button" aria-label="Use item"></div>' : ''}
         <span class="spacer"></span><canvas class="minimap" id="h-map"></canvas><div class="hud-pause" id="h-pause" role="button" aria-label="Pause"></div>
@@ -660,7 +666,7 @@
     H.coach = $('#h-coach', el);
     H.item = $('#h-item', el); H.board = $('#h-board', el);
     if (H.item) H.item.addEventListener('pointerdown', (e) => { e.stopPropagation(); if (Game.player) CR.Extras.use(Game.player); });
-    H.pos = $('#h-pos', el); H.lap = $('#h-lap', el); H.time = $('#h-time', el); H.boost = $('#h-boost', el); H.bb = $('#h-bb', el); H.msg = $('#h-msg', el); H.ko = $('#h-ko', el);
+    H.pos = $('#h-pos', el); H.lap = $('#h-lap', el); H.time = $('#h-time', el); H.boost = $('#h-boost', el); H.bb = $('#h-bb', el); H.msg = $('#h-msg', el); H.ko = $('#h-ko', el); H.gap = $('#h-gap span', el); H.gapBox = $('#h-gap', el); H.best = $('#h-best', el);
     H.map = $('#h-map', el); const mm = Game.world.minimap; H.map.width = mm.canvas.width; H.map.height = mm.canvas.height; H.mctx = H.map.getContext('2d');
     H.cache = {};
     $('#h-pause', el).addEventListener('pointerdown', (e) => { e.stopPropagation(); pause(); });
@@ -679,6 +685,15 @@
       if (c.place !== place) { c.place = place; H.pos.innerHTML = `${place}<sup>${U.ordinal(place).slice(-2)}</sup><small>/${Game.cars.length}</small>`; }
       const lap = Math.min(Game.laps, Math.max(1, p.lap + 1));
       if (c.lap !== lap) { c.lap = lap; H.lap.textContent = UI.lesson ? 'DRIVING LESSON' : `LAP ${lap}/${Game.laps}`; }
+    }
+    if (H.gap) {
+      const lap = Math.min(Game.laps, Math.max(1, p.lap + 1));
+      if (c.lap !== lap) { c.lap = lap; H.lap.textContent = `LAP ${lap}/${Game.laps}`; }
+      const g = Game.ghostGap(), txt = g == null ? (Game.ghost ? '--' : 'none yet') : (g > 0 ? '+' : '-') + Math.abs(g).toFixed(2);
+      const kind = g == null ? '' : g > 0.005 ? 'behind' : 'ahead';
+      if (c.gap !== txt) { c.gap = txt; H.gap.textContent = txt; H.gapBox.className = 'hud-gap ' + kind; }
+      const bl = Game.opts.bestLap, bt = bl == null ? 'BEST --' : 'BEST ' + U.fmtTime(bl);
+      if (c.best !== bt) { c.best = bt; H.best.textContent = bt; }
     }
     if (H.ko) {
       const k = Game.cars.map((x) => `<div style="color:${x.paint}">${x.isPlayer ? 'YOU' : x.name}${'<i></i>'.repeat(0)}${Array.from({ length: Game.ko.target }, (_, i) => `<i class="${i < x.points ? 'on' : ''}"></i>`).join('')}</div>`).join('');
@@ -713,6 +728,8 @@
       x.fillStyle = car.paint; x.strokeStyle = car.isPlayer ? '#3ff0ff' : '#000'; x.lineWidth = car.isPlayer ? 2 : 1;
       x.beginPath(); x.arc(car.x * s, car.y * s, car.isPlayer ? 4.5 : 3.5, 0, 6.28); x.fill(); x.stroke();
     }
+    const gh = Game.ghost;
+    if (gh && gh.on) { x.strokeStyle = '#3ff0ff'; x.lineWidth = 2; x.setLineDash([2, 2]); x.beginPath(); x.arc(gh.x * s, gh.y * s, 4, 0, 6.28); x.stroke(); x.setLineDash([]); }
   };
 
   // ---------------------------------------------------------------------------

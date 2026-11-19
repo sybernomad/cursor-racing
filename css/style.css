@@ -66,10 +66,18 @@ h2 { font-size: 13px; letter-spacing: .22em; text-transform: uppercase; color: v
 
 /* main menu */
 .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-.menu-grid .btn { text-align: left; padding: 18px 16px; font-size: 17px; min-height: 84px; }
-.menu-grid .btn.wide { grid-column: span 2; }
+.menu-grid .btn { text-align: left; padding: 18px 54px 18px 16px; font-size: 17px; min-height: 84px; }
+.menu-grid .btn .ico { position: absolute; top: 16px; right: 14px; }
+.menu-hero { display: block; width: 100%; text-align: left; padding: 18px 16px; font-size: 19px; min-height: 84px; margin-bottom: 12px; }
+.menu-hero .ico { float: right; font-size: 30px; }
+.menu-hero .ttl { display: block; }
+.cupdots { display: flex; align-items: center; gap: 4px; margin-top: 10px; font-family: system-ui, sans-serif; text-transform: none; letter-spacing: 0; }
+.cupdots i { width: 11px; height: 11px; border-radius: 50%; background: rgba(42, 22, 6, .22); box-shadow: inset 0 1px 2px rgba(0, 0, 0, .25); }
+.cupdots i.g1 { background: #fff3b0; box-shadow: 0 0 0 1px #8a5a00; } .cupdots i.g2 { background: #e9eef5; box-shadow: 0 0 0 1px #6b7280; } .cupdots i.g3 { background: #e0a46a; box-shadow: 0 0 0 1px #7a3e10; }
+.cupdots b { margin-left: 6px; font-size: 11px; font-weight: 700; opacity: .8; }
+.menu-inst { display: block; margin: 12px auto 0; }
 .menu-grid .btn .ico { float: right; font-size: 26px; opacity: .9; }
-@media (min-width: 760px) { .menu-grid { grid-template-columns: repeat(3, 1fr); } .menu-grid .btn.wide { grid-column: span 3; } }
+@media (min-width: 760px) and (min-height: 601px) { .menu-grid { grid-template-columns: repeat(4, 1fr); } }
 .menu-logo { font-size: clamp(30px, 7vw, 54px); margin: 4px 0 14px; text-align: left; }
 .menu-logo small { letter-spacing: .3em; }
 
@@ -131,6 +139,10 @@ input[type=range] { width: 140px; accent-color: var(--gold); }
 .hud-top { position: absolute; top: calc(8px + var(--safe-t)); left: calc(10px + var(--safe-l)); right: calc(10px + var(--safe-r)); display: flex; align-items: flex-start; gap: 10px; pointer-events: none; }
 .hud-box { background: rgba(10, 8, 22, 0.55); border: 1px solid rgba(255, 214, 140, .2); border-radius: 12px; padding: 6px 10px; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); text-shadow: 0 1px 2px #000; }
 .hud-pos { font-family: var(--disp); font-weight: 900; font-style: italic; font-size: 38px; line-height: 1; color: #fff6dd; text-shadow: 0 2px 0 #e8932c, 0 3px 0 #6e2a12, 0 4px 10px #000; }
+.hud-gap { font-family: var(--disp); font-weight: 900; font-style: italic; line-height: 1; color: #fff6dd; text-shadow: 0 2px 4px #000; }
+.hud-gap small { display: block; font-family: inherit; font-style: normal; font-size: 10px; letter-spacing: .14em; color: #3ff0ff; margin-bottom: 2px; }
+.hud-gap span { font-size: 26px; font-variant-numeric: tabular-nums; }
+.hud-gap.ahead span { color: #69f0a0; } .hud-gap.behind span { color: #ff8a8a; }
 .hud-pos sup { font-size: 16px; margin-left: 1px; }
 .hud-pos small { font-size: 14px; color: var(--muted); text-shadow: none; margin-left: 3px; font-style: normal; }
 .hud-lap { font-weight: 800; font-size: 13px; letter-spacing: .1em; } .hud-time { font-variant-numeric: tabular-nums; font-size: 13px; color: var(--muted); }
@@ -307,16 +319,6 @@ details.dev .actions { margin-top: 8px; }
   .topbar h1 { font-size: 17px; }
   .topbar .btn { padding: 7px 10px; }
   .coins { padding: 5px 10px; font-size: 13px; }
-  /* main menu: championship tall on the left, five tiles beside it, the rest in the footer */
-  .menu-logo { font-size: 26px; margin: 0 0 8px; }
-  .menu-grid { grid-template-columns: 1.35fr 1fr 1fr 1fr; gap: 8px; }
-  .menu-grid .btn.wide, #m-champ { grid-column: 1; grid-row: 1 / span 2; display: flex; flex-direction: column; justify-content: flex-end; font-size: 20px; padding: 14px; }
-  #m-champ .ico { position: absolute; top: 12px; right: 14px; font-size: 34px; }
-  .menu-grid .btn { min-height: 0; height: auto; padding: 10px 12px; font-size: 14px; }
-  .menu-grid .btn:not(#m-champ) .sub { display: none; }
-  .menu-grid .btn .ico { font-size: 20px; }
-  .menu-grid .btn:not(#m-champ) { display: flex; flex-direction: column-reverse; align-items: flex-start; justify-content: space-between; min-height: 76px; }
-  .menu-grid .btn:not(#m-champ) .ico { float: none; align-self: flex-end; margin-bottom: 2px; }
   .menu-foot { margin-top: 10px; }
   /* options beside the cards on Championship and the track picker */
   .split { display: grid; grid-template-columns: minmax(230px, 270px) 1fr; gap: 12px; align-items: start; }
@@ -376,7 +378,6 @@ details.dev .actions { margin-top: 8px; }
 }
 /* very short (small phones sideways) */
 @media (orientation: landscape) and (max-height: 380px) {
-  .menu-grid .btn:not(#m-champ) { min-height: 64px; }
   .hud-coach { width: min(330px, calc(100vw - 380px)); }
 }
 @media (orientation: landscape) and (max-height: 600px) {
@@ -385,19 +386,39 @@ details.dev .actions { margin-top: 8px; }
 }
 
 /* the stick and buttons sit clear of the screen edges, where phones start their back gesture */
-/* main menu sideways, take 2: every tile keeps its description; the grid fills the screen */
-@media (orientation: landscape) and (max-height: 600px) {
-  .menu-top { margin-bottom: 6px; } .menu-top .menu-logo { margin: 0; }
-  .menu-stats { margin-right: 10px; white-space: nowrap; }
-  .menu-grid { height: calc(100dvh - 66px - var(--safe-t) - var(--safe-b)); max-height: 380px; grid-auto-rows: 1fr; }
-  .menu-grid.m8 { grid-template-columns: 1.3fr repeat(4, 1fr); grid-template-rows: 1fr 1fr; }
-  .menu-grid.m9 { grid-template-columns: 1.3fr repeat(3, 1fr); grid-template-rows: 1fr 1fr 1fr; }
-  .menu-grid.m8 #m-champ { grid-row: 1 / span 2; } .menu-grid.m9 #m-champ { grid-row: 1 / span 3; }
-  .menu-grid .btn:not(#m-champ) { display: block; min-height: 0; padding: 9px 10px; font-size: 13px; line-height: 1.15; overflow: hidden; }
-  .menu-grid .btn:not(#m-champ) .sub { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; font-size: 11px; line-height: 1.25; margin-top: 4px; }
-  .menu-grid.m9 .btn:not(#m-champ) .sub { -webkit-line-clamp: 2; }
-  .menu-grid .btn:not(#m-champ) .ico { float: right; align-self: auto; font-size: 18px; margin: 0 0 2px 4px; }
-}
-@media (orientation: landscape) and (max-height: 380px) { .menu-grid .btn:not(#m-champ) { min-height: 0; } .menu-stats { display: none; } }
 @media (max-width: 520px) { .menu-stats { display: none; } }
 .tbtn.itembtn.full { font-size: 30px; }
+
+/* ===== main menu, phones held sideways =====
+   left: logo, coins and the Championship card; right: the other eight as two columns of rows */
+@media (orientation: landscape) and (max-height: 600px) {
+  #scr-menu { background: linear-gradient(90deg, rgba(13, 11, 26, .78), rgba(13, 11, 26, .35) 34%, rgba(13, 11, 26, .55) 52%, rgba(13, 11, 26, .8)); }
+  .menu-wrap { display: grid; grid-template-columns: minmax(240px, 34%) 1fr; grid-template-rows: auto 1fr auto; column-gap: 14px; max-width: 1100px;
+    height: calc(100dvh - 18px - var(--safe-t) - var(--safe-b)); }
+  .menu-top { grid-column: 1; grid-row: 1; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: 0 0 10px; }
+  .menu-top .menu-logo { font-size: 28px; margin: 0; width: 100%; }
+  .menu-top .spacer { display: none; }
+  .menu-stats { order: 3; margin: 0; white-space: nowrap; }
+  .menu-top .coins { order: 2; }
+  .menu-hero { grid-column: 1; grid-row: 2; margin: 0; min-height: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: 14px 16px; font-size: 22px; }
+  .menu-hero .ico { position: absolute; top: 12px; right: 14px; font-size: 40px; filter: drop-shadow(0 3px 0 rgba(110, 42, 18, .35)); }
+  .menu-hero .sub { font-size: 12px; margin-top: 4px; }
+  .menu-inst { grid-column: 1; grid-row: 3; margin: 8px 0 0; width: 100%; }
+  .menu-grid { grid-column: 2; grid-row: 1 / span 3; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(4, 1fr); gap: 8px; min-height: 0; }
+  .menu-grid .btn { display: grid; grid-template-columns: 42px 1fr; grid-template-rows: auto auto; align-content: center; column-gap: 11px;
+    min-height: 0; padding: 8px 12px; font-size: 14px; line-height: 1.15; overflow: hidden; }
+  .menu-grid .btn .ico { float: none; grid-row: 1 / span 2; width: 42px; height: 42px; display: grid; place-items: center; font-size: 22px; border-radius: 11px; background: rgba(255, 255, 255, .08); margin: 0; align-self: center; }
+  .menu-grid .btn.cyan .ico { background: rgba(255, 255, 255, .35); }
+  .menu-grid .btn .sub { margin-top: 3px; font-size: 11px; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+}
+@media (orientation: landscape) and (max-height: 380px) {
+  .menu-top .menu-logo { font-size: 24px; }
+  .menu-stats { display: none; }
+  .menu-grid .btn { grid-template-columns: 34px 1fr; padding: 6px 10px; font-size: 13px; }
+  .menu-grid .btn .ico { width: 34px; height: 34px; font-size: 18px; border-radius: 9px; }
+  .menu-grid .btn .sub { -webkit-line-clamp: 1; }
+}
+
+.tt-track { font-size: 15px; margin: 0 0 8px; }
+.tt-laps td.ahead { color: #69f0a0; font-weight: 700; } .tt-laps td.behind { color: #ff9a9a; }
+.split > aside .side-note.panel { padding: 10px 12px; line-height: 1.45; }

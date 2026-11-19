@@ -77,8 +77,9 @@
     Game.lastCount = 4; Game.endT = 0; Game.results = null; Game.messages = [];
     Game.ko = opts.mode === 'ko' ? { target: opts.koTarget || 4, round: 1, between: 0, regroup: 0, grace: 2 } : null;
     // ghost (time trial)
-    Game.ghost = null; Game.rec = [];
-    if (opts.mode === 'tt' && opts.ghost) Game.ghost = { data: opts.ghost, mesh: CR.G.upload(R.gl, CR.carMesh(Game.player.def.id, '#ffffff', '#3ff0ff')), m: new Float32Array(16) };
+    Game.prevBest = opts.bestLap == null ? null : opts.bestLap;
+    Game.ghost = null; Game.rec = []; Game.recT = 0; Game.recLapStart = 0; Game.ghostT0 = null; Game.newGhost = null; Game.newGhostTime = null;
+    if (opts.mode === 'tt' && opts.ghost) setGhost(opts.ghost, opts.ghostCar);
     // camera
     const lead = Game.player || Game.cars[0];
     R.cam.x = lead.x; R.cam.y = lead.y; R.cam.pitch = 0.98; R.cam.fov = 0.5; R.cam.yaw = 0; R.cam.shake = 0; R.cam.flash = 0;
@@ -86,6 +87,35 @@
     Game.intro = opts.mode === 'attract' ? 0 : 1;
     Game.on = true; Game.paused = false;
     for (let i = 0; i < 26; i++) Game.motes.push({ x: lead.x + (Math.random() - 0.5) * 900, y: lead.y + (Math.random() - 0.5) * 700, z: 20 + Math.random() * 160, p: Math.random() * 6 });
+  };
+  // The ghost replays a recorded lap (x, y, heading*100, height at 15 samples a second). prog[k] is how far
+  // round the lap sample k is, so the HUD can say how far ahead or behind the ghost you are.
+  function setGhost(data, carId) {
+    if (Game.ghost) CR.G.free(R.gl, Game.ghost.mesh);
+    const id = CR.CARS.some((c) => c.id === carId) ? carId : Game.player.def.id;
+    const w = Game.world, n = data.length >> 2, prog = new Float32Array(n);
+    let ix = -1, prevS = 0, acc = 0, top = -Infinity;
+    for (let k = 0; k < n; k++) {
+      const x = data[k * 4], y = data[k * 4 + 1];
+      ix = ix < 0 ? w.nearestGlobal(x, y, 2000).i : w.nearestLocal(x, y, ix);
+      if (ix < 0) ix = 0;
+      const sNow = w.project(x, y, ix).s;
+      if (k === 0) acc = sNow > w.L / 2 ? sNow - w.L : sNow;
+      else { let ds = sNow - prevS; if (ds > w.L / 2) ds -= w.L; if (ds < -w.L / 2) ds += w.L; acc += ds; }
+      prevS = sNow; top = Math.max(top, acc); prog[k] = top;
+    }
+    Game.ghost = { data, prog, car: id, mesh: CR.G.upload(R.gl, CR.carMesh(id, '#ffffff', '#3ff0ff')), m: new Float32Array(16), x: 0, y: 0, on: false };
+  }
+  // seconds you are behind the ghost (negative = ahead), or null when there's nothing to compare
+  Game.ghostGap = function () {
+    const g = Game.ghost, p = Game.player;
+    if (!g || !p || Game.ghostT0 == null || p.finished) return null;
+    const t = Game.raceT - Game.ghostT0, dp = p.prog - p.lap * Game.world.L, pr = g.prog;
+    if (dp <= 0 || dp > pr[pr.length - 1]) return null;
+    let lo = 0, hi = pr.length - 1;
+    while (lo < hi) { const mid = (lo + hi) >> 1; if (pr[mid] < dp) lo = mid + 1; else hi = mid; }
+    const a = lo ? pr[lo - 1] : pr[0], f = lo && pr[lo] > a ? (dp - a) / (pr[lo] - a) : 0;
+    return t - (Math.max(0, lo - 1) + f) / 15;
   };
   Game.stop = function () {
     if (!Game.cars) return;
@@ -164,7 +194,10 @@
     // ghost recording (time trial)
     if (Game.mode === 'tt' && Game.player && !Game.player.finished) {
       Game.recT = (Game.recT || 0) + dt;
-      if (Game.recT >= 1 / 15) { Game.recT = 0; const p = Game.player; Game.rec.push(Math.round(p.x), Math.round(p.y), Math.round(p.h * 100), Math.round(p.z)); }
+      const p = Game.player;
+      // the lap the ghost replays starts at the line, so lap 1 starts when you first cross it, not on the grid
+      if (Game.ghostT0 == null && p.prog >= 0) { Game.ghostT0 = Game.raceT; Game.recLapStart = Game.rec.length; Game.recT = 0; }
+      if (Game.recT >= 1 / 15) { Game.recT = 0; Game.rec.push(Math.round(p.x), Math.round(p.y), Math.round(p.h * 100), Math.round(p.z)); }
     }
     // end of race
     if (Game.mode !== 'attract' && !Game.ko && Game.state === 'race') {
@@ -516,7 +549,11 @@
       }
       if (c.isPlayer && Game.mode === 'tt') {
         const prev = Game.opts.bestLap;
-        if (prev == null || lt < prev) { Game.opts.bestLap = lt; Game.newGhost = Game.rec.slice(Game.recLapStart || 0); Game.newGhostTime = lt; if (prev != null) { Game.msg('NEW BEST LAP!', 1.6, 'go'); Audio.play('best'); } }
+        if (prev == null || lt < prev) {
+          Game.opts.bestLap = lt; Game.newGhost = Game.rec.slice(Game.recLapStart || 0); Game.newGhostTime = lt;
+          if (Game.newGhost.length >= 8) setGhost(Game.newGhost, c.def.id);   // race this lap from the next one on
+          if (prev != null) { Game.msg('NEW BEST LAP!', 1.6, 'go'); Audio.play('best'); }
+        }
         Game.recLapStart = Game.rec.length;
         Game.ghostT0 = Game.raceT;
       }
@@ -613,7 +650,7 @@
       mode: Game.mode, order: order.map((c) => ({ name: c.name, isPlayer: c.isPlayer, car: c.def.name, paint: c.paint, time: c.finishTime, best: c.bestLap, est: !!c.estimated, points: c.points })),
       place: order.indexOf(Game.player) + 1,
       bestLap: Game.player ? Game.player.bestLap : null, total: Game.player ? Game.player.finishTime : 0,
-      ghost: Game.newGhost ? { data: Game.newGhost, time: Game.newGhostTime } : null,
+      ghost: Game.newGhost ? { data: Game.newGhost, time: Game.newGhostTime, car: Game.player.def.id } : null,
     };
     Game.on = false; Audio.engine(0, 0, false, false); Audio.skid(0);
     if (Game.opts.onEnd) Game.opts.onEnd(Game.results);
@@ -725,12 +762,14 @@
         cars.push({ mesh: c.cursor, m });
       }
     }
-    if (Game.ghost && Game.player && Game.state !== 'count') {
-      const g = Game.ghost, t = Game.raceT - (Game.ghostT0 || 0), d = g.data, i = Math.floor(t * 15) * 4;
+    if (Game.ghost) Game.ghost.on = false;
+    if (Game.ghost && Game.player) {
+      // waits on the line until you cross it
+      const g = Game.ghost, t = Game.ghostT0 == null ? 0 : Game.raceT - Game.ghostT0, d = g.data, i = Math.floor(t * 15) * 4;
       if (i + 7 < d.length) {
         const f = t * 15 - Math.floor(t * 15);
         const x = U.lerp(d[i], d[i + 4], f), y = U.lerp(d[i + 1], d[i + 5], f), h = d[i + 2] / 100 + U.angDiff(d[i + 2] / 100, d[i + 6] / 100) * f, z = U.lerp(d[i + 3], d[i + 7], f);
-        R.carMatrix(x, y, z, h, 0, 0, g.m); cars.push({ mesh: g.mesh, m: g.m, ghost: true, tint: [0.7, 1.2, 1.4] });
+        R.carMatrix(x, y, z, h, 0, 0, g.m); cars.push({ mesh: g.mesh, m: g.m, ghost: true, tint: [0.7, 1.2, 1.4] }); g.x = x; g.y = y; g.on = true;
       }
     }
     for (const b of Game.world.balls) { b.m = b.m || new Float32Array(16); CR.M4.model(b.x, b.r + b.z, b.y, -b.dir, b.rot, 0, 1, b.m); }
