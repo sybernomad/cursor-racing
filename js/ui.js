@@ -67,28 +67,14 @@
     const d = Save.data, run = d.cupRun;
     const el = $('#scr-menu');
     const won = CR.CUPS.filter((c) => d.cups[c.id] && d.cups[c.id].best).length;
-    el.innerHTML = `<div class="wrap menu-wrap">
-      <div class="row menu-top"><div class="logo menu-logo"><span class="cur"></span>Cursor Racing</div><span class="spacer"></span><span class="muted small menu-stats">${d.stats.races} races · ${d.stats.wins} wins · v${UI.version}</span>${coinsHTML()}</div>
-      <button class="btn primary menu-hero" id="m-champ"><span class="ico">🏆</span><span class="ttl">Championship</span><span class="sub">${run ? `Continue ${CR.CUPS.find((c) => c.id === run.cup).name}: race ${run.race + 1} of 3` : 'Win cups to unlock new cars and mirrored tracks'}</span><span class="cupdots">${CR.CUPS.map((c) => { const b = (d.cups[c.id] || {}).best || 0; return `<i class="g${b}"></i>`; }).join('')}<b>${won} / ${CR.CUPS.length} cups</b></span></button>
-      <div class="menu-grid">
-        <button class="btn" id="m-quick"><span class="ico">🏁</span>Quick Race<span class="sub">Up to 19 rivals on any open track</span></button>
-        <button class="btn" id="m-tt"><span class="ico">⏱️</span>Time Trial<span class="sub">Race your own ghost</span></button>
-        <button class="btn" id="m-ko"><span class="ico">💥</span>Knockout<span class="sub">Fall off screen and you're out</span></button>
-        <button class="btn cyan" id="m-garage"><span class="ico">🔧</span>Garage<span class="sub">Your cars, paint and upgrades</span></button>
-        <button class="btn cyan" id="m-shop"><span class="ico">🛒</span>Car Shop<span class="sub">${CR.CARS.filter((c) => !d.owned[c.id]).length} cars to collect</span></button>
-        <button class="btn ghost" id="m-rec"><span class="ico">📊</span>Records<span class="sub">Trophies, best laps, career stats</span></button>
-        <button class="btn ghost" id="m-tutb"><span class="ico">🎓</span>Driving Lesson<span class="sub">${d.tutorialDone ? 'Replay the tutorial race' : 'Learn the ropes, earn 100 coins'}</span></button>
-        <button class="btn ghost" id="m-set"><span class="ico">⚙️</span>Settings<span class="sub">Controls, screen, graphics, sound</span></button>
-      </div>
-      ${UI.install ? '<button class="btn ghost small menu-inst" id="m-inst">📲 Install the game</button>' : ''}
-      ${UI.iosHint ? '<button class="btn ghost small menu-inst" id="m-ios">📲 Add to your home screen</button>' : ''}
-    </div>`;
+    el.innerHTML = menuHTML(d, run, won);
     show('menu'); UI.attract();
     click($('#m-champ'), () => (run ? renderCupRun() : renderCups()));
     click($('#m-quick'), () => renderTracks('quick'));
     click($('#m-tt'), () => renderTracks('tt'));
     click($('#m-ko'), () => renderTracks('ko'));
     click($('#m-garage'), () => renderGarage());
+    click($('#m-car'), () => renderGarage(CR.CARS.findIndex((c) => c.id === Save.data.car)));
     click($('#m-shop'), () => renderShop());
     click($('#m-set'), () => renderSettings());
     click($('#m-tutb'), startTutorial);
@@ -96,6 +82,37 @@
     if (UI.install) click($('#m-inst'), async () => { const p = UI.install; UI.install = null; p.prompt(); try { await p.userChoice; } catch (e) { /* */ } renderMenu(); });
     if (UI.iosHint) click($('#m-ios'), () => modal(`<h2>Install on iPhone / iPad</h2><ol class="help"><li>Open this page in <b>Safari</b>.</li><li>Tap the <b>Share</b> button.</li><li>Choose <b>Add to Home Screen</b>.</li></ol><p class="muted small">It then runs full screen and works offline.</p><div class="actions"><button class="btn primary" id="m-ok">Got it</button></div>`, (m) => click($('#m-ok', m), closeModal)));
     if (!Save.data.seenHelp) { Save.data.seenHelp = true; Save.save(); setTimeout(() => modal(`<h2>Welcome to Cursor Racing</h2><p class="muted">New here? A two-minute driving lesson covers steering, drifting, boost and power-ups, and pays 100 coins.</p><div class="actions"><button class="btn ghost" id="m-skip">Skip</button><button class="btn primary" id="m-tut">Driving lesson</button></div>`, (m) => { click($('#m-skip', m), closeModal, 'back'); click($('#m-tut', m), () => { closeModal(); startTutorial(); }); }), 400); }
+  }
+
+  // Main menu. Sideways: a rail on the left (logo, coins and the garage screens), the Championship banner,
+  // three race cards with live info over a sketch of a track, and your car. Upright: the same in one column.
+  function menuHTML(d, run, won) {
+    const S = d.settings, cup = run && CR.CUPS.find((c) => c.id === run.cup);
+    const chips = (a) => `<span class="mchips">${a.map((x) => `<i>${x}</i>`).join('')}</span>`;
+    const stat = (n, l) => `<span class="mstat"><b>${n}</b>${l}</span>`;
+    const open = []; CR.TRACKS.forEach((t, i) => { if (Save.trackOpen(i, false)) open.push(i); });
+    const art = (ti) => (ti == null ? '' : `<span class="mart" style="background-image:url(${thumb(ti, false)})"></span>`);
+    const ghosts = Object.values(d.best).filter((b) => b && b.tt != null).length;
+    const tile = (id, ico, ttl, sub, cls = '', more = '') => `<button class="mtile ${cls}" id="${id}"><span class="ico">${ico}</span><span class="ttl">${ttl}</span><span class="sub">${sub}</span><span class="chev">›</span>${more}</button>`;
+    const items = S.items ? 'Power-ups' : 'No power-ups';
+    const cd = CR.CARS.find((c) => c.id === d.car), up = Save.ups(d.car);
+    const pips = (n) => `<span class="pips">${'<i class="on"></i>'.repeat(n)}${'<i></i>'.repeat(5 - n)}</span>`;
+    return `<div class="menu">
+      <header class="menu-top"><div class="logo menu-logo"><span class="cur"></span>Cursor Racing</div><span class="menu-stats">${d.stats.races} races · ${d.stats.wins} wins · v${UI.version}</span>${coinsHTML()}
+        ${UI.install ? '<button class="btn ghost small menu-inst" id="m-inst">📲 Install the game</button>' : ''}${UI.iosHint ? '<button class="btn ghost small menu-inst" id="m-ios">📲 Add to your home screen</button>' : ''}</header>
+      <button class="mtile menu-champ" id="m-champ"><span class="ico">🏆</span><span class="kick">${run ? 'In progress' : 'Career'}</span><span class="ttl">Championship</span><span class="sub">${run ? `Continue ${cup.name}: race ${run.race + 1} of ${cup.races.length}` : 'Win cups to unlock new cars and mirrored tracks'}</span><span class="cupdots">${CR.CUPS.map((c) => `<i class="g${(d.cups[c.id] || {}).best || 0}"></i>`).join('')}<b>${won} / ${CR.CUPS.length} cups</b></span><span class="cta">${run ? 'Continue' : 'Play'} ›</span></button>
+      ${tile('m-quick', '🏁', 'Quick Race', 'Up to 19 rivals on any open track', 'menu-play ac-red', art(open[open.length - 1]) + stat(d.stats.wins, d.stats.wins === 1 ? 'win' : 'wins') + chips([`${S.laps} ${S.laps === 1 ? 'lap' : 'laps'}`, `${S.rivals} ${S.rivals === 1 ? 'rival' : 'rivals'}`, items]))}
+      ${tile('m-tt', '⏱️', 'Time Trial', 'Race your own ghost', 'menu-play ac-cyan', art(open[Math.min(1, open.length - 1)]) + stat(ghosts, ghosts === 1 ? 'ghost saved' : 'ghosts saved') + chips([`${open.length} ${open.length === 1 ? 'track' : 'tracks'} open`, 'Ghost of your best lap']))}
+      ${tile('m-ko', '💥', 'Knockout', "Fall off screen and you're out", 'menu-play ac-pink', art(open[0]) + stat(d.stats.koWins, d.stats.koWins === 1 ? 'win' : 'wins') + chips([`${S.koRivals} rivals`, 'First to 4', items]))}
+      <button class="menu-car" id="m-car"><img src="${carThumb(d.car)}" alt=""><span class="menu-car-t"><span class="kick">Your car</span><b>${cd.name}</b></span><span class="menu-car-u">${[['Engine', up.eng], ['Tyres', up.grip], ['Turbo', up.boost]].map(([n, l]) => `<span>${n}${pips(l)}</span>`).join('')}</span><span class="cta2">Change ›</span></button>
+      <nav class="menu-more">
+        ${tile('m-garage', '🔧', 'Garage', 'Your cars, paint and upgrades')}
+        ${tile('m-shop', '🛒', 'Car Shop', `${CR.CARS.filter((c) => !d.owned[c.id]).length} cars to collect`)}
+        ${tile('m-rec', '📊', 'Records', 'Trophies, best laps, career stats')}
+        ${tile('m-tutb', '🎓', 'Driving Lesson', d.tutorialDone ? 'Replay the tutorial race' : 'Learn the ropes, earn 100 coins')}
+        ${tile('m-set', '⚙️', 'Settings', 'Controls, screen, graphics, sound')}
+      </nav>
+    </div>`;
   }
 
   function help() {
