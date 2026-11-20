@@ -343,11 +343,20 @@
     c.x += c.vx * dt; c.y += c.vy * dt;
     // ramps + air
     if (!c.air) {
-      const rh = w.rampHeight(c.x, c.y);
-      if (rh) { c.z = rh.h; c.onRamp = true; c.rampSlope = rh.slope; }
+      let rh = w.rampHeight(c.x, c.y);
+      // the raised end of a see-saw is a wall until it tips back down
+      if (rh && rh.ss && rh.h > c.z + 9 && !w.seesawAt(ox, oy)) {
+        c.x = ox; c.y = oy; c.vx *= -0.35; c.vy *= -0.35; rh = null;
+        if (c.isPlayer && vf > 60) { Audio.play('wall', { vol: Math.min(1, vf / 250) }); shake(4); Audio.vibrate(15); }
+      }
+      if (rh) { c.z = rh.h; c.onRamp = true; c.rampSlope = rh.slope; c.rampSS = rh.ss || null; }
       else if (c.onRamp) {
         c.onRamp = false;
-        if (vf > 90) { c.air = true; c.vz = vf * 0.5 + 40; if (c.isPlayer) Audio.play('jump'); }
+        // off the top of a ramp (or the far end of a see-saw still pointing up): into the air. Off the low end: back on
+        // the road. Off the side of a see-saw: drop.
+        const q = c.rampSS, offEnd = !q || (c.x - q.x) * q.c + (c.y - q.y) * q.s > q.len / 2 - 4;
+        if (q && !offEnd && c.z > 4) { c.air = true; c.vz = 0; }
+        else if (vf > 90 && (c.rampSlope || 0) > 0.02 && c.z > 4) { c.air = true; c.vz = vf * 0.5 + 40; if (c.isPlayer) Audio.play('jump'); }
         else c.z = 0;
       } else c.z = st.hover ? 0 : 0;
     } else {
@@ -691,7 +700,7 @@
   function emit(kind, x, y, z, n, car) {
     if (Game.parts.length > 700) return;
     const w = Game.world;
-    const dust = { breakfast: [0.95, 0.9, 0.8], desk: [0.8, 0.7, 0.55], sandbox: [0.85, 0.72, 0.48], pool: [0.4, 0.75, 0.5], bath: [0.9, 0.95, 1], toybox: [0.6, 0.55, 0.9], garage: [0.8, 0.68, 0.5], computer: [0.5, 0.55, 0.7], bakery: [0.97, 0.95, 0.9], frost: [0.95, 0.98, 1], picnic: [0.9, 0.85, 0.7], town: [0.55, 0.7, 0.4] }[w.def.theme] || [0.85, 0.85, 0.85];
+    const dust = { breakfast: [0.95, 0.9, 0.8], desk: [0.8, 0.7, 0.55], sandbox: [0.85, 0.72, 0.48], pool: [0.4, 0.75, 0.5], bath: [0.9, 0.95, 1], toybox: [0.6, 0.55, 0.9], garage: [0.8, 0.68, 0.5], computer: [0.5, 0.55, 0.7], bakery: [0.97, 0.95, 0.9], frost: [0.95, 0.98, 1], picnic: [0.9, 0.85, 0.7], town: [0.55, 0.7, 0.4], laundry: [0.92, 0.95, 1], shelf: [0.75, 0.6, 0.45], fridge: [0.9, 0.96, 1], aquarium: [0.5, 0.85, 0.85] }[w.def.theme] || [0.85, 0.85, 0.85];
     for (let i = 0; i < n; i++) {
       const p = { x, y, z, vx: 0, vy: 0, vz: 0, life: 0, max: 1, size: 3, col: PCOL[kind] || dust, add: false, grav: 0, drag: 2, grow: 1, a: 0.6 };
       const a = Math.random() * 6.28, s = Math.random();
@@ -703,6 +712,9 @@
         case 'poof': p.vx = Math.cos(a) * 90 * s; p.vy = Math.sin(a) * 90 * s; p.vz = 40 + s * 60; p.max = 0.5 + s * 0.3; p.size = 5 + s * 4; p.grow = 2; p.a = 0.7; break;
         case 'splash': p.vx = Math.cos(a) * 50; p.vy = Math.sin(a) * 50; p.vz = 80 + s * 60; p.max = 0.45; p.size = 2.2; p.grav = 500; p.a = 0.8; break;
         case 'wind': { const h = car.h; p.vx = -Math.cos(h) * 260; p.vy = -Math.sin(h) * 260; p.vz = 0; p.max = 0.18; p.size = 1.1; p.a = 0.55; p.col = [1, 1, 1]; p.drag = 0; p.grow = 1; p.add = true; break; }
+        case 'bubble': p.vx = (Math.random() - 0.5) * 30; p.vy = (Math.random() - 0.5) * 30; p.vz = 90 + s * 90; p.max = 0.7 + s * 0.4; p.size = 2 + s * 2; p.a = 0.7; p.col = [0.75, 0.95, 1]; p.drag = 1.5; p.grow = 1.3; p.add = true; break;
+        case 'gust': p.vx = car.dx * 330; p.vy = car.dy * 330; p.vz = (Math.random() - 0.5) * 10; p.max = 0.4; p.size = 1.7; p.a = 0.6; p.col = [1, 1, 1]; p.drag = 0.3; p.grow = 1; p.add = true; break;
+        case 'goo': p.vx = Math.cos(a) * 40 * s; p.vy = Math.sin(a) * 40 * s; p.vz = 50 + s * 40; p.max = 0.4; p.size = 2.4; p.grav = 400; p.a = 0.9; p.col = [0.75, 0.85, 0.2]; break;
         case 'ring': { const ang = i / n * Math.PI * 2; p.vx = Math.cos(ang) * 420; p.vy = Math.sin(ang) * 420; p.vz = 10; p.max = 0.45; p.size = 3.2; p.add = true; p.a = 0.9; p.col = [1, 0.85, 0.4]; p.drag = 3; p.grow = 1.5; break; }
         case 'confetti': p.vx = Math.cos(a) * 140 * s; p.vy = Math.sin(a) * 140 * s; p.vz = 200 + s * 200; p.max = 2.2; p.size = 2.6; p.grav = 260; p.drag = 1.5; p.a = 1; p.grow = 1; p.col = [[1, 0.3, 0.4], [1, 0.85, 0.2], [0.3, 0.8, 1], [0.5, 1, 0.4], [0.9, 0.5, 1]][i % 5]; p.add = false; break;
       }
@@ -790,7 +802,7 @@
     X().render(cars, B.skid, (x, y, z, s, c, a) => quad(B.add, x, y, z, s, c, a));
     for (const pu of Game.pulses) lights.push({ x: pu.x, y: 30, z: pu.y, col: pu.col.map((v) => v * pu.t * 5), rad: 220 });
     for (const m of Game.motes) quad(B.add, m.x, m.y, m.z, 1.2, [1, 0.92, 0.7], 0.35 + Math.sin(m.p * 2) * 0.2);
-    const sc = ['toybox', 'pool', 'computer', 'garage'].includes(Game.world.def.theme) ? [0.02, 0.02, 0.04] : [0.12, 0.1, 0.1];
+    const sc = ['toybox', 'pool', 'computer', 'garage', 'aquarium', 'shelf'].includes(Game.world.def.theme) ? [0.02, 0.02, 0.04] : [0.12, 0.1, 0.1];
     for (const k of Game.skids) {
       const dx = k.b[0] - k.a[0], dy = k.b[1] - k.a[1], l = Math.hypot(dx, dy) || 1, nx = -dy / l * 1.8, ny = dx / l * 1.8, al = 0.38 * (1 - k.t / 9);
       const i0 = B.skid.v(k.a[0] + nx, 0.2, k.a[1] + ny, 0, 1, 0, sc[0], sc[1], sc[2], al), i1 = B.skid.v(k.a[0] - nx, 0.2, k.a[1] - ny, 0, 1, 0, sc[0], sc[1], sc[2], al);

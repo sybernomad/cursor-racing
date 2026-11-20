@@ -73,6 +73,7 @@
       }
       this.lights = [];
       this.balls = [];
+      this.glue = []; this.spinners = []; this.belts = []; this.fans = []; this.dominoes = []; this.seesaws = [];
     }
 
     // ---------- centreline ----------
@@ -182,6 +183,7 @@
       for (const h of this.holes) if ((x - h.x) ** 2 + (y - h.y) ** 2 < h.r * h.r) return S.void;
       if (this.gaps.length && this.inGap(x, y)) return S.void;
       for (const z of (this.oil || EMPTY)) if ((x - z.x) ** 2 + (y - z.y) ** 2 < z.r * z.r) return S.slick;
+      for (const z of this.glue) if ((x - z.x) ** 2 + (y - z.y) ** 2 < z.r * z.r) return S.sticky;
       for (const z of this.zones) if (inEll(z, x, y)) return z.type === 'slick' ? S.slick : S.sticky;
       for (const b of this.boosts) if (inEll(b, x, y)) return S.boost;
       if (Math.abs(lat) <= this.hw) return S.track;
@@ -189,7 +191,20 @@
       if (this.def.cross && this.nearestGlobal(x, y, this.hw + 80).d <= this.hw) return S.track;
       return this.roughS || (this.roughS = { type: 'rough', grip: this.theme.rough.grip, top: this.theme.rough.top });
     }
+    beltOf(h, p) {
+      const len = h.len || 90, ang = Math.atan2(p.ty, p.tx);
+      return { x: h.x, y: h.y, ang, c: Math.cos(ang), s: Math.sin(ang), len, half: this.hw + 24, side: h.side, px: -p.ty * h.side, py: p.tx * h.side, speed: h.speed || 150 };
+    }
+    // the see-saw under a point, with the board's height there
+    seesawAt(x, y) {
+      for (const q of this.seesaws) {
+        const dx = x - q.x, dy = y - q.y, u = dx * q.c + dy * q.s, v = -dx * q.s + dy * q.c;
+        if (Math.abs(u) <= q.len / 2 && Math.abs(v) <= q.wid / 2) return { q, u, h: Math.max(0, q.h0 + u * Math.sin(q.th)) };
+      }
+      return null;
+    }
     rampHeight(x, y) { // height of a ramp under a point, 0 if none. Also returns slope end flag
+      if (this.seesaws.length) { const q = this.seesawAt(x, y); if (q) return { h: q.h, slope: Math.tan(q.q.th), ss: q.q }; }
       for (const r of this.ramps) {
         const dx = x - r.x, dy = y - r.y, c = Math.cos(r.ang), s = Math.sin(r.ang);
         const u = dx * c + dy * s, v = -dx * s + dy * c;
@@ -221,7 +236,7 @@
       // start gantry
       this.buildStart();
       // ramps
-      const RLOOK = { book: ['#c0392b', '#f2ead8'], ruler: ['#ffd43b', '#343a40'], plank: ['#a0703f', '#ffd43b'], rack: ['#5c2e0e', '#ffd43b'], sponge: ['#ffe066', '#40c057'], block: ['#da77f2', '#ffd43b'], tape: ['#868e96', '#ffd43b'], board: ['#c9a46b', '#222222'], key: ['#343a40', '#3ff0ff'], cookie: ['#d4a056', '#4a2511'], snow: ['#e7f5ff', '#e03131'], bread: ['#e9b872', '#a8632a'], bridge: ['#8d6e53', '#f1f3f5'] };
+      const RLOOK = { book: ['#c0392b', '#f2ead8'], ruler: ['#ffd43b', '#343a40'], plank: ['#a0703f', '#ffd43b'], rack: ['#5c2e0e', '#ffd43b'], sponge: ['#ffe066', '#40c057'], block: ['#da77f2', '#ffd43b'], tape: ['#868e96', '#ffd43b'], board: ['#c9a46b', '#222222'], key: ['#343a40', '#3ff0ff'], cookie: ['#d4a056', '#4a2511'], snow: ['#e7f5ff', '#e03131'], bread: ['#e9b872', '#a8632a'], bridge: ['#8d6e53', '#f1f3f5'], lid: ['#dee2e6', '#4dabf7'], glass: ['#99e9f2', '#0b7285'] };
       for (const r of this.ramps) {
         const [c, s] = RLOOK[r.look] || RLOOK.book;
         const pr = CR.prop('ramp', { len: Math.round(r.len / 3), wid: Math.round(this.width / 3) + 2, hgt: Math.round(r.hgt / 3), color: c, stripe: s });
@@ -231,8 +246,29 @@
       // fixed hazards: bumpers and spring pads; moving ones get their own meshes
       this.movers = [];
       for (const h of this.hazards) {
-        if (h.type === 'bumper') this.addProp(CR.prop('bumper', { color: ['#ff4dd8', '#3ff0ff', '#ffd43b'][Math.floor(h.s) % 3] }, 1), h.x, h.y, 0, 0, true);
-        else if (h.type === 'spring') this.addProp(CR.prop('spring', {}, 1), h.x, h.y, h.ang, 0, false);
+        if (h.type === 'bumper') this.addProp(h.look === 'jelly' ? CR.prop('jelly', {}, 1) : CR.prop('bumper', { color: ['#ff4dd8', '#3ff0ff', '#ffd43b'][Math.floor(h.s) % 3] }, 1), h.x, h.y, 0, 0, true);
+        else if (h.type === 'spring') this.addProp(CR.prop(h.look === 'bubble' ? 'vent' : 'spring', {}, 1), h.x, h.y, h.ang, 0, false);
+        else if (h.type === 'spinner') { // a turntable in the road: anything on it gets carried round
+          const r = h.r || 70;
+          this.spinners.push({ x: h.x, y: h.y, r, speed: (h.speed || 1.6) * (this.reversed ? -1 : 1), ang: 0, mesh: G.upload(gl, CR.prop('drum', { r }, 1).bld), m: new Float32Array(16) });
+        } else if (h.type === 'conveyor') { // a belt across the road that carries cars sideways (painted in paintGround)
+          const p = this.at(h.s);
+          this.belts.push(this.beltOf(h, p));
+        } else if (h.type === 'fan') { // a desk fan at the roadside blowing across it
+          const p = this.at(h.s), off = (this.hw + 44) * h.side, fx = p.x - p.ty * off, fy = p.y + p.tx * off, a = Math.atan2(-p.tx * h.side, p.ty * h.side);
+          if (!this.onTrackish(fx, fy, 14)) this.addProp(CR.prop('fan', {}, 1), fx, fy, a, 0, true);
+          const raw = CR.propRaw('fanblades', {}, 1);
+          this.fans.push({ x: fx, y: fy, a, dx: Math.cos(a), dy: Math.sin(a), reach: this.width + 90, half: 60, power: h.power || 1, ph: h.s * 0.01, spin: 0,
+            mesh: G.upload(gl, G.mesh(raw.vox, raw.vs, 0.5, raw.vox.sy / 2, raw.vox.sz / 2)), m: new Float32Array(16) });
+        } else if (h.type === 'domino') { // a row of dominoes across the road. The first car through knocks them down.
+          const p = this.at(h.s), ang = Math.atan2(p.ty, p.tx), n = Math.max(3, Math.floor(this.width / 21)), row = { pieces: [], downT: 0, x: p.x, y: p.y };
+          for (let i = 0; i < n; i++) { const off = (i - (n - 1) / 2) * (this.width / n); row.pieces.push({ x: p.x - p.ty * off, y: p.y + p.tx * off, ang, fall: 0, dir: 1, wait: -1, m: new Float32Array(16) }); }
+          this.dominoes.push(row); this.dominoMesh = this.dominoMesh || G.upload(gl, CR.prop('domino', {}, 1).bld);
+        } else if (h.type === 'seesaw') { // a plank on a block: drive up it and it tips you down the other side
+          const len = h.len || 120, wid = h.wid || 50, h0 = 12, max = Math.asin(h0 / (len / 2));
+          this.addProp(CR.prop('fulcrum', { wid }, 1), h.x, h.y, h.ang, 0, false);
+          this.seesaws.push({ x: h.x, y: h.y, ang: h.ang, c: Math.cos(h.ang), s: Math.sin(h.ang), len, wid, h0, max, th: max, mesh: G.upload(gl, CR.prop('plank', { len, wid }, 1).bld), m: new Float32Array(16) });
+        }
         else if (h.type === 'sweeper') {
           const p = this.at(h.s), side = h.side, px = p.x - p.ty * (this.hw + 16) * side, py = p.y + p.tx * (this.hw + 16) * side;
           const len = this.width * 0.92, base = Math.atan2(-p.tx * side, p.ty * side); // pointing across the road
@@ -303,6 +339,10 @@
       }
       this.chunks = null;
     }
+    onBelt(x, y, pad) {
+      for (const b of this.belts) { const dx = x - b.x, dy = y - b.y; if (Math.abs(dx * b.c + dy * b.s) < b.len / 2 + pad && Math.abs(-dx * b.s + dy * b.c) < b.half + pad) return true; }
+      return false;
+    }
     holeNear(x, y, pad) { for (const h of this.holes) if (Math.hypot(x - h.x, y - h.y) < h.r + pad) return true; return false; }
     chunk(x, y) {
       const i = Math.floor(x / CHUNK), j = Math.floor(y / CHUNK), k = i * 1000 + j;
@@ -336,7 +376,7 @@
           if (b.chance && rnd() > b.chance) continue;
           const p = this.at(s), off = (this.hw + b.offset) * side;
           const x = p.x - p.ty * off, y = p.y + p.tx * off;
-          if (!this.inTable(x, y, 24) || this.holeNear(x, y, 24)) continue;
+          if (!this.inTable(x, y, 24) || this.holeNear(x, y, 24) || this.onBelt(x, y, 14) || this.fans.some((f) => Math.hypot(f.x - x, f.y - y) < 48)) continue;
           if (b.sprite) { if (!this.onTrackish(x, y, 6)) this.addSprite(b.sprite, x, y, b.size || 1); continue; }
           const pr = CR.prop(b.name, b.opt || {}, Math.floor(s / b.spacing) % 7 + 1 + (side > 0 ? 7 : 0));
           if (b.along) {
@@ -431,12 +471,13 @@
       }
       x.setLineDash([10, 14]); x.strokeStyle = tr.line; x.lineWidth = 2; path(x); x.stroke(); x.setLineDash([]);
       // zones
-      const LOOK = { milk: ['#fbfbf6', '#ffffff'], jam: ['#8f1d2c', '#c2253a'], water: ['rgba(120,190,255,0.55)', 'rgba(220,245,255,0.6)'], ink: ['#1b2a6b', '#2d3f99'], slime: ['#5ce65c', '#a6ff7a'], oil: ['#1a1a1f', '#3a3a48'], sawdust: ['#d9b77e', '#f0d39b'], coffee: ['#4a2c16', '#6b4226'], flour: ['#fbfaf7', '#ffffff'], batter: ['#e8c37a', '#f5d998'], ice: ['rgba(200,235,255,0.85)', 'rgba(255,255,255,0.9)'], ketchup: ['#c92a2a', '#e03131'], lemonade: ['rgba(255,236,120,0.8)', 'rgba(255,250,200,0.85)'], mud: ['#5c3d2e', '#7a5640'] };
+      const LOOK = { milk: ['#fbfbf6', '#ffffff'], jam: ['#8f1d2c', '#c2253a'], water: ['rgba(120,190,255,0.55)', 'rgba(220,245,255,0.6)'], ink: ['#1b2a6b', '#2d3f99'], slime: ['#5ce65c', '#a6ff7a'], oil: ['#1a1a1f', '#3a3a48'], sawdust: ['#d9b77e', '#f0d39b'], coffee: ['#4a2c16', '#6b4226'], flour: ['#fbfaf7', '#ffffff'], batter: ['#e8c37a', '#f5d998'], ice: ['rgba(200,235,255,0.85)', 'rgba(255,255,255,0.9)'], ketchup: ['#c92a2a', '#e03131'], lemonade: ['rgba(255,236,120,0.8)', 'rgba(255,250,200,0.85)'], mud: ['#5c3d2e', '#7a5640'], suds: ['rgba(255,255,255,0.92)', 'rgba(208,235,255,0.95)'] };
       for (const z of this.zones) {
         const [a, b] = LOOK[z.look] || LOOK.water;
         x.save(); x.translate(z.x / TEX, z.y / TEX); x.rotate(z.ang);
         for (let i = 0; i < 7; i++) { x.fillStyle = i < 5 ? a : b; x.beginPath(); const ox = (rnd() - 0.5) * z.rx * 0.8 / TEX, oy = (rnd() - 0.5) * z.ry * 0.8 / TEX; x.ellipse(ox * (i < 5 ? 1 : 0.4), oy * (i < 5 ? 1 : 0.4), z.rx / TEX * (i < 5 ? 0.7 : 0.3), z.ry / TEX * (i < 5 ? 0.7 : 0.25), rnd(), 0, 6.28); x.fill(); }
         x.restore();
+        if (z.look === 'suds') for (let i = 0; i < 26; i++) { x.strokeStyle = 'rgba(116,192,252,0.5)'; x.lineWidth = 1; x.beginPath(); x.arc((z.x + (rnd() - 0.5) * z.rx * 1.3) / TEX, (z.y + (rnd() - 0.5) * z.ry * 1.3) / TEX, 1.5 + rnd() * 4, 0, 6.28); x.stroke(); }
         if (z.look === 'slime') { ex.save(); ex.translate(z.x / TEX, z.y / TEX); ex.rotate(z.ang); ex.fillStyle = '#888'; ex.beginPath(); ex.ellipse(0, 0, z.rx / TEX * 0.8, z.ry / TEX * 0.8, 0, 0, 6.28); ex.fill(); ex.restore(); }
       }
       // boost pads
@@ -466,6 +507,16 @@
         const span = (this.hw + 200) / TEX;
         for (let k = -span; k < span; k += 5) { x.fillStyle = '#6b4a2e'; x.fillRect(k, -12, 2, 24); }
         x.fillStyle = '#adb5bd'; x.fillRect(-span, -8, span * 2, 2); x.fillRect(-span, 6, span * 2, 2);
+        x.restore();
+      }
+      // conveyor belts: dark rubber with a yellow lip at each edge (the moving arrows are drawn each frame)
+      for (const h of this.hazards) if (h.type === 'conveyor') {
+        const b = this.beltOf(h, this.at(h.s));
+        x.save(); x.translate(b.x / TEX, b.y / TEX); x.rotate(b.ang);
+        const L = b.len / TEX, Hh = b.half / TEX;
+        x.fillStyle = '#2b2d33'; x.fillRect(-L / 2, -Hh, L, Hh * 2);
+        x.fillStyle = 'rgba(255,255,255,0.08)'; for (let k = -Hh; k < Hh; k += 4) x.fillRect(-L / 2, k, L, 1);
+        for (let j = -Hh; j < Hh; j += 6) { x.fillStyle = (Math.floor(j / 6) % 2) ? '#ffd43b' : '#111'; x.fillRect(-L / 2 - 3, j, 3, 6); x.fillRect(L / 2, j, 3, 6); }
         x.restore();
       }
       // holes
@@ -511,6 +562,7 @@
       if (k === 'flour') for (let i = 0; i < 40; i++) { x.fillStyle = 'rgba(255,255,255,0.7)'; x.beginPath(); x.ellipse(r() * w, r() * h, 8 + r() * 26, 5 + r() * 14, r() * 3, 0, 6.28); x.fill(); }
       if (k === 'frost') for (let i = 0; i < 30; i++) { x.strokeStyle = 'rgba(160,200,240,0.4)'; x.lineWidth = 1; const cx = r() * w, cy = r() * h; for (let a = 0; a < 6; a++) { x.beginPath(); x.moveTo(cx, cy); x.lineTo(cx + Math.cos(a) * 9, cy + Math.sin(a) * 9); x.stroke(); } }
       if (k === 'paths') for (let i = 0; i < 8; i++) { x.strokeStyle = 'rgba(214,190,150,0.8)'; x.lineWidth = 6; x.beginPath(); x.moveTo(r() * w, r() * h); x.quadraticCurveTo(r() * w, r() * h, r() * w, r() * h); x.stroke(); }
+      if (k === 'dust') for (let i = 0; i < 50; i++) { x.fillStyle = 'rgba(230,210,180,0.12)'; x.beginPath(); x.ellipse(r() * w, r() * h, 10 + r() * 40, 4 + r() * 10, r() * 3, 0, 6.28); x.fill(); }
       if (k === 'stars') for (let i = 0; i < 40; i++) { x.fillStyle = 'rgba(255,230,120,0.5)'; const sx = r() * w, sy = r() * h; x.fillRect(sx - 3, sy, 7, 1); x.fillRect(sx, sy - 3, 1, 7); }
     }
     // starting grid: [along, across] offsets relative to the start line, in world units

@@ -2,9 +2,11 @@
 
 A top-down toy-car racer with a **pixel-art diorama** look: chunky voxel cars and pixel-art sprites on a lit
 3D tabletop, with real-time shadows, bloom, a tilt-shift "miniature" blur, vignette and colour grading.
-Race tiny cars on 16 tracks (32 courses counting mirrored versions): a kitchen table, a study
+Race tiny cars on 20 tracks (40 courses counting mirrored versions): a kitchen table, a study
 desk, a backyard sandbox, a pool table, a bathroom counter, a bedroom at night, a garage workbench, a
-gaming desk, a baking counter, a frosty windowsill, a picnic blanket and a model railway town. Four
+gaming desk, a baking counter, a frosty windowsill, a picnic blanket, a model railway town, the top of
+a washing machine (Spin Cycle), a bookshelf (Shelf Life), a fridge shelf (Cold Snap) and the lid of a
+fish tank (Fish Tank). Four
 of the tables have a second layout: Lucky Clover (four big loops round a central roundabout), Pretzel
 Twist (hairpin after hairpin), Night Oval (a wide, fast oval for big fields) and Paper Chase (a
 second layout on the study desk). Drive off the edge and you drop to the floor.
@@ -47,9 +49,10 @@ does it on demand.
 
 - **Driving Lesson:** a short guided race that teaches steering, drifting, boost and power-ups one
   step at a time. Offered on first launch, pays 100 coins the first time, replayable from the menu.
-- **Championship:** nine cups of three races: Rookie, Pro, Workshop, Mirror, Grand Tour, Twister, Paper,
-  Champion and Legend. Finish a cup on the podium to open the next one; winning some cups gives you a new car.
-  Mirror, Champion and Legend run tracks in reverse (Paper runs Paper Chase both ways). Options on the cup screen: field of 4, 8, 12 or
+- **Championship:** eleven cups of three races: Rookie, Pro, Workshop, Mirror, Grand Tour, Twister, Paper,
+  Chores, Champion, Deep End and Legend. Finish a cup on the podium to open the next one; winning some cups
+  gives you a new car. Mirror, Champion and Legend run tracks in reverse (Paper runs Paper Chase both ways,
+  and Deep End mixes Fish Tank with Spin Cycle and Cold Snap reversed). Options on the cup screen: field of 4, 8, 12 or
   20 cars, 2/3/5 laps, power-ups on or off. Points are 10/6/3/1 with four cars, and
   25/18/15/12/10/8/6/4/2/1 for the top ten in bigger fields. Once the Mirror Cup is open, every open
   track can also be raced mirrored in Quick Race, Time Trial and Knockout. Each race after the first
@@ -79,12 +82,21 @@ does it on demand.
 
 ## Hazards and power-ups
 
-- **Road hazards:** puddles and goo, swinging sweeper arms, things that slide across the road (a robot
-  vacuum, a rubber duck, a mouse, a rolling pin, a ladybug, a toy train at a level crossing), pinball
-  bumpers that fling you, spring pads that launch you, and jump gaps where you need speed off the ramp.
+- **Road hazards:** puddles and goo, swinging sweeper arms (a fridge door and a fishing net among them),
+  things that slide across the road (a robot vacuum, a rubber duck, a mouse, a rolling pin, a ladybug, a
+  lemon, a toy train at a level crossing), pinball bumpers (and jellies) that fling you, spring pads and
+  bubble jets that launch you, and jump gaps where you need speed off the ramp.
+- **Household hazards:** a **turntable** in the road that carries you round and turns your car; a
+  **conveyor belt** across the road that shoves you sideways; a **desk fan** that blows you across the
+  road in gusts (harder in the air, and light cars feel it most); a row of **dominoes** that slows down
+  whoever knocks it over, then lies flat for everyone behind until it stands back up; and a **see-saw**
+  ruler on one side of the road that tips you down the far side, and is a wall while its near end is up.
 - **Power-ups** (Quick Race, Knockout, and the Championship if you switch them on): drive through the rainbow boxes.
   Turbo, Oil slick (dropped behind you), Shield (6 seconds, bumps and hits bounce off), Shockwave
-  (blasts nearby cars away) and Marble (fired ahead, bounces off walls). Cars further back get better items.
+  (blasts nearby cars away), Marble (fired ahead, bounces off walls), **Magnet** (locks on to the car just
+  ahead and pulls you up to it for 3 seconds, with a little boost when you catch it; with nobody close
+  ahead it's a small turbo) and **Glue** (lays a sticky trail behind you for a couple of seconds). Cars
+  further back get better items: the leaders get Glue, the back of the field gets Magnets.
 
 ## Music
 
@@ -144,7 +156,8 @@ Tracks live in `js/tracks.js`. Each one is a closed loop of points on a table `W
 - `pieces`: big props at fixed spots (they are skipped, with a console warning, if they'd sit on the road),
 - `balls`: pushable pool balls.
 - `cross: true`: set this when the road crosses itself, so the other stretch counts as road at the crossing.
-- `hazards`: `sweeper` (swinging arm from one side), `shuttle` (something sliding across the road; a `train` look gets a level crossing), `bumper`, `spring`,
+- `hazards`: `sweeper` (swinging arm from one side), `shuttle` (something sliding across the road; a `train` look gets a level crossing), `bumper` (`look: 'jelly'` for a jelly), `spring` (`look: 'bubble'` for a bubble jet),
+  `spinner` (turntable), `conveyor` (belt across the road), `fan`, `domino` (a row across the road) and `seesaw`,
 - a ramp with `gap: <length>` gets a drop just past it; cars respawn on the far side.
 
 Themes (same file) set the table painting, track paint, border props, scattered props and sprites,
@@ -164,7 +177,8 @@ js/tracks.js            lighting presets, themes, tracks, cups, cars, rivals
 js/world.js             track centreline, surfaces, colliders, painted table, static geometry
 js/render.js            renderer: shadows, point lights, bloom, tilt-shift, grading
 js/game.js              physics, AI, laps, knockout, ghosts, particles, camera
-js/extras.js            moving hazards, bumpers, springs, gaps, power-ups, slipstream, launch starts
+js/extras.js            moving hazards, bumpers, springs, turntables, belts, fans, dominoes, see-saws,
+                        gaps, power-ups, slipstream, launch starts
 js/audio.js             Web Audio synth effects, engine sound and the per-table songs
 js/save.js              save data and economy
 js/ui.js                menus, garage, results, HUD, touch/keyboard/gamepad input

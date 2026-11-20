@@ -17,6 +17,10 @@
     winter: { sun: [0.45, 0.6, -0.55], sunCol: [0.95, 0.98, 1.1], sky: [0.42, 0.5, 0.66], gnd: [0.3, 0.33, 0.4], fog: [0.62, 0.7, 0.84], fogDen: 0.0006, clear: [0.62, 0.7, 0.84], exposure: 0.78, bloom: 0.55, grade: [0.96, 1.0, 1.07] },
     noon: { sun: [-0.3, 0.92, -0.2], sunCol: [1.12, 1.08, 0.95], sky: [0.48, 0.58, 0.7], gnd: [0.28, 0.32, 0.2], fog: [0.6, 0.75, 0.88], fogDen: 0.0005, clear: [0.6, 0.75, 0.88], exposure: 0.95, bloom: 0.5, grade: [1.02, 1.02, 0.97] },
     dusk: { sun: [0.75, 0.42, -0.35], sunCol: [1.3, 0.8, 0.55], sky: [0.4, 0.38, 0.6], gnd: [0.24, 0.2, 0.22], fog: [0.5, 0.42, 0.55], fogDen: 0.0007, clear: [0.5, 0.42, 0.55], exposure: 1.0, bloom: 0.9, grade: [1.06, 0.98, 0.95], vignette: 1.2 },
+    laundry: { sun: [-0.35, 0.88, -0.3], sunCol: [1.0, 1.02, 1.05], sky: [0.5, 0.55, 0.62], gnd: [0.3, 0.32, 0.36], fog: [0.66, 0.72, 0.8], fogDen: 0.0005, clear: [0.66, 0.72, 0.8], exposure: 0.86, bloom: 0.45, grade: [0.98, 1.0, 1.04] },
+    library: { sun: [0.55, 0.72, -0.42], sunCol: [1.25, 0.98, 0.72], sky: [0.4, 0.36, 0.38], gnd: [0.28, 0.2, 0.14], fog: [0.3, 0.22, 0.18], fogDen: 0.0008, clear: [0.28, 0.2, 0.17], exposure: 1.02, bloom: 0.7, grade: [1.08, 0.99, 0.9], vignette: 1.25 },
+    fridge: { sun: [0.0, 0.95, -0.3], sunCol: [0.95, 1.0, 1.1], sky: [0.5, 0.58, 0.7], gnd: [0.34, 0.38, 0.44], fog: [0.55, 0.66, 0.8], fogDen: 0.0004, clear: [0.55, 0.66, 0.8], exposure: 0.85, bloom: 0.6, grade: [0.95, 1.0, 1.08] },
+    aquarium: { sun: [0.2, 0.9, -0.35], sunCol: [0.55, 0.85, 1.0], sky: [0.16, 0.26, 0.36], gnd: [0.06, 0.12, 0.16], fog: [0.03, 0.1, 0.14], fogDen: 0.0011, clear: [0.03, 0.09, 0.13], exposure: 1.1, bloom: 1.1, grade: [0.94, 1.02, 1.08], vignette: 1.3 },
   };
 
   // ---------- themes ----------
@@ -209,6 +213,80 @@
       sprites: [{ name: 'person', count: 22, size: 1.1, near: true }, { name: 'flowerR', count: 12, size: 1.1 }],
       decals: 'paths',
     },
+    laundry: {
+      name: 'Laundry Room', light: 'laundry', edge: 'void', tableSide: '#dfe6ec', floor: '#7d8fa3',
+      ground(x, w, h, r) {
+        // the white enamel top of a washing machine, in panels, with a soap-blue mat under the road
+        x.fillStyle = '#f4f7fa'; x.fillRect(0, 0, w, h);
+        const pw = Math.max(40, w / 4);
+        for (let i = 0; i < w; i += pw) { x.fillStyle = 'rgba(120,140,160,0.35)'; x.fillRect(i, 0, 1, h); x.fillStyle = 'rgba(255,255,255,0.6)'; x.fillRect(i + 1, 0, 1, h); }
+        for (let i = 0; i < 14; i++) { x.strokeStyle = 'rgba(77,171,247,0.18)'; x.lineWidth = 2; x.beginPath(); x.arc(r() * w, r() * h, 8 + r() * 22, 0, 6.28); x.stroke(); }
+        for (let i = 0; i < w * h / 40; i++) { x.fillStyle = 'rgba(160,180,200,0.12)'; x.fillRect(r() * w, r() * h, 1, 1); }
+      },
+      track: { fill: '#cfe0ee', edgeA: '#74c0fc', edgeB: '#ffffff', line: 'rgba(28,126,214,0.3)' },
+      rough: { grip: 0.8, top: 0.74 },
+      border: [{ name: 'sock', spacing: 30, offset: 11, chance: 0.75 }],
+      scatter: [{ name: 'sock', count: 14 }, { name: 'peg', count: 24 }, { name: 'detergent', count: 4 }],
+      sprites: [{ name: 'bubble', count: 24, size: 1.5 }],
+      decals: 'drops',
+    },
+    shelf: {
+      name: 'Bookshelf', light: 'library', edge: 'void', tableSide: '#5a3418', floor: '#2a1d17',
+      ground(x, w, h, r) {
+        // dark varnished planks running left to right
+        x.fillStyle = '#7a4a26'; x.fillRect(0, 0, w, h);
+        const ph = Math.max(12, h / 9);
+        for (let j = 0; j < h; j += ph) {
+          x.fillStyle = `rgba(${r() < 0.5 ? '60,30,10' : '150,90,50'},${0.12 + r() * 0.12})`; x.fillRect(0, j, w, ph);
+          x.fillStyle = 'rgba(30,14,4,0.55)'; x.fillRect(0, j, w, 1);
+          for (let k = 0; k < 3; k++) { const yy = j + r() * ph; x.fillStyle = 'rgba(40,20,6,0.18)'; x.fillRect(0, yy, w, 1); }
+        }
+        for (let i = 0; i < 12; i++) { x.fillStyle = 'rgba(40,20,6,0.3)'; x.beginPath(); x.ellipse(r() * w, r() * h, 3 + r() * 5, 1.5 + r() * 2, 0, 0, 6.28); x.fill(); }
+      },
+      track: { fill: '#efe2c6', edgeA: '#8a1c1c', edgeB: '#f3d9b1', line: 'rgba(120,70,30,0.3)' },
+      rough: { grip: 0.88, top: 0.74 },
+      border: [{ name: 'bookrow', spacing: 64, offset: 10, along: true, wall: true, chance: 0.8 }],
+      scatter: [{ name: 'pawn', count: 10 }, { name: 'marble', count: 12 }, { name: 'book', count: 5, opt: { w: 30, d: 22, h: 4 } }],
+      sprites: [{ name: 'sparkle', count: 8, size: 1.1 }],
+      decals: 'dust',
+    },
+    fridge: {
+      name: 'Fridge Shelf', light: 'fridge', edge: 'wall', wallCol: '#e9eef3', tableSide: '#cfd8e0', floor: '#56657a',
+      ground(x, w, h, r) {
+        // a frosted glass shelf: pale blue, a chrome rim and a grid of faint frost
+        x.fillStyle = '#9fbfd6'; x.fillRect(0, 0, w, h);
+        const g = x.createLinearGradient(0, 0, w, h); g.addColorStop(0, 'rgba(255,255,255,0.25)'); g.addColorStop(0.5, 'rgba(120,170,210,0.15)'); g.addColorStop(1, 'rgba(255,255,255,0.2)'); x.fillStyle = g; x.fillRect(0, 0, w, h);
+        for (let i = 0; i < 40; i++) { x.fillStyle = 'rgba(255,255,255,0.3)'; x.beginPath(); x.ellipse(r() * w, r() * h, 5 + r() * 24, 3 + r() * 10, r() * 3, 0, 6.28); x.fill(); }
+        for (let i = 0; i < 9; i++) { x.strokeStyle = 'rgba(255,255,255,0.5)'; x.lineWidth = 1; const sx = r() * w; x.beginPath(); x.moveTo(sx, 0); x.lineTo(sx + h * 0.4, h); x.stroke(); }
+      },
+      track: { fill: '#f1f7fc', edgeA: '#1c7ed6', edgeB: '#ffffff', line: 'rgba(28,126,214,0.35)' },
+      rough: { grip: 0.62, top: 0.74 },
+      border: [{ name: 'pea', spacing: 20, offset: 9, chance: 0.8 }],
+      scatter: [{ name: 'pea', count: 36 }, { name: 'carton', count: 3 }, { name: 'jar', count: 4 }, { name: 'lemon', count: 5 }, { name: 'egg', count: 4 }],
+      sprites: [{ name: 'flake', count: 24, size: 1.2 }],
+      decals: 'frost',
+    },
+    aquarium: {
+      name: 'Aquarium Lid', light: 'aquarium', edge: 'void', tableSide: '#1d3b47', floor: '#0b1418',
+      ground(x, w, h, r) {
+        // a glass lid over the tank: deep water, rippling light and fish going about their business underneath
+        x.fillStyle = '#0f3b4a'; x.fillRect(0, 0, w, h);
+        const g = x.createRadialGradient(w * 0.5, h * 0.45, 10, w * 0.5, h * 0.5, Math.max(w, h) * 0.7); g.addColorStop(0, 'rgba(60,200,210,0.35)'); g.addColorStop(1, 'rgba(0,10,20,0.4)'); x.fillStyle = g; x.fillRect(0, 0, w, h);
+        for (let i = 0; i < 70; i++) { x.strokeStyle = `rgba(150,240,240,${0.06 + r() * 0.1})`; x.lineWidth = 1 + r() * 2; x.beginPath(); let px = r() * w, py = r() * h; x.moveTo(px, py); for (let k = 0; k < 4; k++) { px += (r() - 0.5) * 50; py += (r() - 0.5) * 30; x.lineTo(px, py); } x.stroke(); }
+        const fc = ['rgba(255,146,43,0.45)', 'rgba(255,212,59,0.4)', 'rgba(116,192,252,0.4)', 'rgba(247,131,172,0.4)'];
+        for (let i = 0; i < 16; i++) {
+          const fx = r() * w, fy = r() * h, s = 4 + r() * 6, d = r() < 0.5 ? 1 : -1;
+          x.fillStyle = fc[i % 4]; x.beginPath(); x.ellipse(fx, fy, s * 1.6, s, 0, 0, 6.28); x.fill();
+          x.beginPath(); x.moveTo(fx - s * 1.4 * d, fy); x.lineTo(fx - s * 2.6 * d, fy - s); x.lineTo(fx - s * 2.6 * d, fy + s); x.fill();
+        }
+      },
+      track: { fill: '#1f5d70', edgeA: '#63e6be', edgeB: '#0b7285', line: 'rgba(99,230,190,0.35)', glow: true },
+      rough: { grip: 0.85, top: 0.74 },
+      border: [{ name: 'shell', spacing: 30, offset: 11, chance: 0.7 }],
+      scatter: [{ name: 'coral', count: 8 }, { name: 'shell', count: 16 }, { name: 'pebble', count: 24, opt: { s: 3 } }, { name: 'foodtub', count: 2 }],
+      sprites: [{ name: 'bubble', count: 34, size: 1.5 }],
+      decals: 'drops',
+    },
   };
 
   // Clover-leaf centreline: a four-petal rose pulled slightly open (k < 1), so the petals miss the
@@ -369,6 +447,46 @@
       pieces: [['mugpens', 700, 850], ['book', 1500, 1020, 0.3, { w: 36, d: 24, h: 8 }], ['eraser', 2150, 1000]],
       hazards: [{ type: 'sweeper', t: 0.28, side: 1, look: 'ruler' }, { type: 'bumper', t: 0.52, off: -30 }, { type: 'bumper', t: 0.53, off: 30 }],
     },
+    {
+      // On top of the washing machine: a spinning drum lid in the road, a conveyor that shoves you sideways, suds everywhere.
+      id: 'spincycle', name: 'Spin Cycle', theme: 'laundry', W: 2400, H: 1700, width: 130, seed: 163, start: [800, 300],
+      pts: [[350, 350], [1000, 280], [1600, 380], [2050, 320], [2150, 750], [1750, 850], [1450, 1100], [1750, 1350], [1500, 1450], [900, 1430], [650, 1150], [380, 1300], [260, 800]],
+      zones: [{ t: 0.36, off: 0, rx: 70, ry: 50, type: 'sticky', look: 'suds' }, { t: 0.66, off: -20, rx: 60, ry: 42, type: 'sticky', look: 'suds' }, { t: 0.9, off: 15, rx: 70, ry: 45, type: 'slick', look: 'water' }],
+      ramps: [{ t: 0.74, len: 28, look: 'lid' }],
+      boosts: [{ t: 0.12, off: 0 }, { t: 0.56, off: 0 }],
+      pieces: [['detergent', 1200, 750], ['detergent', 2250, 1050], ['sock', 900, 900, 0.5], ['detergent', 520, 650]],
+      hazards: [{ type: 'spinner', t: 0.24, r: 72, speed: 1.7 }, { type: 'conveyor', t: 0.47, side: 1, len: 90 }, { type: 'sweeper', t: 0.83, side: -1, look: 'hanger' }, { type: 'spring', t: 0.6, off: 25 }],
+    },
+    {
+      // Along the top of a bookshelf: dominoes across the road, a desk fan, and a see-saw ruler on one side of the road.
+      id: 'shelflife', name: 'Shelf Life', theme: 'shelf', W: 2600, H: 1500, width: 125, seed: 173, start: [900, 280],
+      pts: [[300, 320], [1300, 260], [2300, 330], [2350, 800], [2300, 1200], [1900, 1250], [1650, 950], [1350, 850], [1050, 1000], [800, 1250], [350, 1200], [250, 750]],
+      zones: [{ t: 0.62, off: 0, rx: 60, ry: 45, type: 'sticky', look: 'ink' }],
+      ramps: [{ t: 0.22, len: 28, look: 'book', gap: 42 }],
+      boosts: [{ t: 0.14, off: 0 }, { t: 0.77, off: 0 }],
+      pieces: [['globe', 1350, 600], ['pawn', 1000, 650], ['pawn', 1700, 650], ['bookrow', 1350, 1200, 0.1], ['candle', 600, 800]],
+      hazards: [{ type: 'domino', t: 0.86 }, { type: 'domino', t: 0.7 }, { type: 'seesaw', t: 0.42, off: -32, len: 120 }, { type: 'fan', t: 0.95, side: 1 }],
+    },
+    {
+      // A glass fridge shelf with walls all round: ice, jelly bumpers, a door that swings across and a rolling lemon.
+      id: 'coldsnap', name: 'Cold Snap', theme: 'fridge', W: 2400, H: 1500, width: 128, seed: 181, start: [700, 270],
+      pts: [[320, 300], [1100, 250], [1500, 500], [1900, 260], [2120, 500], [2050, 900], [2150, 1200], [1700, 1250], [1300, 1000], [900, 1250], [400, 1200], [300, 750]],
+      zones: [{ t: 0.2, off: 0, rx: 100, ry: 50, type: 'slick', look: 'ice' }, { t: 0.5, off: 0, rx: 90, ry: 50, type: 'slick', look: 'ice' }, { t: 0.86, off: -10, rx: 70, ry: 45, type: 'slick', look: 'ice' }],
+      ramps: [{ t: 0.64, len: 28, look: 'snow' }],
+      boosts: [{ t: 0.1, off: 0 }, { t: 0.42, off: 0 }],
+      pieces: [['carton', 1500, 850], ['jar', 750, 700], ['lemon', 1800, 600], ['carton', 2280, 700], ['jar', 1250, 1350]],
+      hazards: [{ type: 'bumper', t: 0.31, off: -30, look: 'jelly' }, { type: 'bumper', t: 0.32, off: 30, look: 'jelly' }, { type: 'sweeper', t: 0.56, side: 1, look: 'door', speed: 0.9 }, { type: 'shuttle', t: 0.76, look: 'lemon', speed: 0.7 }, { type: 'fan', t: 0.95, side: -1 }],
+    },
+    {
+      // The lid of the fish tank: bubble jets, a fishing net and a jump over the feeding hatch.
+      id: 'fishtank', name: 'Fish Tank', theme: 'aquarium', W: 2500, H: 1700, width: 130, seed: 191, start: [700, 320],
+      pts: [[350, 350], [1000, 300], [1500, 550], [2000, 320], [2250, 700], [1900, 1000], [2200, 1350], [1600, 1450], [1200, 1150], [800, 1450], [300, 1300], [500, 850]],
+      zones: [{ t: 0.3, off: 0, rx: 80, ry: 50, type: 'slick', look: 'water' }, { t: 0.7, off: 10, rx: 70, ry: 45, type: 'slick', look: 'water' }],
+      ramps: [{ t: 0.6, len: 28, look: 'glass', gap: 44 }],
+      boosts: [{ t: 0.14, off: 0 }, { t: 0.53, off: 0 }],
+      pieces: [['coral', 1500, 900], ['coral', 650, 1050], ['foodtub', 1250, 650], ['coral', 2050, 1200], ['castle', 1150, 950]],
+      hazards: [{ type: 'spring', t: 0.22, off: -30, look: 'bubble' }, { type: 'spring', t: 0.23, off: 30, look: 'bubble' }, { type: 'sweeper', t: 0.38, side: -1, look: 'net' }, { type: 'spring', t: 0.86, off: 0, look: 'bubble' }, { type: 'conveyor', t: 0.78, side: -1, len: 80 }],
+    },
   ];
 
   // Cups: each race is [trackIndex, reversed]
@@ -380,7 +498,9 @@
     { id: 'tour', name: 'Grand Tour Cup', races: [[9, false], [10, false], [11, false]], ai: 1.02, reward: 1000, unlock: 'muscle' },
     { id: 'twist', name: 'Twister Cup', races: [[12, false], [13, false], [14, false]], ai: 1.03, reward: 1100, unlock: 'dome' },
     { id: 'paper', name: 'Paper Cup', races: [[15, false], [1, false], [15, true]], ai: 1.0, reward: 900, unlock: 'cart' },
+    { id: 'chores', name: 'Chores Cup', races: [[16, false], [17, false], [18, false]], ai: 1.035, reward: 1150 },
     { id: 'champ', name: 'Champion Cup', races: [[3, true], [4, true], [5, true]], ai: 1.04, reward: 1200, unlock: 'formula' },
+    { id: 'deep', name: 'Deep End Cup', races: [[19, false], [16, true], [18, true]], ai: 1.05, reward: 1400 },
     { id: 'legend', name: 'Legend Cup', races: [[7, true], [9, true], [11, true]], ai: 1.07, reward: 1600, unlock: 'jet' },
   ];
 

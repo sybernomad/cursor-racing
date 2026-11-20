@@ -170,6 +170,8 @@ void main(){
     for (const m of w.meshes || []) G.free(gl, m.mesh);
     for (const b of w.balls) G.free(gl, b.mesh);
     for (const m of w.movers || []) G.free(gl, m.mesh);
+    for (const m of [...w.spinners, ...w.fans, ...w.seesaws]) G.free(gl, m.mesh);
+    if (w.dominoMesh) G.free(gl, w.dominoMesh);
     if (w.itemMesh) G.free(gl, w.itemMesh);
     G.free(gl, R.groundMesh); G.free(gl, R.tableMesh); G.free(gl, R.floorMesh);
     if (R.groundTex) gl.deleteTexture(R.groundTex);

@@ -1,5 +1,6 @@
 // Cursor Racing — the extras layered on the race: moving hazards (sweepers, shuttles, trains),
-// bumpers, spring pads, jump gaps, power-ups, slipstream and launch starts.
+// bumpers, spring pads, turntables, conveyor belts, fans, dominoes, see-saws, jump gaps,
+// power-ups, slipstream and launch starts.
 // game.js calls in at a handful of places; everything else lives here.
 (function (CR) {
   'use strict';
@@ -14,6 +15,8 @@
     shield: { name: 'Shield', icon: '🛡️' },
     shock: { name: 'Shockwave', icon: '💥' },
     marble: { name: 'Marble', icon: '🔮' },
+    magnet: { name: 'Magnet', icon: '🧲' },
+    glue: { name: 'Glue', icon: '🧴' },
   };
   X.ITEMS = ITEMS;
 
@@ -24,7 +27,11 @@
     X.marbles = [];
     X.marbleMesh = X.marbleMesh || CR.G.upload(R.gl, CR.prop('marble', {}, 2).bld);
     for (const row of w.itemRows) for (const b of row) { b.on = true; b.t = 0; }
-    for (const c of G.cars) { c.item = null; c.itemHold = 0; c.shieldT = 0; c.spinT = 0; c.draft = 0; c.stallT = 0; c.revAt = null; c.hitT = 0; }
+    for (const c of G.cars) { c.item = null; c.itemHold = 0; c.shieldT = 0; c.spinT = 0; c.draft = 0; c.stallT = 0; c.revAt = null; c.hitT = 0; c.magT = 0; c.magOn = null; c.glueT = 0; }
+    w.glue.length = 0;
+    for (const row of w.dominoes) { row.downT = 0; row.rising = false; for (const d of row.pieces) { d.fall = 0; d.wait = -1; d.falling = false; } }
+    for (const q of w.seesaws) q.th = q.max;
+    X.bubbleT = 0;
   };
 
   // ---------- launch start ----------
@@ -69,6 +76,8 @@
     // item boxes come back after a few seconds
     for (const row of w.itemRows) for (const b of row) if (!b.on) { b.t -= dt; if (b.t <= 0) b.on = true; }
     for (let i = w.oil.length - 1; i >= 0; i--) { w.oil[i].t -= dt; if (w.oil[i].t <= 0) w.oil.splice(i, 1); }
+    for (let i = w.glue.length - 1; i >= 0; i--) { w.glue[i].t -= dt; if (w.glue[i].t <= 0) w.glue.splice(i, 1); }
+    worldStep(dt, t);
     // slipstream: tuck in behind a car to go a bit faster and charge boost
     for (const c of G.cars) {
       if (c.state !== 'race' || c.air || c.out) { c.draft = Math.max(0, c.draft - dt * 2); continue; }
@@ -89,6 +98,7 @@
       }
       // moving hazards
       if (c.z < 20) for (const m of w.movers) hitMover(c, m);
+      carFeatures(c, dt);
       // item boxes
       if (G.items && !c.item && c.z < 20) for (const row of w.itemRows) for (const b of row) {
         if (b.on && (c.x - b.x) ** 2 + (c.y - b.y) ** 2 < 20 * 20) {
@@ -100,6 +110,108 @@
     }
     marblesStep(dt);
   };
+  // ---------- turntables, belts, fans, dominoes, see-saws ----------
+  function worldStep(dt, t) {
+    const w = G.world;
+    for (const s of w.spinners) s.ang += s.speed * dt;
+    for (const f of w.fans) { f.str = f.power * (0.65 + 0.35 * Math.sin(t * 1.3 + f.ph * 7)); f.spin += dt * (18 + f.str * 14); }
+    // gusts and bubbles show where the fans and bubble jets are (only near the player, to keep it cheap)
+    const P = G.player || G.cars[0];
+    if (P) {
+      for (const f of w.fans) if (Math.random() < 0.5 && Math.hypot(P.x - f.x, P.y - f.y) < 700) { const o = (Math.random() - 0.5) * f.half * 2; G.emit('gust', f.x + f.dx * 26 - f.dy * o, f.y + f.dy * 26 + f.dx * o, 12 + Math.random() * 40, 2, f); }
+      X.bubbleT -= dt;
+      if (X.bubbleT <= 0) { X.bubbleT = 0.12; for (const s of w.springs) if (s.look === 'bubble' && Math.hypot(P.x - s.x, P.y - s.y) < 700) G.emit('bubble', s.x + (Math.random() - 0.5) * 16, s.y + (Math.random() - 0.5) * 16, 2, 1); }
+    }
+    // dominoes fall in a chain, lie flat for a while, then stand back up once nobody is on them
+    for (const row of w.dominoes) {
+      let down = 0;
+      for (let i = 0; i < row.pieces.length; i++) {
+        const d = row.pieces[i];
+        if (d.wait >= 0) { d.wait -= dt; if (d.wait < 0) { d.wait = -1; d.falling = true; } }
+        if (d.falling) { d.fall = Math.min(1, d.fall + dt * 4.5); if (d.fall > 0.5) { knock(row, i + 1, d.dir); knock(row, i - 1, d.dir); } if (d.fall >= 1) d.falling = false; }
+        if (d.fall >= 1) down++;
+      }
+      if (down === row.pieces.length && !row.rising) {
+        row.downT += dt;
+        if (row.downT > 6 && !G.cars.some((c) => !c.out && Math.hypot(c.x - row.x, c.y - row.y) < w.hw + 30)) row.rising = true;
+      }
+      if (row.rising) { let up = true; for (const d of row.pieces) { d.fall = Math.max(0, d.fall - dt * 2); if (d.fall > 0) up = false; } if (up) { row.rising = false; row.downT = 0; } }
+    }
+    // see-saws tip toward whichever end has the weight on it, and settle back with the near end down
+    for (const q of w.seesaws) {
+      let torque = 0, on = false;
+      for (const c of G.cars) {
+        if (c.out || c.state !== 'race' || c.air) continue;
+        const hit = w.seesawAt(c.x, c.y);
+        if (hit && hit.q === q && c.z > hit.h - 5) { torque += hit.u * c.st.mass; on = true; }
+      }
+      const want = on && torque > 0 ? -q.max : q.max;
+      q.th += U.clamp(want - q.th, -2.2 * dt, 2.2 * dt);
+    }
+  }
+  function knock(row, i, dir) {
+    const d = row.pieces[i]; if (!d || d.fall > 0 || d.wait >= 0 || row.rising) return;
+    d.wait = 0.05; d.dir = dir;
+  }
+  function carFeatures(c, dt) {
+    const w = G.world;
+    if (!c.air && c.z < 4) {
+      // turntables carry you round and turn the car with them
+      for (const s of w.spinners) {
+        const dx = c.x - s.x, dy = c.y - s.y; if (dx * dx + dy * dy > s.r * s.r) continue;
+        c.vx += -s.speed * dy * 2.4 * dt; c.vy += s.speed * dx * 2.4 * dt; c.h += s.speed * 0.75 * dt;
+      }
+      // conveyor belts push you across the road
+      for (const b of w.belts) {
+        const dx = c.x - b.x, dy = c.y - b.y, u = dx * b.c + dy * b.s, v = -dx * b.s + dy * b.c;
+        if (Math.abs(u) > b.len / 2 || Math.abs(v) > b.half) continue;
+        const vp = c.vx * b.px + c.vy * b.py;
+        if (vp < b.speed) { const k = (b.speed - vp) * Math.min(1, 2.6 * dt); c.vx += b.px * k; c.vy += b.py * k; }
+      }
+    }
+    // fans blow you sideways, harder when you're in the air. Light cars get blown about more.
+    if (c.z < 60) for (const f of w.fans) {
+      const dx = c.x - f.x, dy = c.y - f.y, u = dx * f.dx + dy * f.dy, v = -dx * f.dy + dy * f.dx;
+      if (u < 0 || u > f.reach || Math.abs(v) > f.half) continue;
+      const k = 430 * f.str * (1 - u / f.reach * 0.55) * (c.air ? 1.5 : 1) * U.clamp(1.3 - c.st.mass * 0.3, 0.6, 1.2);
+      c.vx += f.dx * k * dt; c.vy += f.dy * k * dt;
+    }
+    // dominoes: standing ones stop you unless you're going fast enough to knock them over
+    if (c.z < 24) for (const row of w.dominoes) for (let i = 0; i < row.pieces.length; i++) {
+      const d = row.pieces[i], dx = c.x - d.x, dy = c.y - d.y, dd = Math.hypot(dx, dy);
+      if (dd > CAR_R + 10) continue;
+      if (d.fall >= 0.9) { if (!c.air) { const k = Math.exp(-2.2 * dt); c.vx *= k; c.vy *= k; c.bumpT = 0.15; } continue; }
+      if (d.fall > 0 || d.wait >= 0) continue;
+      const along = c.vx * Math.cos(d.ang) + c.vy * Math.sin(d.ang), spd = Math.hypot(c.vx, c.vy);
+      if (spd > 55) {
+        d.wait = 0; d.dir = along >= 0 ? 1 : -1; knock(row, i + 1, d.dir); knock(row, i - 1, d.dir);
+        if (c.shieldT <= 0) { c.vx *= 0.7; c.vy *= 0.7; }
+        G.emit('spark', d.x, d.y, 14, 6);
+        if (c.isPlayer) { Audio.play('wall', { vol: 0.7 }); G.shake(4); Audio.vibrate(15); } else if (near(c)) Audio.play('bump', { vol: 0.4 });
+      } else if (dd > 0.01) { const nx = dx / dd, ny = dy / dd, pen = CAR_R + 10 - dd; c.x += nx * pen; c.y += ny * pen; const vn = c.vx * nx + c.vy * ny; if (vn < 0) { c.vx -= 1.3 * vn * nx; c.vy -= 1.3 * vn * ny; } }
+    }
+    // magnet: pulled along behind the car ahead
+    if (c.magT > 0) {
+      c.magT -= dt;
+      const o = c.magOn;
+      if (!o || o.out || o.state !== 'race' || c.state !== 'race') c.magT = 0;
+      else {
+        const dx = o.x - c.x, dy = o.y - c.y, d = Math.hypot(dx, dy);
+        if (d < 34) { c.magT = 0; c.padT = Math.max(c.padT, 0.45); if (c.isPlayer) Audio.play('pad'); } // caught them: a little slingshot past
+        else { const k = 560 * dt; c.vx += dx / d * k; c.vy += dy / d * k; c.draft = 1; }
+      }
+      if (c.magT <= 0) c.magOn = null;
+    }
+    // glue: a trail of goo behind you
+    if (c.glueT > 0) {
+      c.glueT -= dt; c.glueD += Math.hypot(c.vx, c.vy) * dt;
+      if (c.glueD > 22 && w.glue.length < 140) {
+        c.glueD = 0; const fx = Math.cos(c.h), fy = Math.sin(c.h);
+        w.glue.push({ x: c.x - fx * 26, y: c.y - fy * 26, r: 17, t: 10, ph: Math.random() * 6 });
+        if (Math.random() < 0.3) G.emit('goo', c.x - fx * 20, c.y - fy * 20, 2, 2);
+      }
+    }
+  }
   function near(c) { return G.player && Math.hypot(G.player.x - c.x, G.player.y - c.y) < 400; }
 
   function hitMover(c, m) {
@@ -170,6 +282,9 @@
     for (const k of w.hazards) if (k.type === 'bumper') obs.push(k.x, k.y, 16);
     for (const m of w.movers) if (m.type === 'shuttle') obs.push(m.x, m.y, m.box ? 30 : m.r);
     for (const b of X.marbles) obs.push(b.x, b.y, 8);
+    // a see-saw with its near end up is a wall: go round it
+    for (const q of w.seesaws) if (q.h0 - q.len / 2 * Math.sin(q.th) > 6) obs.push(q.x - q.c * q.len / 2, q.y - q.s * q.len / 2, q.wid / 2, q.x, q.y, q.wid / 2);
+    for (const g of w.glue) obs.push(g.x, g.y, g.r * 0.6);
     for (let i = 0; i < obs.length; i += 3) {
       const dx = obs[i] - c.x, dy = obs[i + 1] - c.y, along = dx * fx + dy * fy, side = -dx * fy + dy * fx;
       if (along > 10 && along < 170 && Math.abs(side) < obs[i + 2] + 18) a.lane += (side > 0 ? -1 : 1) * dt * 2.4;
@@ -200,15 +315,25 @@
       case 'shield': return close > 0 || c.itemHold < -4;
       case 'shock': return close > 1 || (close > 0 && c.itemHold < -3);
       case 'marble': return !!ahead || c.itemHold < -6;
+      case 'magnet': return !!magnetTarget(c) || c.itemHold < -6;
+      case 'glue': return behind > 0 || c.itemHold < -5;
     }
     return true;
   }
   function rollItem(c) {
     const order = G.standings(), n = Math.max(2, order.length), f = (order.indexOf(c)) / (n - 1);
-    const table = f < 0.3 ? { oil: 35, shield: 25, marble: 25, turbo: 15 } : f < 0.7 ? { marble: 30, turbo: 25, shock: 20, oil: 15, shield: 10 } : { turbo: 40, shock: 30, marble: 20, shield: 10 };
+    const table = f < 0.3 ? { oil: 28, glue: 20, shield: 22, marble: 20, turbo: 10 }
+      : f < 0.7 ? { marble: 25, turbo: 20, shock: 17, oil: 10, glue: 8, shield: 10, magnet: 10 } : { turbo: 30, magnet: 25, shock: 25, marble: 12, shield: 8 };
     let sum = 0; for (const k in table) sum += table[k];
     let r = Math.random() * sum; for (const k in table) { r -= table[k]; if (r <= 0) return k; }
     return 'turbo';
+  }
+
+  // the car the magnet locks on to: the one just ahead in the race, if it isn't too far away
+  function magnetTarget(c) {
+    const order = G.standings(), i = order.indexOf(c);
+    for (let k = i - 1; k >= 0; k--) { const o = order[k]; if (o.out || o.finished || o.state !== 'race') continue; return Math.hypot(o.x - c.x, o.y - c.y) < 650 ? o : null; }
+    return null;
   }
 
   // ---------- using items ----------
@@ -233,6 +358,13 @@
         if (loud) { Audio.play('shock', { vol: me ? 1 : 0.5 }); if (me) G.shake(5); }
         break;
       }
+      case 'magnet': {
+        const o = magnetTarget(c);
+        if (o) { c.magT = 3; c.magOn = o; if (loud) Audio.play('shield', { vol: me ? 0.8 : 0.3 }); if (me) G.msg(`LOCKED ON: ${o.name.toUpperCase()}`, 0.9, 'info'); }
+        else { c.padT = 1; if (me) Audio.play('boost'); } // nobody close ahead: it works as a small turbo
+        break;
+      }
+      case 'glue': c.glueT = 2.4; c.glueD = 99; if (loud) Audio.play('splash', { vol: me ? 0.8 : 0.4 }); break;
       case 'marble':
         X.marbles.push({ x: c.x + fx * 20, y: c.y + fy * 20, vx: fx * 560 + c.vx * 0.5, vy: fy * 560 + c.vy * 0.5, life: 3.2, owner: c, age: 0, bounces: 0, m: new Float32Array(16), rot: 0 });
         if (loud) Audio.play('shoot', { vol: me ? 1 : 0.4 });
@@ -285,6 +417,33 @@
       cars.push({ mesh: w.itemMesh, m: b.m });
     }
     for (const b of X.marbles) { CR.M4.model(b.x, 0, b.y, 0, b.rot, 0, 1, b.m); cars.push({ mesh: X.marbleMesh, m: b.m }); }
+    for (const s of w.spinners) { CR.M4.model(s.x, -2.4, s.y, -s.ang, 0, 0, 1, s.m); cars.push({ mesh: s.mesh, m: s.m }); }
+    for (const f of w.fans) { CR.M4.model(f.x + f.dx * 10, 52, f.y + f.dy * 10, -f.a, 0, f.spin, 1, f.m); cars.push({ mesh: f.mesh, m: f.m }); }
+    for (const q of w.seesaws) { CR.M4.model(q.x, q.h0 - 3, q.y, -q.ang, q.th, 0, 1, q.m); cars.push({ mesh: q.mesh, m: q.m }); }
+    for (const row of w.dominoes) for (const d of row.pieces) { CR.M4.model(d.x, 0, d.y, -d.ang, -d.dir * U.smooth(d.fall) * Math.PI / 2 * 0.97, 0, 1, d.m); cars.push({ mesh: w.dominoMesh, m: d.m }); }
+    // conveyor belts: arrows sliding across the road
+    for (const b of w.belts) {
+      const sp = 26, n = Math.floor(b.half * 2 / sp), off = (t * b.speed * 0.35) % sp;
+      for (let k = 0; k < n; k++) {
+        const v = -b.half + off + k * sp; if (v > b.half - 6) continue;
+        for (const u of [-b.len * 0.3, 0, b.len * 0.3]) {
+          // a chevron pointing the way the belt runs
+          const cx = b.x + b.c * u + b.px * v, cy = b.y + b.s * u + b.py * v, ax = b.px * 7, ay = b.py * 7, sx = b.c * 9, sy = b.s * 9;
+          const i0 = B.v(cx + ax, 0.3, cy + ay, 0, 1, 0, 1, 0.83, 0.23, 0.85), i1 = B.v(cx - sx, 0.3, cy - sy, 0, 1, 0, 1, 0.83, 0.23, 0.85);
+          const i2 = B.v(cx - ax * 0.2, 0.3, cy - ay * 0.2, 0, 1, 0, 1, 0.83, 0.23, 0.85), i3 = B.v(cx + sx, 0.3, cy + sy, 0, 1, 0, 1, 0.83, 0.23, 0.85);
+          B.idx.push(i0, i1, i2, i0, i2, i3);
+        }
+      }
+    }
+    // glue as yellow-green blobs
+    for (const g of w.glue) {
+      const a = 0.85 * Math.min(1, g.t / 2), n = 9, ids = [];
+      const cIdx = B.v(g.x, 0.27, g.y, 0, 1, 0, 0.85, 0.9, 0.35, a);
+      for (let i = 0; i <= n; i++) { const ang = i / n * Math.PI * 2, rr = g.r * (0.8 + 0.2 * Math.sin(i * 2.3 + g.ph)); ids.push(B.v(g.x + Math.cos(ang) * rr, 0.27, g.y + Math.sin(ang) * rr, 0, 1, 0, 0.62, 0.72, 0.15, a)); }
+      for (let i = 0; i < n; i++) B.idx.push(cIdx, ids[i], ids[i + 1]);
+    }
+    // magnets: a line of sparks to the car being chased
+    for (const c of G.cars) if (c.magT > 0 && c.magOn) { const o = c.magOn; for (let i = 1; i < 8; i++) { const f = (i + (t * 6) % 1) / 8; quadFn(U.lerp(c.x, o.x, f), U.lerp(c.y, o.y, f), 10 + Math.sin(f * Math.PI) * 12, 1.4, [1, 0.35, 0.35], 0.9); } }
     // oil puddles as dark decals
     for (const o of w.oil) {
       const a = 0.75 * Math.min(1, o.t / 2), n = 10, ids = [];

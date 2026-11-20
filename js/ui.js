@@ -17,7 +17,7 @@
     const pool = CR.CARS.filter((c) => c.top <= maxTop), c = pool[Math.floor(Math.random() * pool.length)];
     return c ? { ...r, car: c.id, paint: c.paints[0], acc: c.paints[1] } : r;
   }
-  const CUP_RIVALS = { paper: ['Pip', 'Tinker', 'Lola'], twist: ['Blaze', 'Lola', 'Ace'], rookie: ['Pip', 'Moxie', 'Rusty'], pro: ['Vex', 'Moxie', 'Pip'], mirror: ['Nova', 'Vex', 'Rusty'], champ: ['Nova', 'Glitch', 'Vex'], workshop: ['Rusty', 'Moxie', 'Vex'], tour: ['Glitch', 'Nova', 'Pip'], legend: ['Nova', 'Glitch', 'Vex'] };
+  const CUP_RIVALS = { paper: ['Pip', 'Tinker', 'Lola'], chores: ['Tinker', 'Bonnie', 'Sprocket'], deep: ['Glitch', 'Kiwi', 'Ace'], twist: ['Blaze', 'Lola', 'Ace'], rookie: ['Pip', 'Moxie', 'Rusty'], pro: ['Vex', 'Moxie', 'Pip'], mirror: ['Nova', 'Vex', 'Rusty'], champ: ['Nova', 'Glitch', 'Vex'], workshop: ['Rusty', 'Moxie', 'Vex'], tour: ['Glitch', 'Nova', 'Pip'], legend: ['Nova', 'Glitch', 'Vex'] };
   const rival = (n) => CR.RIVALS.find((r) => r.name === n);
 
   // ---------------------------------------------------------------------------
@@ -120,7 +120,8 @@
       <li><b>Touch:</b> push the stick in the bottom-left corner toward where you want to go. The car turns that way and drives. (Settings has a floating stick and arrow buttons too.)</li>
       <li><b>Off the road:</b> small clutter like cereal, pebbles and nuts can be driven over, it just slows you down. Pencils, glow sticks, trees and walls are solid.</li>
       <li><b>Boost:</b> drift through corners (brake while turning) to fill the meter, then hold <b>BOOST</b>.</li>
-      <li><b>Power-ups:</b> drive through the rainbow boxes, then tap <b>ITEM</b> (E on a keyboard): turbo, oil slick, shield, shockwave or a marble to fire.</li>
+      <li><b>Power-ups:</b> drive through the rainbow boxes, then tap <b>ITEM</b> (E on a keyboard): turbo, oil slick, shield, shockwave, a marble to fire, a magnet that pulls you up to the car ahead, or glue to leave a sticky trail behind you.</li>
+      <li><b>Household hazards:</b> turntables spin you round, conveyor belts and fans push you sideways, dominoes slow you down until somebody knocks them over, and a see-saw is a wall until it tips your way.</li>
       <li><b>Launch:</b> press the gas in the last half-second of the countdown for a perfect start. Too early and you stall.</li>
       <li><b>Slipstream:</b> tuck in behind a car to go faster and charge boost.</li>
       <li><b>Stuck off the road?</b> You're put back after a few seconds, or use <b>Back to track</b> in the pause menu (R on a keyboard, Select on a gamepad).</li>

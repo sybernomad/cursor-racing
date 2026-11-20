@@ -199,7 +199,7 @@ everything else from the theme. Cereal Circuit, minus its features:
 | --- | --- |
 | `id` | Internal name, used for best times and ghosts. Don't rename it later. |
 | `name` | Shown in menus. |
-| `theme` | Which table it's on: the surface painting, lighting, edge props, scattered props and song. One of `breakfast`, `desk`, `sandbox`, `pool`, `bath`, `toybox`, `garage`, `computer`, `bakery`, `frost`, `picnic`, `town`. |
+| `theme` | Which table it's on: the surface painting, lighting, edge props, scattered props and song. One of `breakfast`, `desk`, `sandbox`, `pool`, `bath`, `toybox`, `garage`, `computer`, `bakery`, `frost`, `picnic`, `town`, `laundry`, `shelf`, `fridge`, `aquarium`. |
 | `W`, `H` | Table size in world units. Current tracks run from 2250 x 1300 to 3000 x 1000; a lap takes the computer drivers 15 to 30 seconds. |
 | `width` | Road width. 115 is tight, 130 is normal, 150 is wide and fast. |
 | `seed` | Any number. It shuffles where the scattered props land; change it if they land somewhere you don't like. |
@@ -236,22 +236,28 @@ land on the road even if you later move the points.
 
 | Feature | Format | Notes |
 | --- | --- | --- |
-| Spills (`zones`) | `{ t, off, rx, ry, type, look }` | `rx` = length along the road, `ry` = width across it. `type: 'slick'` loses grip (puddles, ice, oil); `type: 'sticky'` slows you down (jam, mud). Looks: `milk`, `jam`, `water`, `ink`, `slime`, `oil`, `sawdust`, `coffee`, `flour`, `batter`, `ice`, `ketchup`, `lemonade`, `mud`. Hover cars ignore both types. |
+| Spills (`zones`) | `{ t, off, rx, ry, type, look }` | `rx` = length along the road, `ry` = width across it. `type: 'slick'` loses grip (puddles, ice, oil); `type: 'sticky'` slows you down (jam, mud). Looks: `milk`, `jam`, `water`, `ink`, `slime`, `oil`, `sawdust`, `coffee`, `flour`, `batter`, `ice`, `ketchup`, `lemonade`, `mud`, `suds`. Hover cars ignore both types. |
 | Boost pads (`boosts`) | `{ t, off }` | A free burst of speed. Two or three per lap is typical. |
-| Ramps (`ramps`) | `{ t, len, look, gap }` | `len` is the length in blocks (26 to 30 works; one block = 3 units). A car over about 90 speed takes off at the top. Looks: `book`, `ruler`, `plank`, `rack`, `sponge`, `block`, `tape`, `board`, `key`, `cookie`, `snow`, `bread`, `bridge`. Add `gap: 40` to 46 for a drop just past the ramp that you have to clear; cars that fall in come back on the far side. Put ramps on straights: a car launched mid-corner flies off the road. |
-| Swinging arms | `{ type: 'sweeper', t, side, look, speed }` in `hazards` | An arm pivoting from the roadside and sweeping across. `side: 1` = from the right, `-1` = from the left. `speed` defaults to 1.2. Looks: `spoon`, `ruler`, `shovel`, `cue`, `glow`, `wrench`, `usb`, `cane`, `straw`, `barrier`. |
+| Ramps (`ramps`) | `{ t, len, look, gap }` | `len` is the length in blocks (26 to 30 works; one block = 3 units). A car over about 90 speed takes off at the top. Looks: `book`, `ruler`, `plank`, `rack`, `sponge`, `block`, `tape`, `board`, `key`, `cookie`, `snow`, `bread`, `bridge`, `lid`, `glass`. Add `gap: 40` to 46 for a drop just past the ramp that you have to clear; cars that fall in come back on the far side. Put ramps on straights: a car launched mid-corner flies off the road. |
+| Swinging arms | `{ type: 'sweeper', t, side, look, speed }` in `hazards` | An arm pivoting from the roadside and sweeping across. `side: 1` = from the right, `-1` = from the left. `speed` defaults to 1.2. Looks: `spoon`, `ruler`, `shovel`, `cue`, `glow`, `wrench`, `usb`, `cane`, `straw`, `barrier`, `hanger`, `door` (a wide fridge door), `net`. |
 | Things crossing the road | `{ type: 'shuttle', t, look, speed }` in `hazards` | Slides back and forth across the road. `speed` defaults to 0.7. The look can be any prop (below); `beetle` gives a ladybug, `pin` a rolling pin, `vacuum` a robot vacuum. `look: 'train'` runs a toy train across a painted level crossing and sounds its horn. |
-| Bumpers | `{ type: 'bumper', t, off }` in `hazards` | Pinball bumpers that fling cars away. Pairs at `off: -30` and `30` make a slalom. |
-| Spring pads | `{ type: 'spring', t, off }` in `hazards` | Throws the car into the air. |
+| Bumpers | `{ type: 'bumper', t, off, look }` in `hazards` | Pinball bumpers that fling cars away. Pairs at `off: -30` and `30` make a slalom. `look: 'jelly'` makes it a jelly. |
+| Spring pads | `{ type: 'spring', t, off, look }` in `hazards` | Throws the car into the air. `look: 'bubble'` makes it a bubble jet that fizzes. |
+| Turntables | `{ type: 'spinner', t, r, speed }` in `hazards` | A spinning disc in the middle of the road, `r` units across from the centre (72 suits a 130-wide road). Carries cars round and turns them. `speed` (default 1.6) is how fast it spins; mirrored tracks spin it the other way. |
+| Conveyor belts | `{ type: 'conveyor', t, side, len, speed }` in `hazards` | A belt across the whole road, `len` units long (default 90), pushing cars toward `side` (`1` = the driver's right). `speed` defaults to 150. Put it on a straight. |
+| Fans | `{ type: 'fan', t, side, power }` in `hazards` | A desk fan at the roadside on `side`, blowing across the road in gusts. Stronger on cars in the air and on light cars. `power` defaults to 1. |
+| Dominoes | `{ type: 'domino', t }` in `hazards` | A row of dominoes right across the road. Driving into them above a crawl knocks the row over and costs you about a third of your speed; a crawling car is just stopped. They lie flat (a bumpy patch) for 6 seconds, then stand back up once nobody is on them. |
+| See-saws | `{ type: 'seesaw', t, off, len, wid }` in `hazards` | A ruler on a block, lying along the road at `off`, `len` long (default 120) and `wid` wide (default 50). Its near end rests on the road: drive up, and it tips you down the far side. While someone holds the far end down, the near end is up and works as a wall. Keep it to one side so the rest of the road is clear; rivals steer round it while it's up. |
 | Big props (`pieces`) | `['name', x, y, turn, options]` | Scenery placed by `x, y`, usually inside the loop. `turn` (radians) and `options` are optional, e.g. `['book', 640, 790, 1.4, { w: 36, d: 24, h: 10 }]`. **A piece that would sit on the road is skipped**, with a warning in the console. These are solid. |
 | Pool balls (`balls`) | `[[t, off], ...]` | Pushable balls that can drop into the pockets. Pool table only. |
 | A drain (`drain`) | `[x, y, radius]` | A hole in the table you can fall through, as on Bath Time. |
 
-Prop names for `pieces` and `shuttle` looks: `apple`, `battery`, `block`, `bolt`, `book`, `bottle`,
-`bowl`, `bucket`, `candle` (glows), `candycane`, `castle`, `chalk`, `coffee`, `cone`, `cookie`, `cue`,
-`duck`, `egg`, `eraser`, `flour`, `glass`, `house`, `juicebox`, `ladybug`, `lamp` (glows), `marble`,
-`measure`, `melon`, `mouse`, `mugpens`, `oilcan`, `pinecone`, `robot`, `rollingpin`, `sandwich`,
-`screwdriver`, `snowman`, `soap`, `sponge`, `tape`, `toast`, `train`, `tree`, `vacuum`, `wrench`.
+Prop names for `pieces` and `shuttle` looks: `apple`, `battery`, `block`, `bolt`, `book`, `bookrow`,
+`bottle`, `bowl`, `bucket`, `candle` (glows), `candycane`, `carton`, `castle`, `chalk`, `coffee`, `cone`,
+`cookie`, `coral`, `cue`, `detergent`, `duck`, `egg`, `eraser`, `flour`, `foodtub`, `glass`, `globe`,
+`house`, `jar`, `juicebox`, `ladybug`, `lamp` (glows), `lemon`, `marble`, `measure`, `melon`, `mouse`,
+`mugpens`, `oilcan`, `pawn`, `pinecone`, `robot`, `rollingpin`, `sandwich`, `screwdriver`, `snowman`,
+`soap`, `sock`, `sponge`, `tape`, `toast`, `train`, `tree`, `vacuum`, `wrench`.
 They can go on any table, not only their own theme's.
 
 You don't place the edge props (cereal loops, pencils, pebbles and so on) or the scattered clutter:
@@ -281,8 +287,8 @@ laps take about 22 seconds.
 ```
 
 Always add tracks at the end. Cups find tracks by their position in the list, counting from 0, so
-inserting one in the middle shifts every track after it into the wrong cup. Paper Chase is number 15,
-so the next new track will be 16.
+inserting one in the middle shifts every track after it into the wrong cup. Paper Chase is number 15;
+Spin Cycle, Shelf Life, Cold Snap and Fish Tank came after it as 16 to 19, so the next new track will be 20.
 
 **Step 2: put it in a cup.** A track only appears in Quick Race, Time Trial and Knockout once a cup
 that races it is open. The Paper Cup sits in `CUPS` in `js/tracks.js` just before the Champion Cup
@@ -336,7 +342,8 @@ line, red marks are solid props, and the blue box is the ramp:
 
 ## Going further
 
-**A new table (theme).** Every track sits on one of the twelve themes in `THEMES` in `js/tracks.js`.
+**A new table (theme).** Every track sits on one of the sixteen themes in `THEMES` in `js/tracks.js`.
+The four newest (`laundry`, `shelf`, `fridge`, `aquarium`) are the shortest to read.
 A new one needs four things:
 
 1. A `THEMES` entry: the `ground()` painter for the table surface, the road paint colours, the

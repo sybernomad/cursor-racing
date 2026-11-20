@@ -171,6 +171,22 @@
       drums: { k: '1.......1.......', roll: '1.11....1.11..1.', s: '....1.......1...' },
       bass: { pat: '1...5...1...5...', kind: 'tuba' }, chord: { kind: 'stab', pat: '..1...1...1...1.' }, arp: { kind: 'glock', pat: '1.....1.1.....1.', seq: [0, 2, 1, 3] },
       lead: { kind: 'brass', rhythm: '1..11.1.1...1...1..11.1.1.1.1...', range: [7, 14] } },
+    laundry: { name: 'Rinse and Repeat', bpm: 122, key: 52, mode: MAJ, prog: [0, 5, 3, 4, 0, 5, 3, 3], swing: 0.12,
+      drums: { k: '1.......1.1.....', rim: '....1.......1...', sh: '1111111111111111' },
+      bass: { pat: '1..1..5.1..1..w.', kind: 'pick' }, chord: { kind: 'keys', pat: '..1...1...1...1.' }, arp: { kind: 'pluck', pat: '1.1.1.1.1.1.1.11', seq: [0, 1, 2, 3, 2, 1] },
+      lead: { kind: 'whistle', rhythm: '1.1...1.1.1.1...1.1...1.1...1...', range: [7, 14] } },
+    shelf: { name: 'Dewey Decimal', bpm: 96, key: 45, mode: DOR, prog: [0, 3, 0, 4, 0, 3, 6, 4], swing: 0.3, seven: true,
+      drums: { k: '1.......1.....1.', br: '....1.......1...', ride: '1..11..11..11..1' },
+      bass: { pat: '1...3...5...w...', kind: 'walk' }, chord: { kind: 'keys', pat: '1.....1.....1...' }, arp: { kind: 'vibes', pat: '1.....1.....1...', seq: [0, 2, 1, 3] },
+      lead: { kind: 'clarinet', rhythm: '..1.1..1....1...1...1.1...1.....', range: [7, 13] } },
+    fridge: { name: 'Keep It Chill', bpm: 110, key: 53, mode: MAJ, prog: [0, 4, 5, 3, 0, 4, 1, 4], swing: 0.06,
+      drums: { k: '1...1...1...1...', s: '....1.......1...', h: '..1...1...1...1.' },
+      bass: { pat: '1.....5.1.....5.', kind: 'sub' }, chord: { kind: 'pad' }, arp: { kind: 'musicbox', pat: '1.1.1.1.1.1.1.1.', seq: [0, 2, 1, 3, 2, 1] },
+      lead: { kind: 'bell', rhythm: '1...1.1.1...1...1...1.1.1.......', range: [9, 15] } },
+    aquarium: { name: 'Fish Food', bpm: 92, key: 50, mode: MIN, prog: [0, 5, 3, 4, 0, 5, 6, 4], swing: 0.1, seven: true,
+      drums: { k: '1.......1.......', rim: '....1.......1...', sh: '1.1.1.1.1.1.1.1.' },
+      bass: { pat: '1.....5...1.....', kind: 'sub' }, chord: { kind: 'pad' }, arp: { kind: 'vibes', pat: '1.1...1.1...1.1.', seq: [0, 1, 2, 3, 2, 1] },
+      lead: { kind: 'flute', rhythm: '1.......1.1.1...1.......1.1.....', range: [9, 15] } },
   };
   A.SONGS = SONGS;
   const midi = (n) => 440 * Math.pow(2, (n - 69) / 12);

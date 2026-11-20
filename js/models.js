@@ -989,6 +989,141 @@
     return { vox: v, vs: 2.4, col: null, h: 2, top: true };
   };
 
+  // ---------- laundry room ----------
+  P.sock = (r) => { // a sock lying on its side, heel and toe
+    const v = new Vox(14, 2, 8), c = hex(['#f8f9fa', '#ff8787', '#74c0fc', '#ffd43b', '#b197fc'][Math.floor(r() * 5)]), st = U.shade(c, 0.8);
+    v.box(0, 0, 0, 9, 1, 3, c, 0, 0.06, r); v.box(7, 0, 0, 13, 1, 6, c, 0, 0.06, r); v.box(0, 1, 0, 1, 1, 3, st); v.box(12, 0, 4, 13, 1, 6, st);
+    return { vox: v, vs: 2.4, col: { c: 11 }, h: 5 };
+  };
+  P.peg = (r) => { // a clothes peg
+    const v = new Vox(12, 2, 3), c = hex(['#ff6b6b', '#51cf66', '#339af0', '#fcc419'][Math.floor(r() * 4)]);
+    v.box(0, 0, 0, 11, 0, 0, c); v.box(0, 0, 2, 11, 0, 2, c); v.box(4, 0, 0, 6, 1, 2, [0.7, 0.72, 0.78]);
+    return { vox: v, vs: 2, col: { c: 6 }, h: 4 };
+  };
+  P.detergent = (r) => { // a big bottle of washing liquid with a handle and a cap
+    const v = new Vox(14, 22, 10), c = hex(['#1c7ed6', '#e64980', '#f76707'][Math.floor(r() * 3)]);
+    v.box(0, 0, 0, 11, 17, 9, c, 0, 0.04, r); v.box(9, 11, 3, 13, 17, 6, c); for (let y = 12; y < 17; y++) { v.clear(11, y, 4); v.clear(11, y, 5); }
+    v.box(2, 18, 3, 6, 21, 6, [0.95, 0.95, 0.95]); v.box(1, 5, 0, 10, 12, 0, [1, 1, 1]); v.box(3, 7, 0, 8, 10, 0, hex('#ffd43b'));
+    return { vox: v, vs: 3, col: { c: 20 }, h: 66 };
+  };
+  // the spinning drum lid that sits in the road: a flat steel disc, built to a given radius (world units)
+  P.drum = (r, o) => {
+    const vs = 3, n = Math.ceil((o.r || 70) * 2 / vs), v = new Vox(n, 1, n), c = n / 2;
+    for (let x = 0; x < n; x++) for (let z = 0; z < n; z++) {
+      const d = Math.hypot(x + 0.5 - c, z + 0.5 - c); if (d > c) continue;
+      const a = Math.atan2(z + 0.5 - c, x + 0.5 - c), hole = d > 4 && d < c - 3 && (Math.floor(d / 4) % 2) && Math.floor((a + 3.2) * 4) % 2;
+      v.set(x, 0, z, d > c - 2 ? [0.42, 0.45, 0.5] : hole ? [0.3, 0.33, 0.38] : jit([0.78, 0.8, 0.85], r, 0.05));
+    }
+    for (let k = -c + 3; k < c - 3; k++) { v.set(c + k, 0, c, hex('#74c0fc'), 0.5); }
+    return { vox: v, vs, col: null, h: 0 };
+  };
+  // ---------- bookshelf ----------
+  P.bookrow = (r) => { // books standing on end, spines out
+    const v = new Vox(16, 12, 4), cols = ['#8a1c1c', '#1c4f8a', '#2b6b2b', '#6b3a8a', '#b5651d', '#22313f', '#a37f1c'];
+    for (let x = 0; x < 16;) { const w = 2 + Math.floor(r() * 2), h = 8 + Math.floor(r() * 4), c = hex(cols[Math.floor(r() * cols.length)]); v.box(x, 0, 0, Math.min(15, x + w - 1), h, 3, c, 0, 0.05, r); v.box(x, h - 2, 0, Math.min(15, x + w - 1), h - 2, 0, hex('#e9c46a')); x += w; }
+    return { vox: v, vs: 3, col: { w: 48, d: 12 }, h: 36 };
+  };
+  P.pawn = (r) => {
+    const v = new Vox(8, 14, 8), c = r() < 0.5 ? [0.12, 0.11, 0.12] : [0.93, 0.88, 0.78];
+    cyl(v, 4, 4, 4, 0, 1, () => jit(c, r, 0.04)); cyl(v, 4, 4, 2.6, 2, 3, () => jit(c, r, 0.04)); cyl(v, 4, 4, 1.8, 4, 8, () => jit(c, r, 0.04));
+    cyl(v, 4, 4, 2.6, 8, 8, () => jit(c, r, 0.04)); sphere(v, 4, 11, 4, 2.8, () => jit(c, r, 0.04));
+    return { vox: v, vs: 2.6, col: { c: 11 }, h: 36 };
+  };
+  P.globe = (r) => {
+    const v = new Vox(14, 22, 14), b = hex('#1c7ed6'), g = hex('#5c940d'), wd = hex('#5c3d2e');
+    cyl(v, 7, 7, 5, 0, 1, () => jit(wd, r, 0.05)); v.box(6, 2, 6, 7, 5, 7, wd);
+    sphere(v, 7, 13, 7, 6.5, (dx, dy, dz) => (Math.sin(dx * 0.9) + Math.cos(dz * 0.7 + dy * 0.5) > 0.6 ? jit(g, r, 0.1) : jit(b, r, 0.05)));
+    for (let y = 5; y < 21; y++) v.set(Math.round(7 + Math.cos((y - 13) / 8 * 1.6) * 7.2) - 0, y, 7, [0.75, 0.6, 0.3]);
+    return { vox: v, vs: 3, col: { c: 20 }, h: 66 };
+  };
+  // a domino standing on end: x is the thin side, so it falls along x. Pivots about its bottom centre.
+  P.domino = (r) => {
+    const v = new Vox(2, 10, 6), k = [0.08, 0.08, 0.1], w = [0.98, 0.96, 0.9], red = hex('#e03131');
+    v.box(0, 0, 0, 1, 9, 5, w, 0, 0.03, r); v.box(0, 5, 0, 1, 5, 5, k); v.box(0, 0, 0, 1, 0, 5, red); v.box(0, 9, 0, 1, 9, 5, red);
+    for (const [y, z] of [[2, 1], [3, 4], [7, 2], [8, 4], [7, 0]]) { v.set(0, y, z, k); v.set(1, y, z, k); }
+    return { vox: v, vs: 3, col: null, h: 30 };
+  };
+  // the see-saw: a long ruler (a plank, length x) and the block it rocks on
+  P.plank = (r, o) => {
+    const vs = 3, L = Math.ceil((o.len || 120) / vs), W = Math.ceil((o.wid || 50) / vs), v = new Vox(L, 1, W), c = hex('#ffd43b');
+    v.box(0, 0, 0, L - 1, 0, W - 1, c, 0, 0.04, r);
+    for (let x = 1; x < L - 1; x += 2) v.box(x, 0, 0, x, 0, x % 6 === 1 ? 3 : 1, [0.2, 0.2, 0.22]);
+    v.box(0, 0, 0, 0, 0, W - 1, hex('#e03131')); v.box(L - 1, 0, 0, L - 1, 0, W - 1, hex('#e03131'));
+    return { vox: v, vs, col: null, h: 3 };
+  };
+  P.fulcrum = (r, o) => {
+    const W = Math.ceil((o.wid || 50) / 3), v = new Vox(6, 4, W);
+    for (let y = 0; y < 4; y++) v.box(y > 2 ? 2 : Math.floor(y * 0.7), y, 0, y > 2 ? 3 : 5 - Math.floor(y * 0.7), y, W - 1, jit([0.55, 0.38, 0.22], r, 0.06));
+    return { vox: v, vs: 3, col: null, h: 12 };
+  };
+  // a desk fan: base, stand and cage, facing +x. The blades are a separate mesh that spins.
+  P.fan = (r) => {
+    const v = new Vox(10, 22, 18), b = hex('#e9ecef'), g = [0.55, 0.58, 0.64];
+    v.box(0, 0, 4, 9, 1, 13, b, 0, 0.04, r); v.box(4, 2, 8, 5, 9, 9, g); v.box(1, 10, 6, 5, 15, 11, b, 0, 0.04, r);
+    for (let y = 4; y < 22; y++) for (let z = 0; z < 18; z++) { const d = Math.hypot(y + 0.5 - 13, z + 0.5 - 9); if (Math.abs(d - 8) < 0.6 || (d < 8 && (y === 13 || z === 9))) v.set(7, y, z, g); }
+    v.set(6, 13, 9, hex('#4dabf7'), 1);
+    return { vox: v, vs: 4, col: { c: 22 }, h: 88 };
+  };
+  P.fanblades = () => {
+    const v = new Vox(1, 15, 15), c = [0.75, 0.88, 1];
+    for (let y = 0; y < 15; y++) for (let z = 0; z < 15; z++) {
+      const dy = y - 7, dz = z - 7, d = Math.hypot(dy, dz), a = Math.atan2(dz, dy);
+      if (d < 1.5 || (d < 7.2 && Math.cos(3 * a - d * 0.15) > 0.55)) v.set(0, y, z, d < 1.5 ? [0.4, 0.42, 0.48] : c);
+    }
+    return { vox: v, vs: 4, col: null, h: 0 };
+  };
+  // ---------- fridge shelf ----------
+  P.pea = (r) => { const v = new Vox(4, 4, 4); sphere(v, 2, 2, 2, 2, () => jit(hex('#69db7c'), r, 0.15)); return { vox: v, vs: 2.6, col: { c: 5 }, h: 10 }; };
+  P.carton = (r) => { // a milk carton
+    const v = new Vox(12, 26, 12), w = [0.97, 0.97, 0.98], b = hex(['#1c7ed6', '#e03131', '#2b8a3e'][Math.floor(r() * 3)]);
+    v.box(0, 0, 0, 11, 19, 11, w, 0, 0.03, r); v.box(0, 6, 0, 11, 12, 11, b);
+    for (let y = 20; y < 25; y++) { const k = y - 20; v.box(0, y, k, 11, y, 11 - k, w); }
+    v.box(0, 25, 5, 11, 25, 6, w); v.box(3, 8, 0, 8, 10, 0, [1, 1, 1]);
+    return { vox: v, vs: 3, col: { w: 36, d: 36 }, h: 78 };
+  };
+  P.jar = (r) => { // jam jar with a gingham lid
+    const v = new Vox(12, 14, 12), g = [0.78, 0.9, 0.95], j = hex(['#c92a2a', '#e67700', '#862e9c'][Math.floor(r() * 3)]);
+    cyl(v, 6, 6, 6, 0, 10, (x, y, z, d) => (d > 5 ? [g[0], g[1], g[2], 0.15] : y < 9 ? jit(j, r, 0.06) : null));
+    cyl(v, 6, 6, 6.2, 11, 13, (x, y, z) => ((x + z) % 2 ? [0.95, 0.95, 0.95] : hex('#e03131')));
+    return { vox: v, vs: 3, col: { c: 18 }, h: 42 };
+  };
+  P.lemon = (r) => {
+    const v = new Vox(12, 8, 8), c = hex('#fcc419');
+    for (let x = 0; x < 12; x++) for (let y = 0; y < 8; y++) for (let z = 0; z < 8; z++) { const dx = (x + 0.5 - 6) / 6, dy = (y + 0.5 - 4) / 4, dz = (z + 0.5 - 4) / 4; if (dx * dx + dy * dy + dz * dz <= 1) v.set(x, y, z, jit(c, r, 0.08)); }
+    v.set(0, 4, 4, hex('#94d82d')); v.set(11, 4, 4, U.shade(c, 0.8));
+    return { vox: v, vs: 3, col: { c: 15 }, h: 24 };
+  };
+  P.jelly = (r) => { // a wobbly jelly that works like a pinball bumper
+    const v = new Vox(12, 8, 12), c = hex('#ff4d6d');
+    for (let y = 0; y < 8; y++) cyl(v, 6, 6, 6 - y * 0.45, y, y, (x, yy, z, d) => [c[0] * (0.8 + yy * 0.04), c[1], c[2], d > 5 - yy * 0.45 ? 0.5 : 0.25]);
+    v.set(6, 8, 6, hex('#fff3bf'), 0.6);
+    return { vox: v, vs: 3, col: { c: 16, bumper: true }, h: 24 };
+  };
+  // ---------- aquarium lid ----------
+  P.shell = (r) => { // a scallop shell
+    const v = new Vox(8, 3, 8), c = hex(['#ffd8a8', '#fcc2d7', '#fff4e6'][Math.floor(r() * 3)]);
+    for (let x = 0; x < 8; x++) for (let z = 0; z < 8; z++) { const dx = x + 0.5 - 4, dz = z + 0.5 - 1, d = Math.hypot(dx, dz); if (d > 6.5 || dz < 0) continue; const ridge = Math.floor(Math.atan2(dz, dx) * 4) % 2; v.set(x, 0, z, jit(ridge ? c : U.shade(c, 0.85), r, 0.05)); if (d < 5) v.set(x, 1, z, U.shade(c, ridge ? 1 : 0.9)); }
+    return { vox: v, vs: 2.4, col: { c: 9 }, h: 6 };
+  };
+  P.coral = (r) => { // branching coral
+    const v = new Vox(14, 24, 14), c = hex(['#ff8787', '#ff922b', '#f783ac', '#be4bdb'][Math.floor(r() * 4)]);
+    cyl(v, 7, 7, 4, 0, 3, () => jit(c, r, 0.08));
+    for (let b = 0; b < 6; b++) { let x = 7, z = 7; const ax = (r() - 0.5) * 0.9, az = (r() - 0.5) * 0.9; for (let y = 3; y < 14 + r() * 9; y++) { x += ax; z += az; v.box(Math.round(x), y, Math.round(z), Math.round(x) + 1, y, Math.round(z) + 1, jit(c, r, 0.12)); } v.set(Math.round(x), 23, Math.round(z), U.shade(c, 1.3)); }
+    return { vox: v, vs: 3, col: { c: 18 }, h: 70 };
+  };
+  P.foodtub = (r) => { // a tub of fish flakes
+    const v = new Vox(14, 18, 14), c = hex('#fab005');
+    cyl(v, 7, 7, 7, 0, 13, (x, y) => (y > 3 && y < 10 ? hex('#e03131') : [0.95, 0.95, 0.92])); cyl(v, 7, 7, 7.2, 14, 17, () => jit(c, r, 0.05));
+    v.box(5, 6, 0, 8, 7, 0, [1, 1, 1]);
+    return { vox: v, vs: 3, col: { c: 21 }, h: 54 };
+  };
+  P.vent = () => { // a bubble jet: drive over it and you are thrown into the air
+    const v = new Vox(12, 2, 12);
+    v.box(0, 0, 0, 11, 0, 11, [0.12, 0.2, 0.26]);
+    for (let i = 0; i < 12; i++) for (let j = 0; j < 12; j++) { const d = Math.hypot(i - 5.5, j - 5.5); if (Math.abs(d - 5.2) < 0.7) v.set(i, 1, j, [0.7, 0.85, 0.9]); else if (d < 3.6 && (i + j) % 2) v.set(i, 1, j, [0.5, 0.95, 1], 1); }
+    return { vox: v, vs: 2.6, col: null, h: 5 };
+  };
+
   // ---------- moving hazards, pads, pickups ----------
   P.bumper = (r, o) => {
     const v = new Vox(11, 6, 11), c = hex(o.color || '#ff4dd8');
@@ -1038,7 +1173,8 @@
   const ARM = {
     spoon: ['#c9ced6', '#e9ecef'], ruler: ['#ffd43b', '#343a40'], shovel: ['#1c7ed6', '#1864ab'], cue: ['#d9a066', '#5c2e0e'],
     glow: ['#ff4dd8', '#ff4dd8', 1], wrench: ['#adb5bd', '#868e96'], usb: ['#e9ecef', '#3ff0ff'], cane: ['#e03131', '#ffffff'],
-    straw: ['#ff6b6b', '#ffffff'], barrier: ['#e03131', '#ffffff'],
+    straw: ['#ff6b6b', '#ffffff'], barrier: ['#e03131', '#ffffff'], hanger: ['#868e96', '#ced4da'], door: ['#f1f3f5', '#ced4da'],
+    net: ['#2b8a3e', '#e9ecef'],
   };
   // sweeper arm: pivot at origin, arm along +x. len in world units.
   CR.armMesh = function (look, len) {
@@ -1046,6 +1182,7 @@
     const v = new Vox(n + 3, 6, 5);
     cyl(v, 2.5, 2.5, 2.5, 0, 5, () => [0.25, 0.25, 0.3]);
     for (let x = 2; x < n + 2; x++) { const c = Math.floor(x / 3) % 2 ? cb : ca; v.box(x, 2, 1, x, 4, 3, c, glow ? 1 : 0); }
+    if (look === 'door') { v.box(3, 0, 0, n + 1, 5, 4, ca, 0, 0.03, U.rng(n)); v.box(3, 5, 0, n + 1, 5, 0, cb); v.box(3, 5, 4, n + 1, 5, 4, cb); v.box(n - 2, 2, 0, n - 1, 3, 0, hex('#adb5bd')); } // a fridge door, with a handle
     if (look === 'spoon') cyl(v, n, 2.5, 2.5, 2, 3, () => [ca[0], ca[1], ca[2]]);
     v.set(2.5, 5, 2.5, [1, 0.2, 0.2], 1);
     return G.mesh(v, vs, 2.5, 0, 2.5);
