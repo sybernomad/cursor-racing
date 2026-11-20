@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Icon maker</title>
+<style>
+  body { margin: 0; padding: 24px; background: #2a2d34; color: #fff; font: 15px system-ui, sans-serif; }
+  p { color: #b6bcc6; max-width: 640px; }
+  .row { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-end; }
+  figure { margin: 0; text-align: center; }
+  figcaption { margin-top: 8px; font-size: 13px; color: #b6bcc6; }
+  img { display: block; image-rendering: auto; }
+  a { color: #3ff0ff; }
+</style>
+</head>
+<body>
+<h1>Cursor Racing app icons</h1>
+<p>Draws the app icons from the game's own voxel car and cursor. Serve the project folder (for example
+<code>python3 -m http.server</code>), open <code>/tools/make-icons.html</code>, then click each picture to download
+it and save it over the file of the same name in <code>icons/</code>. Run <code>node tools/bump-version.mjs</code>
+afterwards so installed copies pick the new icons up.</p>
+<div class="row" id="out"></div>
+<script src="../js/util.js"></script>
+<script src="../js/gl.js"></script>
+<script src="../js/models.js"></script>
+<script>
+(function () {
+  'use strict';
+  const A = Math.atan(0.5); // the way the voxel car faces in its picture: down and to the right
+  const CUR = ['X.......', 'XX......', 'XWX.....', 'XWWX....', 'XWWWX...', 'XWWWWX..', 'XWWWWWX.', 'XWWWWWWX', 'XWWWXXXX', 'XWXWX...', 'XX.XWX..', 'X...XX..'];
+  function cursor(x, px, py, s) {
+    x.fillStyle = 'rgba(0,0,0,0.35)';
+    CUR.forEach((r, j) => { for (let i = 0; i < r.length; i++) if (r[i] !== '.') x.fillRect(px + i * s + s * 0.6, py + j * s + s * 0.9, s, s); });
+    CUR.forEach((r, j) => { for (let i = 0; i < r.length; i++) { if (r[i] === '.') continue; x.fillStyle = r[i] === 'W' ? '#ffffff' : '#3ff0ff'; x.fillRect(px + i * s, py + j * s, s + 0.5, s + 0.5); } });
+  }
+  function glow(x, cx, cy, r, col) { const g = x.createRadialGradient(cx, cy, 0, cx, cy, r); g.addColorStop(0, col); g.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = g; x.fillRect(cx - r, cy - r, r * 2, r * 2); }
+
+  // Night neon: the red Zip on a dark road with glowing edges, the cursor lit up above it.
+  // k scales the art about the centre (the maskable icon keeps it inside Android's safe circle).
+  function draw(x, k) {
+    const g = x.createRadialGradient(256, 210, 20, 256, 256, 380); g.addColorStop(0, '#3d3a7a'); g.addColorStop(1, '#120f22');
+    x.fillStyle = g; x.fillRect(0, 0, 512, 512);
+    for (let i = 0; i < 70; i++) { x.fillStyle = 'rgba(255,255,255,0.45)'; x.fillRect((i * 137) % 512, (i * 251) % 512, 3, 3); }
+    x.save(); x.translate(256, 256); x.scale(k, k); x.translate(-256, -256);
+    x.save(); x.translate(236, 300); x.rotate(A);
+    x.shadowBlur = 24; x.shadowColor = '#ff4dd8'; x.fillStyle = '#ff4dd8'; x.fillRect(-700, -92, 1400, 10);
+    x.shadowColor = '#3ff0ff'; x.fillStyle = '#3ff0ff'; x.fillRect(-700, 82, 1400, 10); x.shadowBlur = 0;
+    x.fillStyle = '#2b2852'; x.fillRect(-700, -82, 1400, 164);
+    x.fillStyle = 'rgba(63,240,255,0.35)'; for (let i = -700; i < 700; i += 48) x.fillRect(i, -3, 24, 6);
+    x.restore();
+    glow(x, 250, 320, 190, 'rgba(255,90,120,0.35)');
+    const c = CR.voxIcon(CR.carVox('zip', '#ff4d5e', '#ffd43b'), 13);
+    x.imageSmoothingEnabled = false; x.drawImage(c, 250 - c.width / 2, 308 - c.height / 2);
+    glow(x, 365, 120, 150, 'rgba(63,240,255,0.45)');
+    cursor(x, 330, 40, 15);
+    x.restore();
+  }
+  // round: corners cut for the plain icon; square for maskable and Apple (the system rounds those itself)
+  function icon(size, round, k) {
+    const big = document.createElement('canvas'); big.width = big.height = 512; const x = big.getContext('2d');
+    if (round) { x.beginPath(); x.roundRect(0, 0, 512, 512, 112); x.clip(); }
+    draw(x, k);
+    if (size === 512) return big;
+    const c = document.createElement('canvas'); c.width = c.height = size; const y = c.getContext('2d');
+    y.imageSmoothingQuality = 'high'; y.drawImage(big, 0, 0, size, size); return c;
+  }
+  const ICONS = {
+    'icon-512.png': () => icon(512, true, 1),
+    'icon-192.png': () => icon(192, true, 1),
+    'favicon-64.png': () => icon(64, true, 1),
+    'maskable-512.png': () => icon(512, false, 0.78),
+    'apple-touch-icon.png': () => icon(180, false, 0.86),
+  };
+  window.makeIcons = () => Object.fromEntries(Object.entries(ICONS).map(([n, f]) => [n, f()]));
+  const out = document.getElementById('out');
+  for (const [name, c] of Object.entries(window.makeIcons())) {
+    const f = document.createElement('figure'), a = document.createElement('a'), im = document.createElement('img');
+    a.href = im.src = c.toDataURL('image/png'); a.download = name; im.width = im.height = Math.min(c.width, 192);
+    a.appendChild(im); f.appendChild(a);
+    const cap = document.createElement('figcaption'); cap.textContent = `${name} (${c.width}px)`; f.appendChild(cap);
+    out.appendChild(f);
+  }
+})();
+</script>
+</body>
+</html>
