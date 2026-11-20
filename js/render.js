@@ -1,5 +1,5 @@
 // Cursor Racing — pixel-art diorama renderer: lit voxels + pixel sprites, shadow map, point lights,
-// then bloom, tilt-shift depth of field, vignette and colour grading.
+// then bloom, tilt-shift depth of field, vignette and color grading.
 (function (CR) {
   'use strict';
   const { U, M4, G } = CR;

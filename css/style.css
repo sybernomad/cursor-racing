@@ -375,7 +375,7 @@ details.dev .actions { margin-top: 8px; }
 
 /* ===== main menu =====
    Sideways: a rail on the left (logo, coins and the garage screens), the Championship banner, three race cards
-   and your car. The whole thing is capped at about phone size and centred, so bigger screens get the same
+   and your car. The whole thing is capped at about phone size and centered, so bigger screens get the same
    layout rather than giant cards. Upright: one column. */
 #scr-menu.active { display: flex; flex-direction: column; }
 #scr-menu { background: linear-gradient(90deg, rgba(13, 11, 26, .72), rgba(13, 11, 26, .25) 45%, rgba(13, 11, 26, .6)); }

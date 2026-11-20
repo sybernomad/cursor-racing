@@ -103,7 +103,7 @@
     return t;
   };
 
-  // colour render target (optionally with a depth buffer)
+  // color render target (optionally with a depth buffer)
   G.target = function (gl, w, h, opts = {}) {
     const tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, tex);
     const hf = opts.hdr && G.hdrOK;
@@ -138,8 +138,8 @@
   };
 
   // ---------------------------------------------------------------------------
-  // Voxel models. A model is a grid (x forward, y up, z sideways) of packed colours.
-  // Colour value: 0 = empty, else 0xEERRGGBB with EE = emissive (0..255) + 1 marker bit.
+  // Voxel models. A model is a grid (x forward, y up, z sideways) of packed colors.
+  // Color value: 0 = empty, else 0xEERRGGBB with EE = emissive (0..255) + 1 marker bit.
   // ---------------------------------------------------------------------------
   class Vox {
     constructor(sx, sy, sz) { this.sx = sx; this.sy = sy; this.sz = sz; this.d = new Float32Array(sx * sy * sz * 4); this.solid = new Uint8Array(sx * sy * sz); }
@@ -178,7 +178,7 @@
         const ids = [], aos = [];
         for (const [cu, cv] of CORN) {
           q[0] = x; q[1] = y; q[2] = z; q[a] += s > 0 ? 1 : 0; q[u] += cu; q[v] += cv;
-          // AO: neighbours in the layer just outside this face
+          // AO: neighbors in the layer just outside this face
           const du = cu ? 1 : -1, dv = cv ? 1 : -1;
           const b1 = [p[0], p[1], p[2]]; b1[u] += du;
           const b2 = [p[0], p[1], p[2]]; b2[v] += dv;

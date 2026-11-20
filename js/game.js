@@ -430,7 +430,7 @@
         const cu = U.clamp(u, -k.hw, k.hw), cv = U.clamp(v, -k.hd, k.hd);
         let lu = u - cu, lv = v - cv, d = Math.hypot(lu, lv);
         if (d >= CAR_R) continue;
-        if (d < 0.001) { // centre inside the box: push out the short way
+        if (d < 0.001) { // center inside the box: push out the short way
           const pu = k.hw - Math.abs(u), pv = k.hd - Math.abs(v);
           if (pu < pv) { lu = Math.sign(u) || 1; lv = 0; pen = pu + CAR_R; } else { lu = 0; lv = Math.sign(v) || 1; pen = pv + CAR_R; }
           d = 1;

@@ -1,7 +1,7 @@
 # Cursor Racing
 
 A top-down toy-car racer with a **pixel-art diorama** look: chunky voxel cars and pixel-art sprites on a lit
-3D tabletop, with real-time shadows, bloom, a tilt-shift "miniature" blur, vignette and colour grading.
+3D tabletop, with real-time shadows, bloom, a tilt-shift "miniature" blur, vignette and color grading.
 Race tiny cars on 20 tracks (40 courses counting mirrored versions): a kitchen table, a study
 desk, a backyard sandbox, a pool table, a bathroom counter, a bedroom at night, a garage workbench, a
 gaming desk, a baking counter, a frosty windowsill, a picnic blanket, a model railway town, the top of
@@ -65,7 +65,7 @@ does it on demand.
   keeps its own best lap, so laps from races (with power-ups or a clear road) never count against it.
 - **Knockout:** the camera follows the leader. Anyone who falls off the screen (or off the table)
   is out of the round. Last car standing scores a point, first to 4 wins. 3 to 7 rivals, power-ups optional.
-- **Garage:** the cars you own. Pick one to drive, repaint it (10 colours) and buy Engine / Tyres /
+- **Garage:** the cars you own. Pick one to drive, repaint it (10 colors) and buy Engine / Tires /
   Turbo upgrades (5 levels each) with coins from races.
 - **Car Shop:** 65 cars to collect, from the Zip hatchback, Monster truck and Toy Tank to a shark, a
   dragon, a burger, a pencil and a jet. Search by name or description, sort by price, top speed,
@@ -112,7 +112,7 @@ The game is made to be played **sideways**. Held upright, it asks you to turn th
 upright instead" button; every screen has a layout for both.
 
 Settings: control scheme, screen (Sideways by default, Upright, or Auto; the installed app on Android
-locks the screen to match, on iPhone turn rotation lock off), difficulty (Easy by default), graphics quality (Low/Med/High), tilt-shift, bloom, shadows,
+locks the screen to match, on iPhone turn rotation lock off), difficulty (Easy by default), graphics quality (Low/Med/High, Med by default), tilt-shift, bloom, shadows,
 screen shake, vibration, sound and music volume, update check, reset progress. If the game runs
 slowly on first launch it lowers the graphics quality once on its own.
 
@@ -174,7 +174,7 @@ js/util.js              namespace, maths, matrices
 js/gl.js                WebGL helpers, mesh builder, voxel mesher (with ambient occlusion)
 js/models.js            voxel cars and props, pixel sprite atlas, menu car icons
 js/tracks.js            lighting presets, themes, tracks, cups, cars, rivals
-js/world.js             track centreline, surfaces, colliders, painted table, static geometry
+js/world.js             track centerline, surfaces, colliders, painted table, static geometry
 js/render.js            renderer: shadows, point lights, bloom, tilt-shift, grading
 js/game.js              physics, AI, laps, knockout, ghosts, particles, camera
 js/extras.js            moving hazards, bumpers, springs, turntables, belts, fans, dominoes, see-saws,

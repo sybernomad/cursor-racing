@@ -289,8 +289,8 @@
     },
   };
 
-  // Clover-leaf centreline: a four-petal rose pulled slightly open (k < 1), so the petals miss the
-  // exact centre and swirl round it instead.
+  // Clover-leaf centerline: a four-petal rose pulled slightly open (k < 1), so the petals miss the
+  // exact center and swirl round it instead.
   function cloverAt(cx, cy, S, k, f) { const t = f * Math.PI * 2; return [Math.round(cx + S * (Math.cos(t) + k * Math.cos(3 * t))), Math.round(cy + S * (Math.sin(t) - k * Math.sin(3 * t)))]; }
   function clover(cx, cy, S, k, n) { const out = []; for (let i = 0; i < n; i++) out.push(cloverAt(cx, cy, S, k, i / n)); return out; }
 
@@ -509,7 +509,7 @@
   const CARS = [
     { id: 'zip', name: 'Zip', desc: 'Nimble hatchback. Easy to drive.', top: 0.6, accel: 0.65, grip: 0.65, mass: 0.5, price: 0, paints: ['#ff4d5e', '#ffd43b'] },
     { id: 'kart', name: 'Go-Kart', desc: 'Sticks to the road and turns on a dime. Low top speed.', top: 0.5, accel: 0.85, grip: 0.95, mass: 0.25, price: 600, paints: ['#40c057', '#ffffff'] },
-    { id: 'buggy', name: 'Dune Buggy', desc: 'Big tyres. Loses little speed off the track.', top: 0.55, accel: 0.75, grip: 0.6, mass: 0.45, offroad: 0.9, price: 900, paints: ['#ff922b', '#1c1c1c'] },
+    { id: 'buggy', name: 'Dune Buggy', desc: 'Big tires. Loses little speed off the track.', top: 0.55, accel: 0.75, grip: 0.6, mass: 0.45, offroad: 0.9, price: 900, paints: ['#ff922b', '#1c1c1c'] },
     { id: 'beetle', name: 'Bubble', desc: 'A round little classic. Bounces off bumps without losing much.', top: 0.62, accel: 0.62, grip: 0.62, mass: 0.6, price: 1100, paints: ['#74c0fc', '#ffffff'] },
     { id: 'rally', name: 'Rally', desc: 'Built for dirt and drifting. Charges boost fast.', top: 0.7, accel: 0.72, grip: 0.55, mass: 0.5, offroad: 0.6, charge: 1.4, price: 1400, paints: ['#f8f9fa', '#1971c2'] },
     { id: 'gt', name: 'Bolt GT', desc: 'Very fast, slides a lot. Drift it to fill boost.', top: 0.85, accel: 0.6, grip: 0.45, mass: 0.55, price: 1600, paints: ['#4dabf7', '#ffffff'] },
@@ -531,7 +531,7 @@
     { id: 'bus', name: 'School Bus', desc: 'Long, heavy and unbothered by traffic.', top: 0.52, accel: 0.42, grip: 0.68, mass: 1.4, price: 1700, paints: ['#fab005', '#212529'] },
     { id: 'ambulance', name: 'Ambulance', desc: 'Quick off the line for a van.', top: 0.66, accel: 0.74, grip: 0.6, mass: 0.9, price: 1900, paints: ['#f8f9fa', '#e03131'] },
     { id: 'boat', name: 'Speedboat', desc: 'Skims over puddles and goo. Slides like it is on water.', top: 0.74, accel: 0.66, grip: 0.3, mass: 0.5, hover: true, price: 2100, paints: ['#1c7ed6', '#f8f9fa'] },
-    { id: 'hotrod', name: 'Hot Rod', desc: 'Big engine out front, big tyres at the back.', top: 0.8, accel: 0.88, grip: 0.42, mass: 0.6, charge: 1.3, price: 2300, paints: ['#212529', '#ff6b00'] },
+    { id: 'hotrod', name: 'Hot Rod', desc: 'Big engine out front, big tires at the back.', top: 0.8, accel: 0.88, grip: 0.42, mass: 0.6, charge: 1.3, price: 2300, paints: ['#212529', '#ff6b00'] },
     { id: 'firetruck', name: 'Fire Engine', desc: 'Heavy, with real pull. Clears a path.', top: 0.6, accel: 0.58, grip: 0.66, mass: 1.3, offroad: 0.4, price: 2500, paints: ['#e03131', '#ffd43b'] },
     { id: 'dumper', name: 'Dump Truck', desc: 'A load of dirt and the weight to prove it. Great off-road.', top: 0.5, accel: 0.48, grip: 0.7, mass: 1.5, offroad: 0.9, lift: 0.8, price: 2600, paints: ['#f59f00', '#fab005'] },
     { id: 'stock', name: 'Stock Car', desc: 'Built for bumping. Fast, planted and tough.', top: 0.84, accel: 0.66, grip: 0.66, mass: 0.85, price: 3000, paints: ['#1864ab', '#ffd43b'] },

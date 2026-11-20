@@ -104,7 +104,7 @@
       ${tile('m-quick', '🏁', 'Quick Race', 'Up to 19 rivals on any open track', 'menu-play ac-red', art(open[open.length - 1]) + stat(d.stats.wins, d.stats.wins === 1 ? 'win' : 'wins') + chips([`${S.laps} ${S.laps === 1 ? 'lap' : 'laps'}`, `${S.rivals} ${S.rivals === 1 ? 'rival' : 'rivals'}`, items]))}
       ${tile('m-tt', '⏱️', 'Time Trial', 'Race your own ghost', 'menu-play ac-cyan', art(open[Math.min(1, open.length - 1)]) + stat(ghosts, ghosts === 1 ? 'ghost saved' : 'ghosts saved') + chips([`${open.length} ${open.length === 1 ? 'track' : 'tracks'} open`, 'Ghost of your best lap']))}
       ${tile('m-ko', '💥', 'Knockout', "Fall off screen and you're out", 'menu-play ac-pink', art(open[0]) + stat(d.stats.koWins, d.stats.koWins === 1 ? 'win' : 'wins') + chips([`${S.koRivals} rivals`, 'First to 4', items]))}
-      <button class="menu-car" id="m-car"><img src="${carThumb(d.car)}" alt=""><span class="menu-car-t"><span class="kick">Your car</span><b>${cd.name}</b></span><span class="menu-car-u">${[['Engine', up.eng], ['Tyres', up.grip], ['Turbo', up.boost]].map(([n, l]) => `<span>${n}${pips(l)}</span>`).join('')}</span><span class="cta2">Change ›</span></button>
+      <button class="menu-car" id="m-car"><img src="${carThumb(d.car)}" alt=""><span class="menu-car-t"><span class="kick">Your car</span><b>${cd.name}</b></span><span class="menu-car-u">${[['Engine', up.eng], ['Tires', up.grip], ['Turbo', up.boost]].map(([n, l]) => `<span>${n}${pips(l)}</span>`).join('')}</span><span class="cta2">Change ›</span></button>
       <nav class="menu-more">
         ${tile('m-garage', '🔧', 'Garage', 'Your cars, paint and upgrades')}
         ${tile('m-shop', '🛒', 'Car Shop', `${CR.CARS.filter((c) => !d.owned[c.id]).length} cars to collect`)}
@@ -411,7 +411,7 @@
     }
     if ($('#g-sel', el)) click($('#g-sel', el), () => { d.car = car.id; Save.save(); renderGarage(idx); });
     const ul = $('#g-up', el);
-    for (const [k, name, txt] of [['eng', 'Engine', 'Top speed and acceleration'], ['grip', 'Tyres', 'Grip and steering'], ['boost', 'Turbo', 'Stronger boost, slower drain, faster charge']]) {
+    for (const [k, name, txt] of [['eng', 'Engine', 'Top speed and acceleration'], ['grip', 'Tires', 'Grip and steering'], ['boost', 'Turbo', 'Stronger boost, slower drain, faster charge']]) {
       const cost = Save.upCost(car.id, k), lv = up[k];
       const row = document.createElement('div'); row.className = 'upg';
       row.innerHTML = `<div><b>${name}</b><span class="pips">${[0, 1, 2, 3, 4].map((i) => `<i class="${i < lv ? 'on' : ''}"></i>`).join('')}</span><div class="muted small">${txt}</div></div>
@@ -512,7 +512,7 @@
     click($('#s-tut', el), startTutorial);
     click($('#s-upd', el), () => (UI.checkUpdate ? UI.checkUpdate(true) : UI.toast('Updates work once the game is installed or served over https')));
     click($('#s-cred', el), () => modal(`<h2>Credits</h2><p>Cursor Racing is made from scratch: hand-written JavaScript, WebGL and Web Audio. Every car, prop, sprite, sound and song is generated in code. No third-party libraries, fonts, images or audio.</p>
-      <p class="muted small">Inspired by classic top-down toy-car racers. Not affiliated with or endorsed by any of them. All trademarks belong to their owners.</p><p class="muted small">MIT licence. See LICENSE and CREDITS.md.</p><div class="actions"><button class="btn primary" id="m-ok">Close</button></div>`, (m) => click($('#m-ok', m), closeModal)));
+      <p class="muted small">Inspired by classic top-down toy-car racers. Not affiliated with or endorsed by any of them. All trademarks belong to their owners.</p><p class="muted small">MIT license. See LICENSE and CREDITS.md.</p><div class="actions"><button class="btn primary" id="m-ok">Close</button></div>`, (m) => click($('#m-ok', m), closeModal)));
     click($('#s-bak', el), () => modal(`<h2>Back up save</h2><p class="muted small">Copy this code and keep it somewhere safe. Paste it into Restore save, on this or another device, to get your progress back. Time Trial ghosts are not included.</p><textarea id="bk" readonly rows="6">${Save.exportCode()}</textarea><div class="actions"><button class="btn ghost" id="m-ok">Close</button><button class="btn primary" id="m-copy">Copy code</button></div>`, (m) => {
       click($('#m-ok', m), closeModal, 'back');
       click($('#m-copy', m), async () => { const ta = $('#bk', m); ta.focus(); ta.select(); try { await navigator.clipboard.writeText(ta.value); UI.toast('Copied'); } catch (e) { try { document.execCommand('copy'); UI.toast('Copied'); } catch (e2) { UI.toast('Select the code and copy it by hand'); } } });

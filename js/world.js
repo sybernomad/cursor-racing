@@ -1,10 +1,10 @@
-// Cursor Racing — builds a playable world from a track definition: centreline, surfaces,
+// Cursor Racing — builds a playable world from a track definition: centerline, surfaces,
 // colliders, the painted table texture and the static voxel/sprite geometry.
 (function (CR) {
   'use strict';
   const { U, G } = CR;
   const TEX = 2;          // world units per ground texel
-  const STEP = 8;         // centreline sample spacing
+  const STEP = 8;         // centerline sample spacing
   const CHUNK = 700;      // static geometry chunk size (for culling)
 
   function catmull(pts, sub = 40) {
@@ -76,7 +76,7 @@
       this.glue = []; this.spinners = []; this.belts = []; this.fans = []; this.dominoes = []; this.seesaws = [];
     }
 
-    // ---------- centreline ----------
+    // ---------- centerline ----------
     buildLine(pts) {
       const raw = catmull(pts);
       const len = [0];
@@ -120,7 +120,7 @@
       for (let i = 0; i < n; i++) { const k = this.gk(this.px[i], this.py[i]); if (!this.grid.has(k)) this.grid.set(k, []); this.grid.get(k).push(i); }
     }
     gk(x, y) { return (Math.floor(x / 80) + 1000) * 4096 + Math.floor(y / 80) + 1000; }
-    // nearest centreline sample anywhere (radius-limited)
+    // nearest centerline sample anywhere (radius-limited)
     nearestGlobal(x, y, maxR = 480) {
       let best = -1, bd = Infinity;
       const cx = Math.floor(x / 80), cy = Math.floor(y / 80), rr = Math.ceil(maxR / 80);
@@ -452,7 +452,7 @@
       x.setLineDash([8, 8]); x.strokeStyle = tr.edgeB; path(x); x.stroke(); x.setLineDash([]);
       if (tr.glow) { ex.lineJoin = 'round'; ex.strokeStyle = '#fff'; ex.lineWidth = tw + 9; path(ex); ex.stroke(); ex.strokeStyle = '#000'; ex.lineWidth = tw + 3; path(ex); ex.stroke(); }
       x.strokeStyle = tr.fill; x.lineWidth = tw; path(x); x.stroke();
-      // track texture: speckle + ruled lines / ruts / centre dashes
+      // track texture: speckle + ruled lines / ruts / center dashes
       x.save(); x.lineWidth = tw; x.strokeStyle = '#000'; path(x);
       if (tr.ruled) {
         // notebook paper: blue rules across the ribbon, done by clipping to a stroked outline

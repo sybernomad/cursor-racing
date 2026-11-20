@@ -82,7 +82,7 @@
     }
   };
 
-  // continuous engine + tyre squeal for the player's car
+  // continuous engine + tire squeal for the player's car
   A.engine = function (spd, thr, boost, on) {
     if (!ac) return;
     if (!eng) {

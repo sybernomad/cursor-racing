@@ -54,7 +54,7 @@ and the game turns them into speeds and forces in `stats()` in `js/game.js`. Her
 | `grip` | How quickly sideways sliding dies away, and how sharply it turns. Low grip drifts. | 0.28 to 0.95 |
 | `mass` | Weight in collisions: heavier cars shove lighter ones. | 0.20 to 1.80 |
 | `price` | Shop price before scaling. The game multiplies every price by `PRICE_SCALE` (0.6) and rounds to 50, so 2000 here costs 1200 coins. `0` = free from the start. | 0 to 7000 |
-| `paints` | `[body, accent]` as hex colours. The body is the default paint; players can repaint it. The accent (stripes, the driver's helmet) stays fixed. | |
+| `paints` | `[body, accent]` as hex colors. The body is the default paint; players can repaint it. The accent (stripes, the driver's helmet) stays fixed. | |
 
 Optional extras, left out for an ordinary car:
 
@@ -99,23 +99,23 @@ Seen from above, a typical car with wheels at `x` 3 and 12 looks like this (W = 
       x=0           x=15  (front)
 ```
 
-**The function.** It receives four things: `v` (the grid), `P` (the body colour), `A` (the accent
-colour) and `r` (a random number source, the same every time, for slight colour variation). Colours
+**The function.** It receives four things: `v` (the grid), `P` (the body color), `A` (the accent
+color) and `r` (a random number source, the same every time, for slight color variation). Colors
 are `[red, green, blue]` from 0 to 1. Use `P` for anything that should repaint and `A` for stripes and
 trim.
 
 | Call | Does |
 | --- | --- |
-| `v.set(x, y, z, colour, glow)` | One block. `glow` from 0 to 1 makes it emit light (headlights use 1). |
-| `v.box(x0, y0, z0, x1, y1, z1, colour, glow, jitter, r)` | A solid box, both corners included. `jitter` (around 0.05) varies the shade block by block so big panels don't look flat. |
+| `v.set(x, y, z, color, glow)` | One block. `glow` from 0 to 1 makes it emit light (headlights use 1). |
+| `v.box(x0, y0, z0, x1, y1, z1, color, glow, jitter, r)` | A solid box, both corners included. `jitter` (around 0.05) varies the shade block by block so big panels don't look flat. |
 | `v.clear(x, y, z)` | Removes a block, for holes and cut corners. |
 | `wheels(v, [3, 12])` | A wheel on each side at each `x` listed. `wheels(v, [3, 12], true)` gives big off-road wheels. Two more numbers move them inward, for narrow cars: `wheels(v, [3, 12], false, 1, 7)`. |
-| `helmet(v, x, y, z, A)` | The driver: a face block, a helmet in the accent colour, a visor. |
+| `helmet(v, x, y, z, A)` | The driver: a face block, a helmet in the accent color, a visor. |
 | `hull(v, P, r, widthFn, topFn)` | A curved body: for each `x`, `widthFn(x)` gives the half-width and `topFn(x)` the top height. Good for noses, fins and rounded shapes. |
 | `sphere(...)`, `cyl(...)` | Balls and cylinders, as used by the duck, cupcake and saucer. |
 
-Ready-made colours: `TIRE`, `HUB`, `GLASS`, `DARK`, `HEAD` (headlight), `TAIL` (tail light), `SKIN`.
-For any other colour use `hex('#ff922b')`, and `U.shade(colour, 0.8)` for a darker version.
+Ready-made colors: `TIRE`, `HUB`, `GLASS`, `DARK`, `HEAD` (headlight), `TAIL` (tail light), `SKIN`.
+For any other color use `hex('#ff922b')`, and `U.shade(color, 0.8)` for a darker version.
 
 **Things to know:**
 
@@ -137,14 +137,14 @@ pushed around.
     cart(v, P, A, r) { // a shopping cart
       wheels(v, [2, 13], false, 1, 7);            // small wheels, tucked in
       v.box(1, 1, 2, 14, 1, 6, HUB);               // the chassis rails
-      // the basket: open wire walls in the body colour
+      // the basket: open wire walls in the body color
       for (let x = 2; x <= 14; x++) for (let y = 2; y <= 6; y++) {
         if ((x + y) % 2) continue;                 // every other block: a wire grid
         v.set(x, y, 1, P); v.set(x, y, 7, P);       // the two sides
       }
       for (let y = 2; y <= 6; y++) for (let z = 1; z <= 7; z++) if ((y + z) % 2 === 0) v.set(14, y, z, P);   // the front wall
       v.box(2, 2, 2, 13, 2, 6, P, 0, 0.05, r);     // the basket floor
-      v.box(0, 6, 1, 1, 6, 7, A);                  // the handle, in the accent colour
+      v.box(0, 6, 1, 1, 6, 7, A);                  // the handle, in the accent color
       v.set(0, 5, 1, HUB); v.set(0, 5, 7, HUB);
       helmet(v, 7, 3, 4, A);                       // the driver, sitting in the basket
       v.set(14, 3, 2, HEAD, 1); v.set(14, 3, 6, HEAD, 1);   // headlights
@@ -176,9 +176,9 @@ model, so a gap or a stray block shows up there first.
 - **Never rename the `id` later.** Players' saves store which cars they own by `id`, so a renamed car
   disappears from their garage. Changing `name`, `desc`, stats, price or the model is always safe.
 
-The finished cart, as the garage draws it, in its default grey and repainted blue:
+The finished cart, as the garage draws it, in its default gray and repainted blue:
 
-![The shopping cart in grey](images/cart-grey.png) ![The shopping cart painted blue](images/cart-blue.png)
+![The shopping cart in gray](images/cart-grey.png) ![The shopping cart painted blue](images/cart-blue.png)
 
 ## Tracks, part 1: the layout
 
@@ -243,7 +243,7 @@ land on the road even if you later move the points.
 | Things crossing the road | `{ type: 'shuttle', t, look, speed }` in `hazards` | Slides back and forth across the road. `speed` defaults to 0.7. The look can be any prop (below); `beetle` gives a ladybug, `pin` a rolling pin, `vacuum` a robot vacuum. `look: 'train'` runs a toy train across a painted level crossing and sounds its horn. |
 | Bumpers | `{ type: 'bumper', t, off, look }` in `hazards` | Pinball bumpers that fling cars away. Pairs at `off: -30` and `30` make a slalom. `look: 'jelly'` makes it a jelly. |
 | Spring pads | `{ type: 'spring', t, off, look }` in `hazards` | Throws the car into the air. `look: 'bubble'` makes it a bubble jet that fizzes. |
-| Turntables | `{ type: 'spinner', t, r, speed }` in `hazards` | A spinning disc in the middle of the road, `r` units across from the centre (72 suits a 130-wide road). Carries cars round and turns them. `speed` (default 1.6) is how fast it spins; mirrored tracks spin it the other way. |
+| Turntables | `{ type: 'spinner', t, r, speed }` in `hazards` | A spinning disc in the middle of the road, `r` units across from the center (72 suits a 130-wide road). Carries cars round and turns them. `speed` (default 1.6) is how fast it spins; mirrored tracks spin it the other way. |
 | Conveyor belts | `{ type: 'conveyor', t, side, len, speed }` in `hazards` | A belt across the whole road, `len` units long (default 90), pushing cars toward `side` (`1` = the driver's right). `speed` defaults to 150. Put it on a straight. |
 | Fans | `{ type: 'fan', t, side, power }` in `hazards` | A desk fan at the roadside on `side`, blowing across the road in gusts. Stronger on cars in the air and on light cars. `power` defaults to 1. |
 | Dominoes | `{ type: 'domino', t }` in `hazards` | A row of dominoes right across the road. Driving into them above a crawl knocks the row over and costs you about a third of your speed; a crawling car is just stopped. They lie flat (a bumpy patch) for 6 seconds, then stand back up once nobody is on them. |
@@ -346,14 +346,14 @@ line, red marks are solid props, and the blue box is the ramp:
 The four newest (`laundry`, `shelf`, `fridge`, `aquarium`) are the shortest to read.
 A new one needs four things:
 
-1. A `THEMES` entry: the `ground()` painter for the table surface, the road paint colours, the
+1. A `THEMES` entry: the `ground()` painter for the table surface, the road paint colors, the
    `rough` (off-road) surface, the `border` rows of edge props (each with `spacing`, `offset`,
    `chance`, and `wall: true` or `hard: true` for solid ones), and the `scatter` clutter. Copying the
    closest existing theme and changing it is far easier than starting fresh.
-2. A lighting preset in `LIGHT` (sun direction, colours, ambient), named in the theme.
+2. A lighting preset in `LIGHT` (sun direction, colors, ambient), named in the theme.
 3. A song in `SONGS` in `js/audio.js`, keyed by the theme's id. Without one, the menu tune plays.
-4. A dust colour for the theme in the particle colour map in `js/game.js`, so tyres kick up the right
-   colour off-road.
+4. A dust color for the theme in the particle color map in `js/game.js`, so tires kick up the right
+   color off-road.
 
 **A new prop.** Props are voxel models in the `P` object in `js/models.js`, built with the same
 `v.box` and `v.set` calls as cars. Once one is added, its name works in `pieces`, `shuttle` looks and

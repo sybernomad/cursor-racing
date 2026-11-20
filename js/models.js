@@ -22,7 +22,7 @@
   }
   function helmet(v, x, y, z, c) { v.set(x, y, z, SKIN); v.set(x, y + 1, z, c); v.set(x + 1, y + 1, z, GLASS); }
 
-  // fill a body from per-x half-width and height functions (z centred on 4)
+  // fill a body from per-x half-width and height functions (z centered on 4)
   function hull(v, c, r, hw, top, y0 = 1) {
     for (let x = 0; x < 16; x++) { const w = hw(x), t = top(x); if (w < 0) continue; for (let y = y0; y <= t; y++) for (let z = Math.round(4 - w); z <= Math.round(4 + w); z++) { const k = 1 + (r() - 0.5) * 0.05; v.set(x, y, z, [c[0] * k, c[1] * k, c[2] * k]); } }
   }
@@ -545,14 +545,14 @@
     cart(v, P, A, r) { // a shopping cart
       wheels(v, [2, 13], false, 1, 7);            // small wheels, tucked in
       v.box(1, 1, 2, 14, 1, 6, HUB);               // the chassis rails
-      // the basket: open wire walls in the body colour
+      // the basket: open wire walls in the body color
       for (let x = 2; x <= 14; x++) for (let y = 2; y <= 6; y++) {
         if ((x + y) % 2) continue;                 // every other block: a wire grid
         v.set(x, y, 1, P); v.set(x, y, 7, P);       // the two sides
       }
       for (let y = 2; y <= 6; y++) for (let z = 1; z <= 7; z++) if ((y + z) % 2 === 0) v.set(14, y, z, P);   // the front wall
       v.box(2, 2, 2, 13, 2, 6, P, 0, 0.05, r);     // the basket floor
-      v.box(0, 6, 1, 1, 6, 7, A);                  // the handle, in the accent colour
+      v.box(0, 6, 1, 1, 6, 7, A);                  // the handle, in the accent color
       v.set(0, 5, 1, HUB); v.set(0, 5, 7, HUB);
       helmet(v, 7, 3, 4, A);                       // the driver, sitting in the basket
       v.set(14, 3, 2, HEAD, 1); v.set(14, 3, 6, HEAD, 1);   // headlights
@@ -1036,7 +1036,7 @@
     for (let y = 5; y < 21; y++) v.set(Math.round(7 + Math.cos((y - 13) / 8 * 1.6) * 7.2) - 0, y, 7, [0.75, 0.6, 0.3]);
     return { vox: v, vs: 3, col: { c: 20 }, h: 66 };
   };
-  // a domino standing on end: x is the thin side, so it falls along x. Pivots about its bottom centre.
+  // a domino standing on end: x is the thin side, so it falls along x. Pivots about its bottom center.
   P.domino = (r) => {
     const v = new Vox(2, 10, 6), k = [0.08, 0.08, 0.1], w = [0.98, 0.96, 0.9], red = hex('#e03131');
     v.box(0, 0, 0, 1, 9, 5, w, 0, 0.03, r); v.box(0, 5, 0, 1, 5, 5, k); v.box(0, 0, 0, 1, 0, 5, red); v.box(0, 9, 0, 1, 9, 5, red);
