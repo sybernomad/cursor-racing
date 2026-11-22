@@ -6,9 +6,10 @@
   const fresh = () => ({
     v: 1, coins: 150, car: 'zip', paint: {}, owned: { zip: true }, up: {},
     cups: { rookie: { unlocked: true, best: 0 } }, best: {}, cupRun: null,
-    settings: { controls: 'fixed', ctl2: true, orient: 'landscape', orient2: true, autoGas: true, diff: 0, quality: 'medium', dof: true, bloom: true, shadows: true, shake: true, vib: true, sfx: 0.8, music: 0.5, laps: 3, rivals: 5, koRivals: 3, items: true, cupRivals: 3, cupLaps: 3, cupItems: false, hazards: true, cupHazards: true },
-    stats: { races: 0, wins: 0, podiums: 0, cups: 0, koWins: 0, coinsEarned: 0 },
+    settings: { controls: 'fixed', ctl2: true, orient: 'landscape', orient2: true, autoGas: true, diff: 0, quality: 'medium', dof: true, bloom: true, shadows: true, shake: true, vib: true, sfx: 0.8, music: 0.5, laps: 3, rivals: 5, koRivals: 3, items: true, cupRivals: 3, cupLaps: 3, cupItems: false, hazards: true, cupHazards: true, derbyRivals: 5 },
+    stats: { races: 0, wins: 0, podiums: 0, cups: 0, koWins: 0, coinsEarned: 0, derbies: 0, derbyWins: 0, wrecks: 0 },
     seenHelp: false, tutorialDone: false,
+    derby: {}, derbyArena: 0, derbyHelp: false, // Demolition Derby: per-arena { wins, wrecks }, last arena, rules seen
   });
   S.load = function () {
     let d = null;

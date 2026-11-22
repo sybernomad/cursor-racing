@@ -28,8 +28,9 @@
     const dt = Math.min(0.05, (now - last) / 1000); last = now;
     try {
       if (UI.inRace) UI.pollInput();
-      Game.update(dt);
-      Game.render();
+      const sim = UI.derby ? CR.Derby : Game; // a demolition derby runs in its own simulation
+      sim.update(dt);
+      sim.render();
       if (UI.inRace) UI.hudFrame();
     } catch (e) { console.error(e); }
     // auto-lower quality if we are clearly too slow (first time only)

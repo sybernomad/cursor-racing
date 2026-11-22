@@ -2,23 +2,26 @@
  * To ship an update: change VERSION below (or run `node tools/bump-version.mjs`) and push.
  * Installed apps notice the changed worker, download the new files in the background,
  * and the page switches to them on the next menu screen (never mid-race). */
-const VERSION = '1.9.10';
+const VERSION = '1.10.0';
 const CACHE = `cursorracing-${VERSION}`;
 const ASSETS = [
   './',
   './index.html',
   './manifest.webmanifest',
   './css/style.css',
+  './css/derby.css',
   './js/util.js',
   './js/gl.js',
   './js/models.js',
   './js/tracks.js',
   './js/world.js',
+  './js/arena.js',
   './js/render.js',
   './js/audio.js',
   './js/save.js',
   './js/extras.js',
   './js/game.js',
+  './js/derby.js',
   './js/ui.js',
   './js/main.js',
   './icons/favicon-64.png',

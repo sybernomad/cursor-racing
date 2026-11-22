@@ -1,0 +1,43 @@
+/* Cursor Racing — Demolition Derby: the fourth play card on the main menu, the arena list, derby HUD and results. */
+
+/* main menu: a fourth card next to Quick Race, Time Trial and Knockout */
+.ac-orange { --ac: #ff922b; }
+#m-derby { grid-area: derby; }
+.menu { grid-template-areas: "top" "champ" "quick" "tt" "ko" "derby" "car" "more"; }
+@media (orientation: landscape) {
+  .menu { grid-template-columns: 236px repeat(4, minmax(0, 1fr)); grid-template-areas: "top champ champ champ champ" "more quick tt ko derby" "more car car car car"; }
+}
+@media (orientation: landscape) and (max-width: 780px) {
+  .menu { grid-template-columns: 196px repeat(4, minmax(0, 1fr)); }
+}
+
+/* arena list */
+.setup { margin-bottom: 12px; }
+.cards.arenas { grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); }
+.cards.arenas .thumb { object-fit: cover; image-rendering: auto; }
+
+/* results payout */
+.payout { margin-top: 4px; font-size: 13px; } .payout td { padding: 4px 8px; }
+
+/* HUD */
+.dhud { min-width: 150px; }
+.hud-left { font-family: var(--disp); font-weight: 900; font-style: italic; font-size: 34px; line-height: 1; color: #fff6dd; text-shadow: 0 2px 0 #e8632c, 0 3px 0 #6e1a12, 0 4px 10px #000; }
+.hud-left small { font-size: 12px; letter-spacing: .16em; margin-left: 4px; color: var(--muted); text-shadow: none; font-style: normal; }
+.hpbar { position: relative; width: 150px; height: 16px; margin-top: 6px; border-radius: 6px; background: rgba(0, 0, 0, .5); border: 1px solid rgba(255, 255, 255, .2); overflow: hidden; }
+.hpbar i { display: block; height: 100%; width: 100%; background: linear-gradient(90deg, #2fbf71, #69f0ae); transition: width .15s ease; }
+.hpbar.low i { background: linear-gradient(90deg, #e8932c, #ffd37a); }
+.hpbar.crit i { background: linear-gradient(90deg, #c2203a, #ff4d6d); animation: pulse .35s ease-in-out infinite alternate; }
+.hpbar span { position: absolute; inset: 0; display: grid; place-items: center; font-size: 11px; font-weight: 900; text-shadow: 0 1px 2px #000; }
+.dhud .boostbar { width: 150px; }
+.hud-time.sd { color: #ff6b6b; font-weight: 800; }
+.hud-msg div.hit { font-size: clamp(22px, 5vw, 38px); color: #ffe0b3; text-shadow: 0 3px 0 #e8632c, 0 5px 0 #5c1a0f, 0 8px 18px rgba(0, 0, 0, .7); }
+.hud-spec { position: absolute; left: 50%; bottom: calc(18px + var(--safe-b)); transform: translateX(-50%); display: flex; gap: 10px; align-items: center; pointer-events: auto;
+  background: rgba(10, 8, 22, .6); border: 1px solid var(--line); border-radius: 12px; padding: 6px 8px 6px 14px; font-weight: 800; font-size: 13px; white-space: nowrap; z-index: 2; }
+.hud-spec.hidden { display: none; }
+.hp-layer { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.hp-tag { position: absolute; left: 0; top: 0; margin: -20px 0 0 -22px; width: 44px; text-align: center; font-size: 9px; font-weight: 800; letter-spacing: .04em; text-shadow: 0 1px 2px #000; color: #f5efe1; will-change: transform; }
+.hp-tag b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: .85; }
+.hp-tag i { display: block; height: 5px; border-radius: 3px; background: rgba(0, 0, 0, .55); border: 1px solid rgba(255, 255, 255, .25); overflow: hidden; margin-top: 1px; }
+.hp-tag u { display: block; height: 100%; width: 100%; background: #69f0ae; }
+.hp-tag.me b { color: var(--cyan); }
+.hp-tag.me i { border-color: rgba(63, 240, 255, .6); }

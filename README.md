@@ -10,6 +10,7 @@ fish tank (Fish Tank). Four
 of the tables have a second layout: Lucky Clover (four big loops round a central roundabout), Pretzel
 Twist (hairpin after hairpin), Night Oval (a wide, fast oval for big fields) and Paper Chase (a
 second layout on the study desk). Drive off the edge and you drop to the floor.
+Or smash them up: **Demolition Derby** is last car standing on 8 tabletop arenas.
 
 Installable **Progressive Web App** with offline play and automatic updates. No build step and
 no dependencies: open `index.html` or serve the folder.
@@ -65,6 +66,17 @@ does it on demand.
   keeps its own best lap, so laps from races (with power-ups or a clear road) never count against it.
 - **Knockout:** the camera follows the leader. Anyone who falls off the screen (or off the table)
   is out of the round. Last car standing scores a point, first to 4 wins. 3 to 7 rivals, power-ups optional.
+- **Demolition Derby:** last car standing on one of 8 tabletop arenas: tables with no walls (Kitchen
+  Sumo, Neon Desk, Ant Hill) where you shove rivals off the edge, walled pits (Workbench Pit with oil
+  slicks, Night Light), tire-ring bowls (Sandpit Bowl, and Ice Rink where nothing grips) and Pocket
+  Brawl, a pool table whose pockets swallow cars. Every car has health (heavier cars more). Damage
+  depends on impact speed, weight and where you're hit: the front bumper is armored, sides take full
+  damage and the back a bit more, so T-bone them and don't get T-boned. Boosting into a hit does 40%
+  more, and a big side hit leaves a car skidding for a moment. Hits knock voxels off the car and
+  scorch the paint; hurt cars smoke and burn, wrecks stay in the arena. Wrenches repair, batteries
+  fill boost, and after 2:30 sudden death drains everyone. Your garage car, paint and Engine / Tires /
+  Turbo upgrades come along; 3 to 11 rivals. Tuning numbers are at the top of `js/derby.js` and in
+  `collideCars` there; arenas are the `ARENAS` list in `js/arena.js`.
 - **Garage:** the cars you own. Pick one to drive, repaint it (10 colors) and buy Engine / Tires /
   Turbo upgrades (5 levels each) with coins from races.
 - **Car Shop:** 65 cars to collect, from the Zip hatchback, Monster truck and Toy Tank to a shark, a
@@ -170,11 +182,14 @@ index.html              app shell
 manifest.webmanifest    PWA manifest
 sw.js                   service worker (offline cache + updates)
 css/style.css           UI styles
+css/derby.css           Demolition Derby menu card, arena list, HUD
 js/util.js              namespace, maths, matrices
 js/gl.js                WebGL helpers, mesh builder, voxel mesher (with ambient occlusion)
 js/models.js            voxel cars and props, pixel sprite atlas, menu car icons
 js/tracks.js            lighting presets, themes, tracks, cups, cars, rivals
 js/world.js             track centerline, surfaces, colliders, painted table, static geometry
+js/arena.js             Demolition Derby arenas: definitions, boundaries, pockets, oil, static geometry
+js/derby.js             Demolition Derby: damage by hit zone, dents, wrecks, falls, pickups, ramming AI
 js/render.js            renderer: shadows, point lights, bloom, tilt-shift, grading
 js/game.js              physics, AI, laps, knockout, ghosts, particles, camera
 js/extras.js            moving hazards, bumpers, springs, turntables, belts, fans, dominoes, see-saws,

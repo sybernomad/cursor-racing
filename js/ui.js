@@ -29,8 +29,10 @@
   function bind(root) {
     root.querySelectorAll('[data-go]').forEach((b) => click(b, () => go(b.dataset.go), b.dataset.go === 'menu' ? 'back' : 'ui'));
   }
+  // the simulation that's running: the race sim, or the demolition derby
+  const sim = () => (UI.derby ? CR.Derby : Game);
   function go(where) {
-    ({ menu: renderMenu, cups: renderCups, shop: () => renderShop(), garage: () => renderGarage(), settings: renderSettings, title: renderTitle })[where]();
+    ({ menu: renderMenu, cups: renderCups, shop: () => renderShop(), garage: () => renderGarage(), settings: renderSettings, title: renderTitle, arenas: renderArenas })[where]();
   }
   UI.toast = function (msg, ms = 2200) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(UI.tt); UI.tt = setTimeout(() => t.classList.remove('show'), ms); };
   function modal(html, after) { const m = $('#modal'); m.innerHTML = `<div class="panel">${html}</div>`; m.classList.remove('hidden'); if (after) after(m); bind(m); return m; }
@@ -73,6 +75,7 @@
     click($('#m-quick'), () => renderTracks('quick'));
     click($('#m-tt'), () => renderTracks('tt'));
     click($('#m-ko'), () => renderTracks('ko'));
+    click($('#m-derby'), renderArenas);
     click($('#m-garage'), () => renderGarage());
     click($('#m-car'), () => renderGarage(CR.CARS.findIndex((c) => c.id === Save.data.car)));
     click($('#m-shop'), () => renderShop());
@@ -104,6 +107,7 @@
       ${tile('m-quick', '🏁', 'Quick Race', 'Up to 19 rivals on any open track', 'menu-play ac-red', art(open[open.length - 1]) + stat(d.stats.wins, d.stats.wins === 1 ? 'win' : 'wins') + chips([`${S.laps} ${S.laps === 1 ? 'lap' : 'laps'}`, `${S.rivals} ${S.rivals === 1 ? 'rival' : 'rivals'}`, items]))}
       ${tile('m-tt', '⏱️', 'Time Trial', 'Race your own ghost', 'menu-play ac-cyan', art(open[Math.min(1, open.length - 1)]) + stat(ghosts, ghosts === 1 ? 'ghost saved' : 'ghosts saved') + chips([`${open.length} ${open.length === 1 ? 'track' : 'tracks'} open`, 'Ghost of your best lap']))}
       ${tile('m-ko', '💥', 'Knockout', "Fall off screen and you're out", 'menu-play ac-pink', art(open[0]) + stat(d.stats.koWins, d.stats.koWins === 1 ? 'win' : 'wins') + chips([`${S.koRivals} rivals`, 'First to 4', items]))}
+      ${tile('m-derby', '🔥', 'Demolition Derby', 'Last car standing. Wreck them or shove them off', 'menu-play ac-orange', `<span class="mart" style="background-image:url(${arenaThumb(d.derbyArena || 0)})"></span>` + stat(d.stats.derbyWins, d.stats.derbyWins === 1 ? 'win' : 'wins') + chips([`${S.derbyRivals} rivals`, `${CR.ARENAS.length} arenas`]))}
       <button class="menu-car" id="m-car"><img src="${carThumb(d.car)}" alt=""><span class="menu-car-t"><span class="kick">Your car</span><b>${cd.name}</b></span><span class="menu-car-u">${[['Engine', up.eng], ['Tires', up.grip], ['Turbo', up.boost]].map(([n, l]) => `<span>${n}${pips(l)}</span>`).join('')}</span><span class="cta2">Change ›</span></button>
       <nav class="menu-more">
         ${tile('m-garage', '🔧', 'Garage', 'Your cars, paint and upgrades')}
@@ -127,7 +131,8 @@
       <li><b>Stuck off the road?</b> You're put back after a few seconds, or use <b>Back to track</b> in the pause menu (R on a keyboard, Select on a gamepad).</li>
       <li><b>Keyboard:</b> arrows or WASD, Space to boost, E to use an item, R back to track, Esc to pause. Gamepads work too.</li>
       <li>Watch the edges: drive off the table and you drop to the floor.</li>
-      <li><b>Knockout:</b> the camera follows the leader. Fall off the screen and you're out of the round.</li></ul>
+      <li><b>Knockout:</b> the camera follows the leader. Fall off the screen and you're out of the round.</li>
+      <li><b>Demolition Derby:</b> last car standing. Ram rivals side-on (your front bumper is armored), boost into hits, grab wrenches to repair, and shove cars off tables or into pockets.</li></ul>
       <div class="actions"><button class="btn primary" id="m-ok">Let's race</button></div>`, (m) => click($('#m-ok', m), closeModal));
   }
 
@@ -336,7 +341,7 @@
     const d = Save.data, el = $('#scr-records'), s = d.stats, mirror = Save.cupUnlocked('mirror');
     const box = (l, v) => `<div><b>${v}</b><span>${l}</span></div>`;
     el.innerHTML = `<div class="wrap">${topbar('Records')}
-      <div class="panel"><h2>Career</h2><div class="statgrid">${box('Races', s.races)}${box('Wins', s.wins)}${box('Podiums', s.podiums)}${box('Cups won', s.cups)}${box('Knockout wins', s.koWins)}${box('Coins earned', s.coinsEarned.toLocaleString())}${box('Cars owned', CR.CARS.filter((c) => d.owned[c.id]).length + ' / ' + CR.CARS.length)}</div></div>
+      <div class="panel"><h2>Career</h2><div class="statgrid">${box('Races', s.races)}${box('Wins', s.wins)}${box('Podiums', s.podiums)}${box('Cups won', s.cups)}${box('Knockout wins', s.koWins)}${box('Derbies', s.derbies)}${box('Derby wins', s.derbyWins)}${box('Cars wrecked', s.wrecks)}${box('Coins earned', s.coinsEarned.toLocaleString())}${box('Cars owned', CR.CARS.filter((c) => d.owned[c.id]).length + ' / ' + CR.CARS.length)}</div></div>
       <div class="panel" style="margin-top:12px"><h2>Trophies</h2><div class="trophies">${CR.CUPS.map((c) => { const st = d.cups[c.id] || {}; return `<div class="${st.unlocked ? '' : 'off'}"><span class="trophy g${st.best || 0}"></span><b>${c.name}</b><span class="muted small">${st.best ? ['', 'Gold', 'Silver', 'Bronze'][st.best] : st.unlocked ? 'No trophy yet' : 'Locked'}</span></div>`; }).join('')}</div></div>
       <div class="panel" style="margin-top:12px"><h2>Track records</h2><table class="table"><tr><th>Track</th><th class="num">Best lap</th><th class="num">Best race</th>${mirror ? '<th class="num">Mirror lap</th>' : ''}</tr>
         ${CR.TRACKS.map((t, i) => { const a = Save.bestOf(i, false), m = Save.bestOf(i, true); return `<tr><td>${t.name}</td><td class="num">${U.fmtTime(a.lap)}</td><td class="num">${U.fmtTime(Save.raceBest(i, false, 3))}</td>${mirror ? `<td class="num">${U.fmtTime(m.lap)}</td>` : ''}</tr>`; }).join('')}</table>
@@ -555,7 +560,7 @@
       el.innerHTML = '<div class="rot-phone"></div><h2>Turn your phone sideways</h2><p class="muted small">Cursor Racing is made for playing sideways.</p><button class="btn small ghost" id="rot-up">Play upright instead</button>';
       el.classList.remove('hidden');
       $('#rot-up', el).addEventListener('click', () => { Save.data.settings.orient = 'portrait'; Save.save(); applyOrientation(); el.classList.add('hidden'); Audio.play('ui'); if (UI.screen === 'settings') renderSettings(); });
-      if (UI.inRace && !Game.paused) pause();
+      if (UI.inRace && !sim().paused) pause();
     } else if (!want) el.classList.add('hidden');
   }
   UI.checkRotate = checkRotate;
@@ -698,6 +703,7 @@
     setupTouch($('#touch', el), s);
   }
   UI.hudFrame = function () {
+    if (UI.derby) { if (UI.inRace) derbyHud(); return; }
     if (!UI.inRace || !Game.player) return;
     const p = Game.player, c = H.cache;
     if (UI.lesson) { lessonTick(); if (!UI.inRace) return; }
@@ -760,8 +766,8 @@
     if (e.target && /^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)) return; // typing in the shop search
     if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) e.preventDefault();
     keys.add(e.key.toLowerCase());
-    if ((e.key === 'Escape' || e.key === 'p') && UI.inRace) { if (Game.paused) resume(); else pause(); }
-    if (e.key.toLowerCase() === 'r' && UI.inRace && !Game.paused && !e.repeat) Game.rescue();
+    if ((e.key === 'Escape' || e.key === 'p') && UI.inRace) { if (sim().paused) resume(); else pause(); }
+    if (e.key.toLowerCase() === 'r' && UI.inRace && !UI.derby && !Game.paused && !e.repeat) Game.rescue();
   });
   window.addEventListener('keyup', (e) => keys.delete(e.key.toLowerCase()));
   window.addEventListener('blur', () => keys.clear());
@@ -780,7 +786,7 @@
     const boost = mk('boost', '<span class="ring"></span>BOOST'); hold(boost, 'boost'); H.boostBtn = boost;
     hold(mk('brake', 'BRAKE'), 'brake');
     H.itemBtn = null;
-    if (Game.items) { const ib = mk('itembtn', 'ITEM'); H.itemBtn = ib; ib.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); if (Game.player) CR.Extras.use(Game.player); }); }
+    if (Game.items && !UI.derby) { const ib = mk('itembtn', 'ITEM'); H.itemBtn = ib; ib.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); if (Game.player) CR.Extras.use(Game.player); }); }
     if (s.controls === 'buttons') {
       hold(mk('left', '&#9664;'), 'left'); hold(mk('right', '&#9654;'), 'right');
       if (!s.autoGas) hold(mk('gas', 'GAS'), 'gas');
@@ -851,9 +857,9 @@
       if (gp.buttons[1] && gp.buttons[1].pressed) brk = 1; if (gp.buttons[6]) brk = Math.max(brk, gp.buttons[6].value > 0.2 ? gp.buttons[6].value : 0);
       if ((gp.buttons[2] && gp.buttons[2].pressed) || (gp.buttons[5] && gp.buttons[5].pressed)) boost = true;
       if ((gp.buttons[3] && gp.buttons[3].pressed) || (gp.buttons[4] && gp.buttons[4].pressed)) item = true;
-      if (gp.buttons[9] && gp.buttons[9].pressed && !UI.padStart && UI.inRace) { UI.padStart = true; Game.paused ? resume() : pause(); }
+      if (gp.buttons[9] && gp.buttons[9].pressed && !UI.padStart && UI.inRace) { UI.padStart = true; sim().paused ? resume() : pause(); }
       if (gp.buttons[9] && !gp.buttons[9].pressed) UI.padStart = false;
-      if (gp.buttons[8] && gp.buttons[8].pressed && !UI.padBack && UI.inRace && !Game.paused) { UI.padBack = true; Game.rescue(); }
+      if (gp.buttons[8] && gp.buttons[8].pressed && !UI.padBack && UI.inRace && !UI.derby && !Game.paused) { UI.padBack = true; Game.rescue(); }
       if (gp.buttons[8] && !gp.buttons[8].pressed) UI.padBack = false;
     }
     I.steer = U.clamp(steer, -1, 1); I.throttle = thr; I.brake = brk; I.boost = boost; I.item = item;
@@ -862,6 +868,7 @@
 
   // ---------------------------------------------------------------------------
   function pause() {
+    if (UI.derby) return derbyPause();
     if (!UI.inRace || Game.paused || !Game.on) return;
     Game.paused = true; Audio.engine(0, 0, false, false); Audio.skid(0);
     const cupRace = !!(UI.last && UI.last.cup != null && Save.data.cupRun), left = cupRace ? retriesLeft(Save.data.cupRun) : 0;
@@ -878,8 +885,172 @@
       }, 'back');
     });
   }
-  function resume() { closeModal(); Game.paused = false; }
+  function resume() { closeModal(); sim().paused = false; }
   UI.pause = pause;
+
+  // ---------------------------------------------------------------------------
+  // Demolition Derby: its own arenas, simulation (CR.Derby), HUD and results. Your garage car, paint and
+  // upgrades come along; coins go into the same purse.
+  const KIND = { table: 'No walls', walls: 'Walled pit', ring: 'Tire bowl' };
+  // rivals: a shuffled crew, most of them in a random car so the whole collection turns up
+  function crew(n) {
+    return CR.RIVALS.slice().sort(() => Math.random() - 0.5).slice(0, n).map((r) => {
+      if (!CR.CARS.some((c) => c.id === r.car) || Math.random() < 0.6) { const c = CR.CARS[Math.floor(Math.random() * CR.CARS.length)]; return { ...r, car: c.id, paint: c.paints[0], acc: c.paints[1] }; }
+      return r;
+    });
+  }
+  const arenaThumbs = {};
+  function arenaThumb(i) { // the painted table, small, with the arena's boundary drawn on
+    if (arenaThumbs[i]) return arenaThumbs[i];
+    const A = CR.ARENAS[i], T = CR.THEMES[A.theme], w = 160, h = Math.round(160 * A.H / A.W);
+    const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+    const x = cv.getContext('2d'), big = document.createElement('canvas'); big.width = A.W / 4; big.height = A.H / 4;
+    T.ground(big.getContext('2d'), big.width, big.height, U.rng(A.seed));
+    x.drawImage(big, 0, 0, w, h);
+    x.strokeStyle = 'rgba(255,255,255,0.9)'; x.lineWidth = 3;
+    if (A.kind === 'ring') { x.beginPath(); x.arc(w / 2, h / 2, A.R / A.W * w, 0, 6.28); x.stroke(); }
+    else if (A.kind === 'walls') x.strokeRect(2, 2, w - 4, h - 4);
+    else { x.setLineDash([6, 5]); x.strokeStyle = '#ffd43b'; x.strokeRect(2, 2, w - 4, h - 4); }
+    return (arenaThumbs[i] = cv.toDataURL());
+  }
+  function derbyHelp(after) {
+    modal(`<h2>How to derby</h2><ul class="help">
+      <li><b>Last car standing wins.</b> Wreck the others, or knock them off the table, before they do it to you.</li>
+      <li><b>Hit them side-on.</b> Your front bumper is armored: ram with it. Hits to the sides and back do the most damage, so don't get T-boned.</li>
+      <li><b>Boost</b> into a hit for 40% more damage. Boost refills slowly, faster when you drift or land hits. A big side hit leaves a car skidding: that's when you shove it off.</li>
+      <li><b>Wrenches</b> repair 35% of your health, <b>batteries</b> fill your boost.</li>
+      <li><b>Heavier cars have more health</b> and shove harder. Your Engine, Tires and Turbo upgrades count here too.</li>
+      <li>After 2:30 it's <b>sudden death</b>: everyone slowly loses health.</li></ul>
+      <div class="actions"><button class="btn primary" id="m-ok">Let's smash</button></div>`, (m) => click($('#m-ok', m), () => { closeModal(); if (after) after(); }));
+  }
+  function renderArenas() {
+    const d = Save.data, S = d.settings, el = $('#scr-arenas');
+    const seg = (id, opts, val) => `<div class="seg" id="${id}">${opts.map(([v, l]) => `<button data-v="${v}" class="${String(val) === String(v) ? 'on' : ''}">${l}</button>`).join('')}</div>`;
+    el.innerHTML = `<div class="wrap">${topbar('Demolition Derby')}
+      <div class="panel setup"><div class="set"><div class="lbl"><b>Rivals</b><span>Last car standing wins. Pick an arena to start.</span></div>${seg('a-riv', [[3, '3'], [5, '5'], [7, '7'], [11, '11']], S.derbyRivals)}</div>
+        <div class="set"><div class="lbl"><b>Difficulty</b><span>Easy rivals hit softer and only one at a time picks on you</span></div>${seg('a-diff', [[0, 'Easy'], [1, 'Normal'], [2, 'Hard']], S.diff)}</div>
+        <div class="set"><div class="lbl"><b>How to derby</b><span>Ram side-on, boost into hits, push them off the edge</span></div><button class="btn small" id="a-help">Rules</button></div></div>
+      <div class="cards arenas">${CR.ARENAS.map((A, i) => { const b = d.derby[A.id] || {}; return `<div class="card ${i === (d.derbyArena || 0) ? 'sel' : ''}" data-i="${i}">
+        <img class="thumb" src="${arenaThumb(i)}" alt=""><span class="tag">${KIND[A.kind]}</span><h3>${A.name}</h3><div class="meta">${A.desc}</div>
+        <div class="meta gold">${b.wins ? `${b.wins} ${b.wins === 1 ? 'win' : 'wins'}` : 'Not won yet'}${b.wrecks ? ` · best ${b.wrecks} wrecks` : ''}</div></div>`; }).join('')}</div></div>`;
+    el.querySelectorAll('.card[data-i]').forEach((c) => click(c, () => { d.derbyArena = +c.dataset.i; Save.save(); if (!d.derbyHelp) { d.derbyHelp = true; Save.save(); derbyHelp(() => startDerby(d.derbyArena)); } else startDerby(d.derbyArena); }));
+    const segBind = (id, key) => el.querySelectorAll(`#${id} button`).forEach((b) => click(b, () => { S[key] = +b.dataset.v; Save.save(); applySettings(); el.querySelectorAll(`#${id} button`).forEach((x) => x.classList.toggle('on', x === b)); }));
+    segBind('a-riv', 'derbyRivals'); segBind('a-diff', 'diff');
+    click($('#a-help', el), () => derbyHelp());
+    bind(el); show('arenas');
+  }
+  function startDerby(arena) {
+    const d = Save.data;
+    closeModal();
+    UI.derby = true; UI.derbyArena = arena;
+    CR.Derby.start({ mode: 'derby', arena, player: { car: d.car, paint: Save.paintOf(d.car), up: Save.ups(d.car) }, rivals: crew(d.settings.derbyRivals), onEnd: (res) => setTimeout(() => endDerby(arena, res), 300) });
+    UI.inRace = true;
+    buildDerbyHUD(arena);
+    show('hud');
+    Audio.init(); Audio.setMusic(CR.ARENAS[arena].theme); Audio.setIntensity(0);
+  }
+  // back to the menus: the derby makes way for the attract race
+  function leaveDerby(then) { UI.derby = false; UI.inRace = false; teardownTouch(); CR.Derby.stop(); Audio.setMusic('menu'); then(); }
+  function endDerby(arena, res) {
+    UI.inRace = false; teardownTouch();
+    const d = Save.data, me = res.order.find((o) => o.isPlayer), N = res.order.length, win = res.place === 1;
+    const lines = [[`${U.ordinal(res.place)} of ${N}`, Math.round((N - res.place) / Math.max(1, N - 1) * (40 + N * 10))]];
+    if (me.wrecks) lines.push([`${me.wrecks} ${me.wrecks === 1 ? 'car' : 'cars'} wrecked`, me.wrecks * 40]);
+    if (me.dealt) lines.push([`${me.dealt} damage dealt`, Math.round(me.dealt * 0.3)]);
+    if (win) lines.push(['Last one standing', 100 + N * 15]);
+    const coins = lines.reduce((s, l) => s + l[1], 0);
+    d.stats.races++; d.stats.derbies++; if (win) { d.stats.derbyWins++; d.stats.wins++; } d.stats.wrecks += me.wrecks;
+    const id = CR.ARENAS[arena].id, b = d.derby[id] || (d.derby[id] = { wins: 0, wrecks: 0 });
+    if (win) b.wins++; const best = me.wrecks > b.wrecks; if (best) b.wrecks = me.wrecks;
+    Save.addCoins(coins);
+    Audio.setMusic('menu'); Audio.setIntensity(0);
+    const el = $('#scr-results');
+    const how = (o) => o.how === 'winner' ? '<span class="gold">Winner</span>' : o.how === 'survived' ? 'Still running' : `${o.how === 'fell' ? 'Fell off' : 'Wrecked'}${o.by ? ` by ${o.by === 'You' ? 'you' : o.by}` : ''}`;
+    const rows = res.order.map((o, i) => `<tr class="${o.isPlayer ? 'me' : ''}"><td>${i + 1}</td><td><span class="chip" style="background:${o.paint}"></span>${o.name}</td><td class="muted small">${o.car}</td>
+      <td class="num">${o.wrecks}</td><td class="num">${o.dealt}</td><td class="small">${how(o)}</td></tr>`).join('');
+    el.innerHTML = `<div class="wrap res-wrap"><div class="panel res"><div class="r-head"><div class="bigplace">${U.ordinal(res.place)}</div>
+      <div class="reward">${win ? 'Last car standing!' : me.how === 'fell' ? 'Over the edge' : res.place <= 3 ? 'Survived the carnage' : 'Scrapped'}</div><p class="muted small" style="margin:4px 0 0;text-align:center">${CR.ARENAS[arena].name} · ${U.fmtTime(res.time)}${best && me.wrecks ? ' · most wrecks here yet' : ''}</p></div>
+      <div class="r-main"><table class="table"><tr><th>#</th><th>Driver</th><th>Car</th><th class="num">Wrecks</th><th class="num">Dmg</th><th></th></tr>${rows}</table></div>
+      <div class="r-foot"><table class="table payout">${lines.map(([t, c]) => `<tr><td class="muted small">${t}</td><td class="num gold">+${c}</td></tr>`).join('')}</table>
+      <p class="reward">+${coins} <span class="coin"></span></p>
+      <div class="actions"><button class="btn primary" id="r-again">Smash again</button><button class="btn" id="r-arenas">Arenas</button><button class="btn ghost" id="r-menu">Menu</button></div></div>
+    </div></div>`;
+    show('results');
+    click($('#r-again', el), () => startDerby(arena));
+    click($('#r-arenas', el), () => leaveDerby(renderArenas));
+    click($('#r-menu', el), () => leaveDerby(renderMenu), 'back');
+    if (win) Audio.play('win'); else if (res.place === N) Audio.play('lose');
+  }
+  function buildDerbyHUD(arena) {
+    const el = $('#scr-hud'), D = CR.Derby;
+    el.innerHTML = `<div class="touch" id="touch"></div><div class="hp-layer" id="h-tags"></div>
+      <div class="hud-top">
+        <div class="hud-box dhud"><div class="hud-left" id="h-left">8<small>LEFT</small></div>
+          <div class="hpbar" id="h-hpbar"><i id="h-hp"></i><span id="h-hpn">100</span></div>
+          <div class="boostbar" id="h-bb"><i id="h-boost"></i></div><div class="hud-time" id="h-time">0:00</div></div>
+        <span class="spacer"></span><canvas class="minimap" id="h-map"></canvas><div class="hud-pause" id="h-pause" role="button" aria-label="Pause"></div>
+      </div>
+      <div class="hud-spec hidden" id="h-spec"><span id="h-spect">Spectating</span><button class="btn small" id="h-skip">Skip to results</button></div>
+      <div class="hud-song" id="h-song">&#9834; ${Audio.songName(CR.ARENAS[arena].theme)}</div>
+      <div class="hud-msg" id="h-msg"></div>`;
+    for (const k of Object.keys(H)) delete H[k];
+    Object.assign(H, { left: $('#h-left', el), hp: $('#h-hp', el), hpn: $('#h-hpn', el), hpbar: $('#h-hpbar', el), boost: $('#h-boost', el), bb: $('#h-bb', el), time: $('#h-time', el), msg: $('#h-msg', el), spec: $('#h-spec', el), spect: $('#h-spect', el), tags: $('#h-tags', el), cache: {} });
+    H.map = $('#h-map', el); const mm = D.world.minimap; H.map.width = mm.canvas.width; H.map.height = mm.canvas.height; H.mctx = H.map.getContext('2d');
+    // a little health bar floating over every car
+    H.tagEls = D.cars.map((c) => { const t = document.createElement('div'); t.className = 'hp-tag' + (c.isPlayer ? ' me' : ''); t.innerHTML = `<b>${c.isPlayer ? 'YOU' : c.name}</b><i><u></u></i>`; H.tags.appendChild(t); return t; });
+    $('#h-pause', el).addEventListener('pointerdown', (e) => { e.stopPropagation(); pause(); });
+    $('#h-skip', el).addEventListener('click', (e) => { e.stopPropagation(); Audio.play('ui'); D.skip(); });
+    D.onMsg = (text, dur, kind) => {
+      const m = document.createElement('div'); m.className = kind || ''; m.textContent = text;
+      H.msg.innerHTML = ''; H.msg.appendChild(m); clearTimeout(H.mt); H.mt = setTimeout(() => { if (m.parentNode) m.remove(); }, dur * 1000);
+    };
+    setupTouch($('#touch', el), Save.data.settings);
+  }
+  function derbyHud() {
+    const D = CR.Derby, p = D.player, c = H.cache;
+    if (!p || !c) return;
+    const left = D.alive().length;
+    if (c.left !== left) { c.left = left; H.left.innerHTML = `${left}<small>LEFT</small>`; }
+    const hf = Math.max(0, p.hp / p.st.hp), hp = Math.ceil(Math.max(0, p.hp));
+    if (c.hp !== hp) { c.hp = hp; H.hp.style.width = hf * 100 + '%'; H.hpn.textContent = hp; H.hpbar.className = 'hpbar' + (hf < 0.25 ? ' crit' : hf < 0.55 ? ' low' : ''); }
+    const t = U.fmtTime(D.raceT).replace(/\.\d+$/, '');
+    if (c.t !== t) { c.t = t; H.time.textContent = t; H.time.classList.toggle('sd', !!D.sudden); }
+    const b = Math.round(p.boost * 100);
+    if (c.b !== b) { c.b = b; H.boost.style.width = b + '%'; H.bb.classList.toggle('full', b >= 99); if (H.boostBtn) H.boostBtn.style.setProperty('--p', b + '%'); }
+    const dead = p.wrecked || p.out;
+    if (c.dead !== dead) { c.dead = dead; H.spec.classList.toggle('hidden', !dead); }
+    if (dead) { const f = D.focus(), s = f && f !== p ? `Spectating ${f.name}` : 'Spectating'; if (c.spec !== s) { c.spec = s; H.spect.textContent = s; } }
+    const W = window.innerWidth, Hh = window.innerHeight;
+    D.cars.forEach((car, i) => {
+      const el = H.tagEls[i]; if (!el) return;
+      const pr = R.project(car.x, car.y, car.z + 30);
+      if (car.out || car.wrecked || D.state === 'count' || pr[2] < 0 || Math.abs(pr[0]) > 1.1 || Math.abs(pr[1]) > 1.1) { if (!el.hidden) el.hidden = true; return; }
+      if (el.hidden) el.hidden = false;
+      el.style.transform = `translate(${((pr[0] * 0.5 + 0.5) * W).toFixed(1)}px, ${((0.5 - pr[1] * 0.5) * Hh).toFixed(1)}px)`;
+      const f = Math.round(Math.max(0, car.hp / car.st.hp) * 100);
+      if (el._f !== f) { el._f = f; const u = el.querySelector('u'); u.style.width = f + '%'; u.style.background = f < 25 ? '#ff4d6d' : f < 55 ? '#ffb84d' : '#69f0ae'; }
+    });
+    const mm = D.world.minimap, x = H.mctx, s = mm.scale;
+    x.clearRect(0, 0, H.map.width, H.map.height); x.drawImage(mm.canvas, 0, 0);
+    for (const pk of D.pickups) { x.fillStyle = pk.type === 'wrench' ? '#69f0ae' : '#ffd43b'; x.fillRect(pk.x * s - 2, pk.y * s - 2, 4, 4); }
+    for (const car of D.cars) {
+      if (car.out) continue;
+      x.fillStyle = car.wrecked ? '#444' : car.paint; x.strokeStyle = car.isPlayer ? '#3ff0ff' : '#000'; x.lineWidth = car.isPlayer ? 2 : 1;
+      x.beginPath(); x.arc(car.x * s, car.y * s, car.isPlayer ? 4.5 : 3.5, 0, 6.28); x.fill(); x.stroke();
+    }
+  }
+  function derbyPause() {
+    const D = CR.Derby;
+    if (!UI.inRace || D.paused || !D.on) return;
+    D.paused = true; Audio.engine(0, 0, false, false); Audio.skid(0);
+    modal(`<h2>Paused</h2><div class="actions" style="flex-direction:column"><button class="btn primary" id="p-res">Resume</button><button class="btn" id="p-rst">Restart</button><button class="btn" id="p-help">How to derby</button><button class="btn ghost" id="p-quit">Quit to menu</button></div>`, (m) => {
+      click($('#p-res', m), resume);
+      click($('#p-rst', m), () => { closeModal(); D.paused = false; startDerby(UI.derbyArena); });
+      click($('#p-help', m), () => derbyHelp(() => { D.paused = false; derbyPause(); }));
+      click($('#p-quit', m), () => { closeModal(); leaveDerby(renderMenu); }, 'back');
+    });
+  }
+  UI.startDerby = startDerby;
 
   UI.renderTitle = renderTitle; UI.renderMenu = renderMenu; UI.show = show; UI.startRace = startRace; UI.startTutorial = startTutorial; UI.renderGarage = renderGarage; UI.renderShop = renderShop; UI.renderRecords = renderRecords; UI.renderCupRun = renderCupRun; UI.renderTracks = renderTracks; UI.renderCups = renderCups; UI.renderSettings = renderSettings;
   // ---------------------------------------------------------------------------
@@ -895,7 +1066,7 @@
   window.addEventListener('popstate', () => { if (handleBack()) trap(); });
   function handleBack() {
     if (!$('#rotate').classList.contains('hidden')) return true;
-    if (!$('#modal').classList.contains('hidden')) { if (!(UI.inRace && Game.paused)) { closeModal(); Audio.play('back'); } return true; }
+    if (!$('#modal').classList.contains('hidden')) { if (!(UI.inRace && sim().paused)) { closeModal(); Audio.play('back'); } return true; }
     if (UI.inRace) { pause(); return true; }
     if (UI.screen === 'menu' || UI.screen === 'title') {
       if (UI.exitArm && Date.now() - UI.exitArm < 2500) { UI.exitArm = 0; try { history.back(); } catch (e) { /* first entry */ } return false; }
@@ -906,6 +1077,6 @@
     return true;
   }
 
-  UI.isSafe = () => !UI.inRace && ['title', 'menu', 'results', 'standings', 'cups', 'tracks', 'garage', 'shop', 'records', 'settings'].includes(UI.screen);
+  UI.isSafe = () => !UI.inRace && ['title', 'menu', 'results', 'standings', 'cups', 'tracks', 'arenas', 'garage', 'shop', 'records', 'settings'].includes(UI.screen);
   CR.UI = UI;
 })(window.CR);
