@@ -516,7 +516,7 @@
   function pickupsStep(dt) {
     if (Game.state !== 'fight') return;
     Game.pickT -= dt;
-    const max = Game.cars.length > 6 ? 3 : 2;
+    const max = Math.min(6, 2 + Math.floor(Game.cars.length / 6)); // more wrenches and batteries about in a big field
     if (Game.pickT <= 0) {
       Game.pickT = 6 + Math.random() * 4;
       if (Game.pickups.length < max) {

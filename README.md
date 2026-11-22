@@ -75,8 +75,10 @@ does it on demand.
   more, and a big side hit leaves a car skidding for a moment. Hits knock voxels off the car and
   scorch the paint; hurt cars smoke and burn, wrecks stay in the arena. Wrenches repair, batteries
   fill boost, and after 2:30 sudden death drains everyone. Your garage car, paint and Engine / Tires /
-  Turbo upgrades come along; 3 to 11 rivals. Tuning numbers are at the top of `js/derby.js` and in
-  `collideCars` there; arenas are the `ARENAS` list in `js/arena.js`.
+  Turbo upgrades come along. Pick a field of 4, 8, 12, 20 or 30 cars on the arena screen, where the
+  arena you pick is shown large with its description and your record there. In a big field only the cars
+  near you keep their name labels, and payouts stop growing past 16 cars. Tuning numbers are at the top
+  of `js/derby.js` and in `collideCars` there; arenas are the `ARENAS` list in `js/arena.js`.
 - **Garage:** the cars you own. Pick one to drive, repaint it (10 colors) and buy Engine / Tires /
   Turbo upgrades (5 levels each) with coins from races.
 - **Car Shop:** 65 cars to collect, from the Zip hatchback, Monster truck and Toy Tank to a shark, a
@@ -182,7 +184,7 @@ index.html              app shell
 manifest.webmanifest    PWA manifest
 sw.js                   service worker (offline cache + updates)
 css/style.css           UI styles
-css/derby.css           Demolition Derby menu card, arena list, HUD
+css/derby.css           Demolition Derby menu banner, arena screen, HUD
 js/util.js              namespace, maths, matrices
 js/gl.js                WebGL helpers, mesh builder, voxel mesher (with ambient occlusion)
 js/models.js            voxel cars and props, pixel sprite atlas, menu car icons

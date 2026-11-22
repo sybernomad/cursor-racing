@@ -1,20 +1,87 @@
-/* Cursor Racing — Demolition Derby: the fourth play card on the main menu, the arena list, derby HUD and results. */
+/* Cursor Racing — Demolition Derby: its banner on the main menu, the arena screen, derby HUD and results. */
 
-/* main menu: a fourth card next to Quick Race, Time Trial and Knockout */
-.ac-orange { --ac: #ff922b; }
-#m-derby { grid-area: derby; }
-.menu { grid-template-areas: "top" "champ" "quick" "tt" "ko" "derby" "car" "more"; }
+/* main menu: Demolition Derby is the second headliner, beside the Championship banner */
+.menu { grid-template-areas: "top" "champ" "derby" "quick" "tt" "ko" "car" "more"; }
+.menu-derby { grid-area: derby; grid-template-columns: auto minmax(0, 1fr) auto; column-gap: 12px; row-gap: 2px; align-items: center; align-content: center; padding: 12px 14px;
+  background: linear-gradient(135deg, #ff7a3a 0%, #d9363e 60%, #8a1f3d 100%); border-color: rgba(255, 190, 150, .75); box-shadow: 0 10px 30px rgba(230, 70, 50, .28); color: #fff4ec; }
+.menu-derby:hover { background: linear-gradient(135deg, #ff8a4a 0%, #e4434a 60%, #962649 100%); border-color: #ffd6b8; }
+.menu-derby > :not(.mart) { position: relative; z-index: 1; }
+.menu-derby .mart { opacity: .22; -webkit-mask-image: linear-gradient(90deg, transparent, #000 60%); mask-image: linear-gradient(90deg, transparent, #000 60%); }
+.menu-derby .ico { grid-row: 1 / span 3; width: 42px; height: 42px; border-radius: 13px; font-size: 22px; background: rgba(255, 255, 255, .2); }
+.menu-derby .kick { display: block; grid-column: 2; opacity: .75; }
+.menu-derby .ttl { grid-column: 2; font-size: 20px; text-transform: uppercase; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.menu-derby .sub { grid-column: 2; color: rgba(255, 240, 230, .85); -webkit-line-clamp: 1; }
+.menu-derby .cta { display: inline-flex; grid-column: 3; grid-row: 1 / span 3; padding: 9px 16px; border-radius: 999px; background: #2a0b10; color: #ffb38a;
+  font-family: var(--disp); font-weight: 800; font-size: 13px; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
 @media (orientation: landscape) {
-  .menu { grid-template-columns: 236px repeat(4, minmax(0, 1fr)); grid-template-areas: "top champ champ champ champ" "more quick tt ko derby" "more car car car car"; }
+  .menu { grid-template-areas: "top champ champ derby" "more quick tt ko" "more car car car"; }
+  /* sideways the derby banner is one column wide: title and Smash stacked */
+  .menu-derby { grid-template-columns: auto minmax(0, 1fr); }
+  .menu-derby .ttl { font-size: 17px; }
+  .menu-derby .cta { grid-column: 2; grid-row: auto; justify-self: start; margin-top: 4px; padding: 7px 14px; font-size: 12px; }
 }
 @media (orientation: landscape) and (max-width: 780px) {
-  .menu { grid-template-columns: 196px repeat(4, minmax(0, 1fr)); }
+  .menu-derby { padding: 10px 12px; column-gap: 10px; }
+  .menu-derby .ico { width: 34px; height: 34px; font-size: 18px; border-radius: 10px; }
+  .menu-derby .ttl { font-size: 15px; }
+  .menu-derby .cta { padding: 6px 11px; font-size: 11px; }
+  /* the race cards are narrower with the derby sharing the top row: keep each card's first chip only */
+  .menu-play .mchips { flex-wrap: nowrap; }
+  .menu-play .mchips i:nth-child(n+2) { display: none; }
+  .menu-champ .cupdots b { white-space: nowrap; }
+}
+/* the narrowest sideways phones: the derby banner drops its icon so the words fit */
+@media (orientation: landscape) and (max-width: 700px) {
+  .menu-derby { grid-template-columns: minmax(0, 1fr); }
+  .menu-derby .ico { display: none; }
+  .menu-derby .kick, .menu-derby .ttl, .menu-derby .sub, .menu-derby .cta { grid-column: 1; }
+  .menu-derby .kick { letter-spacing: .1em; }
+}
+@media (orientation: landscape) and (max-height: 380px) {
+  .menu-derby { padding-top: 8px; padding-bottom: 8px; row-gap: 1px; }
 }
 
-/* arena list */
-.setup { margin-bottom: 12px; }
-.cards.arenas { grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); }
-.cards.arenas .thumb { object-fit: cover; image-rendering: auto; }
+/* arena screen: a list of arenas, and the picked one shown large with the settings and Smash */
+.apick { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); }
+.apick-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; min-height: 0; }
+.apick-tile { appearance: none; display: grid; grid-template-columns: 54px minmax(0, 1fr); align-items: center; gap: 8px; padding: 4px; min-height: 0; border-radius: 10px;
+  border: 1px solid var(--line); cursor: pointer; color: var(--text); text-align: left; background: rgba(20, 18, 40, .78); transition: border-color .15s, background .15s; }
+.apick-tile:hover { border-color: var(--line2); }
+.apick-tile img { width: 54px; height: 38px; object-fit: cover; border-radius: 6px; }
+.apick-tile b { font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.apick-tile.sel { border-color: #ff922b; background: rgba(90, 40, 30, .85); box-shadow: 0 0 0 1px rgba(255, 146, 43, .4); }
+.ashow { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; padding: 10px; min-height: 0; }
+.ashow-pic { position: relative; border-radius: 10px; background: rgba(0, 0, 0, .28) center / contain no-repeat; min-height: 140px; }
+.ashow-pic .tag { position: absolute; top: 8px; right: 8px; font-size: 9px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; padding: 3px 6px; border-radius: 5px; background: rgba(0, 0, 0, .55); color: var(--gold); }
+.ashow-info { display: flex; flex-direction: column; gap: 6px; min-height: 0; min-width: 0; }
+.ashow-info h2 { font-size: 18px; font-style: italic; text-transform: uppercase; }
+.ashow-info p { margin: 0; font-size: 12px; color: var(--muted); line-height: 1.35; }
+.ashow-info p.gold { color: var(--gold); }
+.ashow-row { display: flex; flex-direction: column; gap: 3px; }
+.ashow-row > span { font-size: 10px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.ashow-row .seg { align-self: flex-start; }
+.ashow-row .seg button { padding: 6px 9px; font-size: 11px; }
+.ashow-act { display: flex; gap: 8px; margin-top: auto; padding-top: 4px; } .ashow-act .btn { white-space: nowrap; } .ashow-act .primary { flex: 1; }
+@media (orientation: landscape) {
+  /* sideways it all fits on one screen: list left, showcase right */
+  .arena-wrap { display: flex; flex-direction: column; height: calc(100dvh - 28px - var(--safe-t) - var(--safe-b)); max-height: 560px; }
+  .arena-wrap .topbar { margin-bottom: 10px; }
+  .apick { flex: 1; min-height: 0; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); }
+  .apick-list { grid-template-rows: repeat(4, minmax(0, 1fr)); }
+  .apick-tile img { height: 100%; max-height: 38px; }
+  .ashow { grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); }
+  .ashow-pic { min-height: 0; }
+}
+@media (orientation: landscape) and (max-width: 780px) {
+  .apick { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 10px; }
+  .apick-tile { grid-template-columns: 38px minmax(0, 1fr); gap: 6px; }
+  .apick-tile img { width: 38px; max-height: 30px; }
+  .apick-tile b { font-size: 11.5px; }
+}
+@media (orientation: landscape) and (max-height: 380px) {
+  .ashow-info { gap: 4px; } .ashow-info h2 { font-size: 16px; } .ashow-info p { font-size: 11px; }
+  .ashow-row .seg button { padding: 5px 7px; }
+}
 
 /* results payout */
 .payout { margin-top: 4px; font-size: 13px; } .payout td { padding: 4px 8px; }
@@ -41,3 +108,11 @@
 .hp-tag u { display: block; height: 100%; width: 100%; background: #69f0ae; }
 .hp-tag.me b { color: var(--cyan); }
 .hp-tag.me i { border-color: rgba(63, 240, 255, .6); }
+
+/* big fields: cars away from you lose their name and shrink to a bar */
+.hp-tag.far { width: 28px; margin: -12px 0 0 -14px; }
+.hp-tag.far b { display: none; }
+.hp-tag.far i { height: 4px; opacity: .85; }
+/* results with more than 12 cars: tighter rows */
+.table.dense td, .table.dense th { padding-top: 3px; padding-bottom: 3px; font-size: 12px; }
+.table.dense .chip { width: 9px; height: 9px; }

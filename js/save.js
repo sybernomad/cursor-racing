@@ -6,7 +6,7 @@
   const fresh = () => ({
     v: 1, coins: 150, car: 'zip', paint: {}, owned: { zip: true }, up: {},
     cups: { rookie: { unlocked: true, best: 0 } }, best: {}, cupRun: null,
-    settings: { controls: 'fixed', ctl2: true, orient: 'landscape', orient2: true, autoGas: true, diff: 0, quality: 'medium', dof: true, bloom: true, shadows: true, shake: true, vib: true, sfx: 0.8, music: 0.5, laps: 3, rivals: 5, koRivals: 3, items: true, cupRivals: 3, cupLaps: 3, cupItems: false, hazards: true, cupHazards: true, derbyRivals: 5 },
+    settings: { controls: 'fixed', ctl2: true, orient: 'landscape', orient2: true, autoGas: true, diff: 0, quality: 'medium', dof: true, bloom: true, shadows: true, shake: true, vib: true, sfx: 0.8, music: 0.5, laps: 3, rivals: 5, koRivals: 3, items: true, cupRivals: 3, cupLaps: 3, cupItems: false, hazards: true, cupHazards: true, derbyRivals: 7 },
     stats: { races: 0, wins: 0, podiums: 0, cups: 0, koWins: 0, coinsEarned: 0, derbies: 0, derbyWins: 0, wrecks: 0 },
     seenHelp: false, tutorialDone: false,
     derby: {}, derbyArena: 0, derbyHelp: false, // Demolition Derby: per-arena { wins, wrecks }, last arena, rules seen
@@ -33,6 +33,8 @@
       if (b.tt == null) { try { const g = JSON.parse(localStorage.getItem('cr-ghost-' + k)); if (g && typeof g.time === 'number') b.tt = g.time; } catch (e) { /* no ghost */ } }
       delete b.race; b.v2 = true;
     }
+    // 1.11: the derby field is picked by total cars (4, 8, 12, 20 or 30); older saves move to the nearest size
+    { const opts = [3, 7, 11, 19, 29], r = d.settings.derbyRivals; if (!opts.includes(r)) d.settings.derbyRivals = opts.reduce((a, b) => (Math.abs(b - r) <= Math.abs(a - r) ? b : a)); }
     S.data = d; return d;
   };
   S.save = function () { try { localStorage.setItem(KEY, JSON.stringify(S.data)); } catch (e) { /* storage full or blocked */ } };

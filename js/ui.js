@@ -87,8 +87,9 @@
     if (!Save.data.seenHelp) { Save.data.seenHelp = true; Save.save(); setTimeout(() => modal(`<h2>Welcome to Cursor Racing</h2><p class="muted">New here? A two-minute driving lesson covers steering, drifting, boost and power-ups, and pays 100 coins.</p><div class="actions"><button class="btn ghost" id="m-skip">Skip</button><button class="btn primary" id="m-tut">Driving lesson</button></div>`, (m) => { click($('#m-skip', m), closeModal, 'back'); click($('#m-tut', m), () => { closeModal(); startTutorial(); }); }), 400); }
   }
 
-  // Main menu. Sideways: a rail on the left (logo, coins and the garage screens), the Championship banner,
-  // three race cards with live info over a sketch of a track, and your car. Upright: the same in one column.
+  // Main menu. Sideways: a rail on the left (logo, coins and the garage screens), the two headliners on top
+  // (Championship and Demolition Derby), three race cards with live info over a sketch of a track, and your car.
+  // Upright: the same in one column.
   function menuHTML(d, run, won) {
     const S = d.settings, cup = run && CR.CUPS.find((c) => c.id === run.cup);
     const chips = (a) => `<span class="mchips">${a.map((x) => `<i>${x}</i>`).join('')}</span>`;
@@ -104,10 +105,10 @@
       <header class="menu-top"><div class="logo menu-logo"><span class="cur"></span>Cursor Racing</div><span class="menu-stats">${d.stats.races} races · ${d.stats.wins} wins · v${UI.version}</span>${coinsHTML()}
         ${UI.install ? '<button class="btn ghost small menu-inst" id="m-inst">📲 Install the game</button>' : ''}${UI.iosHint ? '<button class="btn ghost small menu-inst" id="m-ios">📲 Add to your home screen</button>' : ''}</header>
       <button class="mtile menu-champ" id="m-champ"><span class="ico">🏆</span><span class="kick">${run ? 'In progress' : 'Career'}</span><span class="ttl">Championship</span><span class="sub">${run ? `Continue ${cup.name}: race ${run.race + 1} of ${cup.races.length}` : 'Win cups to unlock new cars and mirrored tracks'}</span><span class="cupdots">${CR.CUPS.map((c) => `<i class="g${(d.cups[c.id] || {}).best || 0}"></i>`).join('')}<b>${won} / ${CR.CUPS.length} cups</b></span><span class="cta">${run ? 'Continue' : 'Play'} ›</span></button>
-      ${tile('m-quick', '🏁', 'Quick Race', 'Up to 19 rivals on any open track', 'menu-play ac-red', art(open[open.length - 1]) + stat(d.stats.wins, d.stats.wins === 1 ? 'win' : 'wins') + chips([`${S.laps} ${S.laps === 1 ? 'lap' : 'laps'}`, `${S.rivals} ${S.rivals === 1 ? 'rival' : 'rivals'}`, items]))}
-      ${tile('m-tt', '⏱️', 'Time Trial', 'Race your own ghost', 'menu-play ac-cyan', art(open[Math.min(1, open.length - 1)]) + stat(ghosts, ghosts === 1 ? 'ghost saved' : 'ghosts saved') + chips([`${open.length} ${open.length === 1 ? 'track' : 'tracks'} open`, 'Ghost of your best lap']))}
-      ${tile('m-ko', '💥', 'Knockout', "Fall off screen and you're out", 'menu-play ac-pink', art(open[0]) + stat(d.stats.koWins, d.stats.koWins === 1 ? 'win' : 'wins') + chips([`${S.koRivals} rivals`, 'First to 4', items]))}
-      ${tile('m-derby', '🔥', 'Demolition Derby', 'Last car standing. Wreck them or shove them off', 'menu-play ac-orange', `<span class="mart" style="background-image:url(${arenaThumb(d.derbyArena || 0)})"></span>` + stat(d.stats.derbyWins, d.stats.derbyWins === 1 ? 'win' : 'wins') + chips([`${S.derbyRivals} rivals`, `${CR.ARENAS.length} arenas`]))}
+      <button class="mtile menu-derby" id="m-derby"><span class="mart" style="background-image:url(${arenaThumb(d.derbyArena || 0)})"></span><span class="ico">🔥</span><span class="kick">Demolition</span><span class="ttl">Derby</span><span class="sub">${S.derbyRivals + 1} cars · ${d.stats.derbyWins} ${d.stats.derbyWins === 1 ? 'win' : 'wins'}</span><span class="cta">Smash ›</span></button>
+      ${tile('m-quick', '🏁', 'Quick Race', 'Up to 20 cars on any open track', 'menu-play ac-red', art(open[open.length - 1]) + stat(d.stats.wins, d.stats.wins === 1 ? 'win' : 'wins') + chips([`${S.laps} ${S.laps === 1 ? 'lap' : 'laps'}`, `${S.rivals + 1} cars`, items]))}
+      ${tile('m-tt', '⏱️', 'Time Trial', 'Race your own ghost', 'menu-play ac-cyan', art(open[Math.min(1, open.length - 1)]) + stat(ghosts, ghosts === 1 ? 'ghost saved' : 'ghosts saved') + chips([`${open.length} ${open.length === 1 ? 'track' : 'tracks'} open`, 'Best-lap ghost']))}
+      ${tile('m-ko', '💥', 'Knockout', "Fall off screen and you're out", 'menu-play ac-pink', art(open[0]) + stat(d.stats.koWins, d.stats.koWins === 1 ? 'win' : 'wins') + chips([`${S.koRivals + 1} cars`, 'First to 4']))}
       <button class="menu-car" id="m-car"><img src="${carThumb(d.car)}" alt=""><span class="menu-car-t"><span class="kick">Your car</span><b>${cd.name}</b></span><span class="menu-car-u">${[['Engine', up.eng], ['Tires', up.grip], ['Turbo', up.boost]].map(([n, l]) => `<span>${n}${pips(l)}</span>`).join('')}</span><span class="cta2">Change ›</span></button>
       <nav class="menu-more">
         ${tile('m-garage', '🔧', 'Garage', 'Your cars, paint and upgrades')}
@@ -893,8 +894,10 @@
   // upgrades come along; coins go into the same purse.
   const KIND = { table: 'No walls', walls: 'Walled pit', ring: 'Tire bowl' };
   // rivals: a shuffled crew, most of them in a random car so the whole collection turns up
+  // The 20 racing rivals plus a few who only turn up to smash things, so a field can hold 30 cars.
+  const DERBY_ONLY = ['Crash', 'Dent', 'Rivet', 'Scrap', 'Bumper', 'Clank', 'Junk', 'Banger', 'Smash', 'Tow'].map((name) => ({ name, car: '' }));
   function crew(n) {
-    return CR.RIVALS.slice().sort(() => Math.random() - 0.5).slice(0, n).map((r) => {
+    return CR.RIVALS.concat(DERBY_ONLY).sort(() => Math.random() - 0.5).slice(0, n).map((r) => {
       if (!CR.CARS.some((c) => c.id === r.car) || Math.random() < 0.6) { const c = CR.CARS[Math.floor(Math.random() * CR.CARS.length)]; return { ...r, car: c.id, paint: c.paints[0], acc: c.paints[1] }; }
       return r;
     });
@@ -923,17 +926,22 @@
       <li>After 2:30 it's <b>sudden death</b>: everyone slowly loses health.</li></ul>
       <div class="actions"><button class="btn primary" id="m-ok">Let's smash</button></div>`, (m) => click($('#m-ok', m), () => { closeModal(); if (after) after(); }));
   }
+  // The arena screen: a list of the eight arenas on the left; the one you pick is shown large on the right with its
+  // description, your record there, the field size, difficulty and a Smash button.
   function renderArenas() {
     const d = Save.data, S = d.settings, el = $('#scr-arenas');
     const seg = (id, opts, val) => `<div class="seg" id="${id}">${opts.map(([v, l]) => `<button data-v="${v}" class="${String(val) === String(v) ? 'on' : ''}">${l}</button>`).join('')}</div>`;
-    el.innerHTML = `<div class="wrap">${topbar('Demolition Derby')}
-      <div class="panel setup"><div class="set"><div class="lbl"><b>Rivals</b><span>Last car standing wins. Pick an arena to start.</span></div>${seg('a-riv', [[3, '3'], [5, '5'], [7, '7'], [11, '11']], S.derbyRivals)}</div>
-        <div class="set"><div class="lbl"><b>Difficulty</b><span>Easy rivals hit softer and only one at a time picks on you</span></div>${seg('a-diff', [[0, 'Easy'], [1, 'Normal'], [2, 'Hard']], S.diff)}</div>
-        <div class="set"><div class="lbl"><b>How to derby</b><span>Ram side-on, boost into hits, push them off the edge</span></div><button class="btn small" id="a-help">Rules</button></div></div>
-      <div class="cards arenas">${CR.ARENAS.map((A, i) => { const b = d.derby[A.id] || {}; return `<div class="card ${i === (d.derbyArena || 0) ? 'sel' : ''}" data-i="${i}">
-        <img class="thumb" src="${arenaThumb(i)}" alt=""><span class="tag">${KIND[A.kind]}</span><h3>${A.name}</h3><div class="meta">${A.desc}</div>
-        <div class="meta gold">${b.wins ? `${b.wins} ${b.wins === 1 ? 'win' : 'wins'}` : 'Not won yet'}${b.wrecks ? ` · best ${b.wrecks} wrecks` : ''}</div></div>`; }).join('')}</div></div>`;
-    el.querySelectorAll('.card[data-i]').forEach((c) => click(c, () => { d.derbyArena = +c.dataset.i; Save.save(); if (!d.derbyHelp) { d.derbyHelp = true; Save.save(); derbyHelp(() => startDerby(d.derbyArena)); } else startDerby(d.derbyArena); }));
+    const rec = (A) => { const b = d.derby[A.id] || {}; return b.wins ? `${b.wins} ${b.wins === 1 ? 'win' : 'wins'}${b.wrecks ? ` · best ${b.wrecks} wrecks` : ''}` : 'Not won yet'; };
+    const i = Math.min(d.derbyArena || 0, CR.ARENAS.length - 1), A = CR.ARENAS[i];
+    el.innerHTML = `<div class="wrap arena-wrap">${topbar('Demolition Derby')}<div class="apick">
+      <div class="apick-list">${CR.ARENAS.map((B, k) => `<button class="apick-tile ${k === i ? 'sel' : ''}" data-i="${k}"><img src="${arenaThumb(k)}" alt=""><b>${B.name}</b></button>`).join('')}</div>
+      <div class="panel ashow"><div class="ashow-pic" style="background-image:url(${arenaThumb(i)})"><span class="tag">${KIND[A.kind]}</span></div>
+        <div class="ashow-info"><h2>${A.name}</h2><p>${A.desc}</p><p class="gold small">${rec(A)}</p>
+          <div class="ashow-row"><span>Cars</span>${seg('a-riv', [[3, '4'], [7, '8'], [11, '12'], [19, '20'], [29, '30']], S.derbyRivals)}</div>
+          <div class="ashow-row"><span>Difficulty</span>${seg('a-diff', [[0, 'Easy'], [1, 'Normal'], [2, 'Hard']], S.diff)}</div>
+          <div class="ashow-act"><button class="btn ghost small" id="a-help">Rules</button><button class="btn primary" id="a-go">Smash ›</button></div></div></div></div></div>`;
+    el.querySelectorAll('.apick-tile').forEach((b) => click(b, () => { d.derbyArena = +b.dataset.i; Save.save(); renderArenas(); }));
+    click($('#a-go', el), () => { if (!d.derbyHelp) { d.derbyHelp = true; Save.save(); derbyHelp(() => startDerby(i)); } else startDerby(i); });
     const segBind = (id, key) => el.querySelectorAll(`#${id} button`).forEach((b) => click(b, () => { S[key] = +b.dataset.v; Save.save(); applySettings(); el.querySelectorAll(`#${id} button`).forEach((x) => x.classList.toggle('on', x === b)); }));
     segBind('a-riv', 'derbyRivals'); segBind('a-diff', 'diff');
     click($('#a-help', el), () => derbyHelp());
@@ -954,10 +962,11 @@
   function endDerby(arena, res) {
     UI.inRace = false; teardownTouch();
     const d = Save.data, me = res.order.find((o) => o.isPlayer), N = res.order.length, win = res.place === 1;
-    const lines = [[`${U.ordinal(res.place)} of ${N}`, Math.round((N - res.place) / Math.max(1, N - 1) * (40 + N * 10))]];
+    // payouts grow with the field up to 16 cars, so a 30-car smash pays well without flooding the purse
+    const F = Math.min(N, 16), lines = [[`${U.ordinal(res.place)} of ${N}`, Math.round((N - res.place) / Math.max(1, N - 1) * (40 + F * 10))]];
     if (me.wrecks) lines.push([`${me.wrecks} ${me.wrecks === 1 ? 'car' : 'cars'} wrecked`, me.wrecks * 40]);
     if (me.dealt) lines.push([`${me.dealt} damage dealt`, Math.round(me.dealt * 0.3)]);
-    if (win) lines.push(['Last one standing', 100 + N * 15]);
+    if (win) lines.push(['Last one standing', 100 + F * 15]);
     const coins = lines.reduce((s, l) => s + l[1], 0);
     d.stats.races++; d.stats.derbies++; if (win) { d.stats.derbyWins++; d.stats.wins++; } d.stats.wrecks += me.wrecks;
     const id = CR.ARENAS[arena].id, b = d.derby[id] || (d.derby[id] = { wins: 0, wrecks: 0 });
@@ -970,12 +979,13 @@
       <td class="num">${o.wrecks}</td><td class="num">${o.dealt}</td><td class="small">${how(o)}</td></tr>`).join('');
     el.innerHTML = `<div class="wrap res-wrap"><div class="panel res"><div class="r-head"><div class="bigplace">${U.ordinal(res.place)}</div>
       <div class="reward">${win ? 'Last car standing!' : me.how === 'fell' ? 'Over the edge' : res.place <= 3 ? 'Survived the carnage' : 'Scrapped'}</div><p class="muted small" style="margin:4px 0 0;text-align:center">${CR.ARENAS[arena].name} · ${U.fmtTime(res.time)}${best && me.wrecks ? ' · most wrecks here yet' : ''}</p></div>
-      <div class="r-main"><table class="table"><tr><th>#</th><th>Driver</th><th>Car</th><th class="num">Wrecks</th><th class="num">Dmg</th><th></th></tr>${rows}</table></div>
+      <div class="r-main"><table class="table${N > 12 ? ' dense' : ''}"><tr><th>#</th><th>Driver</th><th>Car</th><th class="num">Wrecks</th><th class="num">Dmg</th><th></th></tr>${rows}</table></div>
       <div class="r-foot"><table class="table payout">${lines.map(([t, c]) => `<tr><td class="muted small">${t}</td><td class="num gold">+${c}</td></tr>`).join('')}</table>
       <p class="reward">+${coins} <span class="coin"></span></p>
       <div class="actions"><button class="btn primary" id="r-again">Smash again</button><button class="btn" id="r-arenas">Arenas</button><button class="btn ghost" id="r-menu">Menu</button></div></div>
     </div></div>`;
     show('results');
+    const mine = $('tr.me', el); if (mine && N > 8) mine.scrollIntoView({ block: 'nearest' }); // in a big field, bring your own row into view
     click($('#r-again', el), () => startDerby(arena));
     click($('#r-arenas', el), () => leaveDerby(renderArenas));
     click($('#r-menu', el), () => leaveDerby(renderMenu), 'back');
@@ -1020,12 +1030,15 @@
     const dead = p.wrecked || p.out;
     if (c.dead !== dead) { c.dead = dead; H.spec.classList.toggle('hidden', !dead); }
     if (dead) { const f = D.focus(), s = f && f !== p ? `Spectating ${f.name}` : 'Spectating'; if (c.spec !== s) { c.spec = s; H.spect.textContent = s; } }
-    const W = window.innerWidth, Hh = window.innerHeight;
+    const W = window.innerWidth, Hh = window.innerHeight, me = D.focus() || p;
     D.cars.forEach((car, i) => {
       const el = H.tagEls[i]; if (!el) return;
       const pr = R.project(car.x, car.y, car.z + 30);
       if (car.out || car.wrecked || D.state === 'count' || pr[2] < 0 || Math.abs(pr[0]) > 1.1 || Math.abs(pr[1]) > 1.1) { if (!el.hidden) el.hidden = true; return; }
       if (el.hidden) el.hidden = false;
+      // in a big field only the cars near you keep their names, so 30 labels don't bury the arena
+      const far = !car.isPlayer && D.cars.length > 8 && Math.hypot(car.x - me.x, car.y - me.y) > 260;
+      if (el._far !== far) { el._far = far; el.classList.toggle('far', far); }
       el.style.transform = `translate(${((pr[0] * 0.5 + 0.5) * W).toFixed(1)}px, ${((0.5 - pr[1] * 0.5) * Hh).toFixed(1)}px)`;
       const f = Math.round(Math.max(0, car.hp / car.st.hp) * 100);
       if (el._f !== f) { el._f = f; const u = el.querySelector('u'); u.style.width = f + '%'; u.style.background = f < 25 ? '#ff4d6d' : f < 55 ? '#ffb84d' : '#69f0ae'; }
